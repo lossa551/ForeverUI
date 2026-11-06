@@ -472,22 +472,7 @@ function CombatText:OnCombatLogEvent()
     end
 end
 
-function CombatText:SyncVanillaFCT(hideVanilla)
-    if InCombatLockdown() or not SetCVar then
-        return
-    end
-    local val = hideVanilla and "0" or "1"
-    pcall(SetCVar, "floatingCombatTextCombatDamage", val)
-    pcall(SetCVar, "floatingCombatTextCombatLogPeriodicSpells", val)
-    pcall(SetCVar, "PetMeleeDamage", val)
-end
-
 function CombatText:OnEnable()
-    local cfg = ns.Config:Get("combatText")
-    if cfg and cfg.hideVanillaDamage ~= false then
-        self:SyncVanillaFCT(true)
-    end
-    ns.Events:Register("COMBAT_LOG_EVENT_UNFILTERED", function()
-        self:OnCombatLogEvent()
-    end, self)
+    -- Note: In WoW Forever (16001), SetCVar is a protected Blizzard-only action.
+    -- All enemy damage numbers are driven directly by Nameplates:OnUnitCombat (UNIT_COMBAT).
 end

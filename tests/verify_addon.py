@@ -63,9 +63,9 @@ def verify_lua_blocks_and_safety(lua_paths):
         assert cleaned.count("{") == cleaned.count("}"), f"Unbalanced {{}} in {os.path.basename(path)}"
         assert cleaned.count("(") == cleaned.count(")"), f"Unbalanced () in {os.path.basename(path)}"
 
-        # Combat Lockdown Safety Check: never call SetPoint/Show/Hide on PlayerFrame or TargetFrame
-        forbidden = re.findall(r"\b(?:PlayerFrame|TargetFrame)\s*:\s*(?:SetPoint|SetScale|Show|Hide)\b", cleaned)
-        assert not forbidden, f"Combat-lockdown unsafe call in {os.path.basename(path)}: {forbidden}"
+        # Combat Lockdown & Protected CVar Safety Check: never call SetCVar or mutate PlayerFrame/TargetFrame
+        forbidden = re.findall(r"\b(?:SetCVar|(?:PlayerFrame|TargetFrame)\s*:\s*(?:SetPoint|SetScale|Show|Hide))\b", cleaned)
+        assert not forbidden, f"Forbidden Blizzard-only call in {os.path.basename(path)}: {forbidden}"
 
         # Restricted Region Safety Check (WoW 12.0+ / 16001): never call FrameMeasurement getters
         measurement = re.findall(r":\s*Get(?:Center|Left|Right|Top|Bottom|Rect|ScaledRect|Width|Height|Size)\s*\(", cleaned)
