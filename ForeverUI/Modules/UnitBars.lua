@@ -5,15 +5,8 @@ ns.UnitBars = UnitBars
 UnitBars.enhancers = {}
 local activeAnimEnhancers = {}
 
-local function GetUnitBarColor(unit, bar, isNameplate)
+local function GetUnitBarColor(unit, bar)
     if unit and UnitExists(unit) then
-        if UnitIsPlayer(unit) and RAID_CLASS_COLORS then
-            local _, classToken = UnitClass(unit)
-            local c = classToken and RAID_CLASS_COLORS[classToken]
-            if c then
-                return c.r, c.g, c.b
-            end
-        end
         if UnitReaction then
             local reaction = UnitReaction(unit, "player")
             if reaction then
@@ -33,14 +26,9 @@ local function GetUnitBarColor(unit, bar, isNameplate)
             return r, g, b
         end
     end
-    if isNameplate then
-        return 0.90, 0.12, 0.12
-    end
-    return 0.10, 0.85, 0.15
+    return 0.90, 0.12, 0.12
 end
 
--- Read current and max health reliably from either the StatusBar widget or UnitHealth API.
--- Never returns 0/1 (0%) for a living unit whose health hasn't populated on frame 1!
 local function ReadBarHealth(enhancer)
     local bar = enhancer.statusBar
     local unit = enhancer.unit
@@ -61,7 +49,6 @@ local function ReadBarHealth(enhancer)
     end
 
     if maxHp <= 0 then
-        -- Unit health not yet populated on first tick: default to 100% full bar, NEVER 0%!
         return 100, 100, 1.0, false
     end
 
@@ -159,6 +146,9 @@ function UnitBars:CreateBarEnhancer(statusBar, unitToken, isNameplate)
     if not statusBar then
         return nil
     end
+    -- Always keep statusBar frame alpha at 1.0 while alive so child frames (container) stay 100% visible!
+    statusBar:SetAlpha(1.0)
+
     if self.enhancers[statusBar] then
         local existing = self.enhancers[statusBar]
         existing.unit = unitToken
@@ -169,11 +159,9 @@ function UnitBars:CreateBarEnhancer(statusBar, unitToken, isNameplate)
         return existing
     end
 
-    -- Parent container to statusBar's parent on nameplates so shaking container moves the whole bar!
-    local parentFrame = (isNameplate and statusBar:GetParent()) or statusBar
-    local baseLevel = math.max(2, (statusBar:GetFrameLevel() or 1) + 3)
-
-    local container = CreateFrame("Frame", nil, parentFrame)
+    -- Parent container directly to statusBar (proven 100% visible in WoW Forever!)
+    local baseLevel = math.max(2, (statusBar:GetFrameLevel() or 1) + 2)
+    local container = CreateFrame("Frame", nil, statusBar)
     container:SetAllPoints(statusBar)
     container:SetFrameLevel(baseLevel)
     container:EnableMouse(false)
@@ -182,18 +170,18 @@ function UnitBars:CreateBarEnhancer(statusBar, unitToken, isNameplate)
     local bgTex = container:CreateTexture(nil, "BACKGROUND", nil, 0)
     bgTex:SetAllPoints(container)
     bgTex:SetTexture("Interface\\Buttons\\WHITE8X8")
-    bgTex:SetVertexColor(0.07, 0.07, 0.08, 0.92)
+    bgTex:SetVertexColor(0.07, 0.07, 0.08, 0.94)
 
     -- 2. Molten Damage Trail StatusBar (Level + 1, 0..1000 integer range)
     local trailBar = CreateFrame("StatusBar", nil, container)
     trailBar:SetAllPoints(container)
     trailBar:SetFrameLevel(baseLevel + 1)
     trailBar:SetStatusBarTexture("Interface\\Buttons\\WHITE8X8")
-    trailBar:SetStatusBarColor(1.0, 0.60, 0.12, 0.98)
+    trailBar:SetStatusBarColor(1.0, 0.65, 0.12, 0.98)
     trailBar:SetMinMaxValues(0, 1000)
     trailBar:SetValue(1000)
 
-    -- 3. Smooth Main Health StatusBar (Level + 2, 0..1000 integer range, always visible!)
+    -- 3. Smooth Main Health StatusBar (Level + 2, 0..1000 integer range)
     local mainBar = CreateFrame("StatusBar", nil, container)
     mainBar:SetAllPoints(container)
     mainBar:SetFrameLevel(baseLevel + 2)
@@ -208,35 +196,33 @@ function UnitBars:CreateBarEnhancer(statusBar, unitToken, isNameplate)
     fxOverlay:SetAllPoints(container)
     fxOverlay:SetFrameLevel(baseLevel + 3)
 
-    if isNameplate then
-        local bTop = fxOverlay:CreateTexture(nil, "BORDER")
-        bTop:SetTexture("Interface\\Buttons\\WHITE8X8")
-        bTop:SetVertexColor(0.08, 0.07, 0.06, 0.96)
-        bTop:SetPoint("TOPLEFT", container, "TOPLEFT", -1, 1)
-        bTop:SetPoint("TOPRIGHT", container, "TOPRIGHT", 1, 1)
-        bTop:SetHeight(1)
+    local bTop = fxOverlay:CreateTexture(nil, "BORDER")
+    bTop:SetTexture("Interface\\Buttons\\WHITE8X8")
+    bTop:SetVertexColor(0.08, 0.07, 0.06, 0.96)
+    bTop:SetPoint("TOPLEFT", container, "TOPLEFT", -1, 1)
+    bTop:SetPoint("TOPRIGHT", container, "TOPRIGHT", 1, 1)
+    bTop:SetHeight(1)
 
-        local bBot = fxOverlay:CreateTexture(nil, "BORDER")
-        bBot:SetTexture("Interface\\Buttons\\WHITE8X8")
-        bBot:SetVertexColor(0.08, 0.07, 0.06, 0.96)
-        bBot:SetPoint("BOTTOMLEFT", container, "BOTTOMLEFT", -1, -1)
-        bBot:SetPoint("BOTTOMRIGHT", container, "BOTTOMRIGHT", 1, -1)
-        bBot:SetHeight(1)
+    local bBot = fxOverlay:CreateTexture(nil, "BORDER")
+    bBot:SetTexture("Interface\\Buttons\\WHITE8X8")
+    bBot:SetVertexColor(0.08, 0.07, 0.06, 0.96)
+    bBot:SetPoint("BOTTOMLEFT", container, "BOTTOMLEFT", -1, -1)
+    bBot:SetPoint("BOTTOMRIGHT", container, "BOTTOMRIGHT", 1, -1)
+    bBot:SetHeight(1)
 
-        local bLeft = fxOverlay:CreateTexture(nil, "BORDER")
-        bLeft:SetTexture("Interface\\Buttons\\WHITE8X8")
-        bLeft:SetVertexColor(0.08, 0.07, 0.06, 0.96)
-        bLeft:SetPoint("TOPLEFT", container, "TOPLEFT", -1, 1)
-        bLeft:SetPoint("BOTTOMLEFT", container, "BOTTOMLEFT", -1, -1)
-        bLeft:SetWidth(1)
+    local bLeft = fxOverlay:CreateTexture(nil, "BORDER")
+    bLeft:SetTexture("Interface\\Buttons\\WHITE8X8")
+    bLeft:SetVertexColor(0.08, 0.07, 0.06, 0.96)
+    bLeft:SetPoint("TOPLEFT", container, "TOPLEFT", -1, 1)
+    bLeft:SetPoint("BOTTOMLEFT", container, "BOTTOMLEFT", -1, -1)
+    bLeft:SetWidth(1)
 
-        local bRight = fxOverlay:CreateTexture(nil, "BORDER")
-        bRight:SetTexture("Interface\\Buttons\\WHITE8X8")
-        bRight:SetVertexColor(0.08, 0.07, 0.06, 0.96)
-        bRight:SetPoint("TOPRIGHT", container, "TOPRIGHT", 1, 1)
-        bRight:SetPoint("BOTTOMRIGHT", container, "BOTTOMRIGHT", 1, -1)
-        bRight:SetWidth(1)
-    end
+    local bRight = fxOverlay:CreateTexture(nil, "BORDER")
+    bRight:SetTexture("Interface\\Buttons\\WHITE8X8")
+    bRight:SetVertexColor(0.08, 0.07, 0.06, 0.96)
+    bRight:SetPoint("TOPRIGHT", container, "TOPRIGHT", 1, 1)
+    bRight:SetPoint("BOTTOMRIGHT", container, "BOTTOMRIGHT", 1, -1)
+    bRight:SetWidth(1)
 
     local hitFlash = fxOverlay:CreateTexture(nil, "OVERLAY", nil, 3)
     hitFlash:SetTexture("Interface\\Buttons\\WHITE8X8")
@@ -257,7 +243,7 @@ function UnitBars:CreateBarEnhancer(statusBar, unitToken, isNameplate)
     end
     cutLine:Hide()
 
-    local executeBorder = CreateBorderFrame(fxOverlay, 1.0, 0.15, 0.15, isNameplate and 2 or 2.5)
+    local executeBorder = CreateBorderFrame(fxOverlay, 1.0, 0.15, 0.15, 2)
 
     local enhancer = {
         statusBar = statusBar,
@@ -285,7 +271,6 @@ function UnitBars:CreateBarEnhancer(statusBar, unitToken, isNameplate)
         lastImpactTime = 0,
     }
 
-    -- Hook OnValueChanged directly on Blizzard's StatusBar so EVERY health change triggers our effects immediately!
     if statusBar.HookScript then
         statusBar:HookScript("OnValueChanged", function()
             if enhancer.unit and UnitExists(enhancer.unit) then
@@ -303,7 +288,7 @@ function UnitBars:CreateBarEnhancer(statusBar, unitToken, isNameplate)
 end
 
 function UnitBars:RefreshBarColor(enhancer)
-    local r, g, b = GetUnitBarColor(enhancer.unit, enhancer.statusBar, enhancer.isNameplate)
+    local r, g, b = GetUnitBarColor(enhancer.unit, enhancer.statusBar)
     enhancer.mainBar:SetStatusBarColor(r, g, b, 1.0)
 end
 
@@ -335,7 +320,6 @@ function UnitBars:SyncUnitState(enhancer, forceReset)
     enhancer.maxHp = maxHp
     enhancer.targetFrac = newFrac
 
-    -- Ignore max-health scaling changes that aren't real damage
     if maxHp ~= prevMax and curHp == maxHp then
         enhancer.displayFrac = newFrac
         enhancer.trailFrac = newFrac
@@ -394,8 +378,8 @@ function UnitBars:TriggerDamageImpact(enhancer, pctLost, isCrit, isMega)
     local rawTrauma = math.min(1.0, (pctLost / 0.20) * mult * (cfg.traumaScale or 1.0))
     if isCrit and rawTrauma < 0.68 then
         rawTrauma = 0.68
-    elseif rawTrauma < 0.32 then
-        rawTrauma = 0.32
+    elseif rawTrauma < 0.34 then
+        rawTrauma = 0.34
     end
     enhancer.trauma = math.min(1.0, math.max(enhancer.trauma, rawTrauma))
 
@@ -479,7 +463,7 @@ function UnitBars:StepEnhancer(enhancer, dt, now, smoothSpeed, trailSpeed)
     if enhancer.trauma > 0.01 then
         stillActive = true
         local p = enhancer.trauma * enhancer.trauma
-        local maxOffset = enhancer.isNameplate and 11.5 or 8.0
+        local maxOffset = 11.5
         dx = (math.sin(now * 88.0) * maxOffset + (math.random() - 0.5) * 6.0) * p
         dy = (math.cos(now * 96.0) * (maxOffset * 0.65) + (math.random() - 0.5) * 4.5) * p
         enhancer.trauma = math.max(0, enhancer.trauma - dt * 2.35)
@@ -512,13 +496,13 @@ function UnitBars:RenderEnhancer(enhancer, dx, dy)
     container:SetPoint("TOPLEFT", bar, "TOPLEFT", dx, yPad + dy)
     container:SetPoint("BOTTOMRIGHT", bar, "BOTTOMRIGHT", dx, -yPad + dy)
 
-    -- While shaking on a nameplate, hide the static bar underneath so the whole bar visibly recoils;
-    -- while idle, keep native bar at alpha 1.0 as a safety net!
-    if enhancer.isNameplate and not enhancer.deathTriggered then
+    -- Hide ONLY the internal StatusBar fill texture (NEVER bar:SetAlpha(0) which hides child frames!)
+    local nativeTex = bar.GetStatusBarTexture and bar:GetStatusBarTexture()
+    if nativeTex and nativeTex.SetAlpha then
         if enhancer.trauma > 0.01 or enhancer.barPunchY > 1.01 then
-            bar:SetAlpha(0.0)
+            nativeTex:SetAlpha(0.0)
         else
-            bar:SetAlpha(1.0)
+            nativeTex:SetAlpha(1.0)
         end
     end
 
@@ -546,53 +530,7 @@ function UnitBars:RenderEnhancer(enhancer, dx, dy)
     end
 end
 
-local function ResolveDefaultHealthBar(unitFrame, globalBarName)
-    if _G[globalBarName] then
-        return _G[globalBarName]
-    end
-    if unitFrame then
-        if unitFrame.healthbar then
-            return unitFrame.healthbar
-        end
-        if unitFrame.HealthBar then
-            return unitFrame.HealthBar
-        end
-    end
-    return nil
-end
-
 function UnitBars:OnEnable()
-    local playerBar = ResolveDefaultHealthBar(PlayerFrame, "PlayerFrameHealthBar")
-    if playerBar then
-        self.playerEnhancer = self:CreateBarEnhancer(playerBar, "player", false)
-        self:SyncUnitState(self.playerEnhancer, true)
-    end
-
-    local targetBar = ResolveDefaultHealthBar(TargetFrame, "TargetFrameHealthBar")
-    if targetBar then
-        self.targetEnhancer = self:CreateBarEnhancer(targetBar, "target", false)
-    end
-
-    local function OnUnitHealthChanged(_, _, unit)
-        if unit == "player" and self.playerEnhancer then
-            self:SyncUnitState(self.playerEnhancer, false)
-        elseif unit == "target" and self.targetEnhancer then
-            self:SyncUnitState(self.targetEnhancer, false)
-        end
-    end
-
-    ns.Events:Register("UNIT_HEALTH", OnUnitHealthChanged, self)
-    ns.Events:Register("UNIT_HEALTH_FREQUENT", OnUnitHealthChanged, self)
-
-    ns.Events:Register("PLAYER_TARGET_CHANGED", function()
-        if self.targetEnhancer and UnitExists("target") then
-            self:SyncUnitState(self.targetEnhancer, true)
-        end
-    end, self)
-
-    ns.Events:Register("PLAYER_ENTERING_WORLD", function()
-        if self.playerEnhancer then
-            self:SyncUnitState(self.playerEnhancer, true)
-        end
-    end, self)
+    -- Leave PlayerFrame and TargetFrame portrait bars 100% native WoW!
+    -- Overhead enemy health bars are enhanced by Nameplates.lua using UnitBars:CreateBarEnhancer.
 end
