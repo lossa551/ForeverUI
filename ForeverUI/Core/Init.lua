@@ -30,12 +30,13 @@ local function GetOrCreateDemoBar()
         demoNameLabel:SetText("Enemy Target (Demo)")
     end
     demoBar:Show()
+    demoBar:SetAlpha(1.0)
     demoEnhancer.container:Show()
     demoEnhancer.container:SetAlpha(1.0)
     if demoNameLabel then
         demoNameLabel:Show()
     end
-    return demoEnhancer.container, demoEnhancer
+    return demoBar, demoEnhancer
 end
 
 function ns:RunInGameDemo(mode)
@@ -50,12 +51,13 @@ function ns:RunInGameDemo(mode)
     end
 
     if mode == "kill" then
+        ns.CombatFX:SpawnDeathShatterBar(bar)
         if usingDemoBar then
             if demoNameLabel then
                 demoNameLabel:Hide()
             end
+            demoBar:SetAlpha(0.0)
             demoEnhancer.container:SetAlpha(0.0)
-            ns.CombatFX:SpawnDeathShatterBar(bar)
         else
             enhancer.deathTriggered = false
             ns.Nameplates:TriggerDeathForEnhancer(enhancer)
@@ -77,6 +79,7 @@ function ns:RunInGameDemo(mode)
     enhancer.displayFrac = 1.0
     enhancer.trailFrac = 1.0
     enhancer.targetFrac = 0.78
+    enhancer.statusBar:SetAlpha(1.0)
     enhancer.container:SetAlpha(1.0)
     if usingDemoBar then
         demoBar:SetValue(78)
@@ -108,12 +111,13 @@ function ns:RunInGameDemo(mode)
         end)
 
         C_Timer.After(1.20, function()
+            ns.CombatFX:SpawnDeathShatterBar(bar)
             if usingDemoBar then
                 if demoNameLabel then
                     demoNameLabel:Hide()
                 end
+                demoBar:SetAlpha(0.0)
                 demoEnhancer.container:SetAlpha(0.0)
-                ns.CombatFX:SpawnDeathShatterBar(bar)
             else
                 enhancer.deathTriggered = false
                 ns.Nameplates:TriggerDeathForEnhancer(enhancer)
@@ -132,14 +136,19 @@ function ns:RunInGameDemo(mode)
             if usingDemoBar and demoBar then
                 demoBar:Hide()
                 demoEnhancer.container:Hide()
-            elseif enhancer and enhancer.unitFrame then
-                -- Restore live nameplate visibility after preview
+            elseif enhancer then
+                enhancer.statusBar:SetAlpha(1.0)
                 enhancer.container:SetAlpha(1.0)
-                if enhancer.unitFrame.name then
-                    enhancer.unitFrame.name:SetAlpha(1.0)
-                end
-                if enhancer.unitFrame.LevelFrame then
-                    enhancer.unitFrame.LevelFrame:SetAlpha(1.0)
+                if enhancer.unitFrame then
+                    if enhancer.unitFrame.name then
+                        enhancer.unitFrame.name:SetAlpha(1.0)
+                    end
+                    if enhancer.unitFrame.Name then
+                        enhancer.unitFrame.Name:SetAlpha(1.0)
+                    end
+                    if enhancer.unitFrame.LevelFrame then
+                        enhancer.unitFrame.LevelFrame:SetAlpha(1.0)
+                    end
                 end
             end
         end)

@@ -72,8 +72,8 @@ local function ResolveNameplateHealthBar(namePlate)
 end
 
 local function SetNameplateExtrasAlpha(uf, statusBar, container, isDead)
+    local alpha = isDead and 0.0 or 1.0
     if uf then
-        local alpha = isDead and 0.0 or 1.0
         if uf.name and uf.name.SetAlpha then
             uf.name:SetAlpha(alpha)
         end
@@ -88,11 +88,11 @@ local function SetNameplateExtrasAlpha(uf, statusBar, container, isDead)
         end
     end
     if statusBar and statusBar.SetAlpha then
-        -- Keep native bar alpha at 0 while our enhancer container renders the active bar
-        statusBar:SetAlpha(0.0)
+        -- Keep native health bar 100% visible while alive; hide ONLY on death when replaced by DeathShatterBar!
+        statusBar:SetAlpha(alpha)
     end
     if container and container.SetAlpha then
-        container:SetAlpha(isDead and 0.0 or 1.0)
+        container:SetAlpha(alpha)
     end
 end
 
