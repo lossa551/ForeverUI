@@ -43,6 +43,7 @@ local DEFAULTS = {
     },
     combatText = {
         enabled = true,
+        hideVanillaDamage = true,
         anchorToNameplate = true,
         baseOffsetY = 26,
         critOffsetY = 34,

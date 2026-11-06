@@ -229,16 +229,26 @@ local function HandleSlashCommand(msg)
             ns.StateEngine:RefreshState()
             PrintMsg("Context state unit-frame fade: " .. (seCfg.fadeUnitFrames and "ON" or "OFF"))
         end
+    elseif cmd == "vanillafct" then
+        local ctCfg = ns.Config:Get("combatText")
+        if ctCfg then
+            ctCfg.hideVanillaDamage = not (ctCfg.hideVanillaDamage ~= false)
+            if ns.CombatText and ns.CombatText.SyncVanillaFCT then
+                ns.CombatText:SyncVanillaFCT(ctCfg.hideVanillaDamage)
+            end
+            PrintMsg("Blizzard vanilla 3D damage numbers: " .. (ctCfg.hideVanillaDamage and "HIDDEN" or "SHOWN"))
+        end
     elseif cmd == "reset" then
         ns.Config:Reset()
         PrintMsg("Configuration reset to defaults.")
     else
         PrintMsg("Commands:")
-        PrintMsg("  /fui test   - Preview Normal Hit -> Mega Crit -> Bare Cracked Death Bar")
-        PrintMsg("  /fui kill   - Preview Killing Blow bare cracked/tilted gray death bar")
-        PrintMsg("  /fui status - Check how many enemy nameplates are currently hooked")
-        PrintMsg("  /fui statefade - Toggle out-of-combat state fading")
-        PrintMsg("  /fui reset  - Reset settings to defaults")
+        PrintMsg("  /fui test       - Preview Flurry Fountain -> Crit Shockwave -> Bare Cracked Death Bar")
+        PrintMsg("  /fui kill       - Preview Killing Blow bare cracked/tilted gray death bar")
+        PrintMsg("  /fui vanillafct - Toggle Blizzard's default 3D floating damage numbers on/off")
+        PrintMsg("  /fui status     - Check how many enemy nameplates are currently hooked")
+        PrintMsg("  /fui statefade  - Toggle out-of-combat state fading")
+        PrintMsg("  /fui reset      - Reset settings to defaults")
     end
 end
 

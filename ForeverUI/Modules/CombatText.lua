@@ -431,6 +431,11 @@ function CombatText:OnCombatLogEvent()
             anchorBar = ns.Nameplates:GetBarForGUID(destGUID)
         end
 
+        -- Avoid duplicate numbers if UNIT_COMBAT already spawned for this nameplate hit
+        if anchorBar or ((GetTime() - (self.lastUnitCombatTime or 0)) < 0.15) then
+            return
+        end
+
         local r, g, b = 1.0, 1.0, 1.0
         if not isAutoAttack then
             local schoolKey = (school and not ns.IsSecret(school)) and school or 1
@@ -467,7 +472,21 @@ function CombatText:OnCombatLogEvent()
     end
 end
 
+function CombatText:SyncVanillaFCT(hideVanilla)
+    if InCombatLockdown() or not SetCVar then
+        return
+    end
+    local val = hideVanilla and "0" or "1"
+    pcall(SetCVar, "floatingCombatTextCombatDamage", val)
+    pcall(SetCVar, "floatingCombatTextCombatLogPeriodicSpells", val)
+    pcall(SetCVar, "PetMeleeDamage", val)
+end
+
 function CombatText:OnEnable()
+    local cfg = ns.Config:Get("combatText")
+    if cfg and cfg.hideVanillaDamage ~= false then
+        self:SyncVanillaFCT(true)
+    end
     ns.Events:Register("COMBAT_LOG_EVENT_UNFILTERED", function()
         self:OnCombatLogEvent()
     end, self)

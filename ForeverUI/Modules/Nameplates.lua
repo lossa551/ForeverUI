@@ -327,6 +327,7 @@ function Nameplates:OnUnitCombat(unitToken, action, flagText, amount)
     ns.UnitBars:TriggerDamageImpact(enhancer, pctLost, isCrit, isMega)
 
     if ns.CombatText then
+        ns.CombatText.lastUnitCombatTime = GetTime()
         local displayText = ns.IsSecret(amount) and amount or tostring(math.floor(amount + 0.5))
         ns.CombatText:SpawnNumber({
             text = displayText,
