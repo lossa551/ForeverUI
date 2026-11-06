@@ -189,13 +189,17 @@ function CombatText:OnCombatLogEvent()
     if not CombatLogGetCurrentEventInfo then
         return
     end
-    local _, subEvent, _, sourceGUID, _, _, _, destGUID, _, _, _, arg12, arg13, arg14, arg15, arg16, arg17, arg18, arg19, arg20, arg21 = CombatLogGetCurrentEventInfo()
+    local _, subEvent, _, sourceGUID, _, sourceFlags, _, destGUID, _, _, _, arg12, arg13, arg14, arg15, arg16, arg17, arg18, arg19, arg20, arg21 = CombatLogGetCurrentEventInfo()
     local playerGUID = UnitGUID("player")
     if not playerGUID then
         return
     end
 
-    local isOutgoing = (sourceGUID == playerGUID) and (destGUID ~= playerGUID)
+    local isMine = (sourceGUID == playerGUID)
+        or (UnitGUID("pet") and sourceGUID == UnitGUID("pet"))
+        or (sourceFlags and bit and bit.band and COMBATLOG_OBJECT_AFFILIATION_MINE and bit.band(sourceFlags, COMBATLOG_OBJECT_AFFILIATION_MINE) ~= 0)
+
+    local isOutgoing = isMine and (destGUID ~= playerGUID)
     local isIncoming = (destGUID == playerGUID)
     if not isOutgoing and not isIncoming then
         return

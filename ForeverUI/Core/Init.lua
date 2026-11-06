@@ -6,38 +6,42 @@ local function PrintMsg(msg)
 end
 ns.Print = PrintMsg
 
--- Optional in-game demo bar when /fui test or /fui kill is run without a visible nameplate
 local demoBar = nil
 local demoEnhancer = nil
+local demoNameLabel = nil
 
 local function GetOrCreateDemoBar()
     if not demoBar then
+        -- Offset to the right (+185, +35) so the simulated enemy nameplate never sits over the player's own head
         demoBar = CreateFrame("StatusBar", "ForeverUI_DemoNameplateBar", UIParent)
         demoBar:SetSize(156, 14)
-        demoBar:SetPoint("CENTER", UIParent, "CENTER", 0, 90)
+        demoBar:SetPoint("CENTER", UIParent, "CENTER", 185, 35)
         demoBar:SetStatusBarTexture("Interface\\TargetingFrame\\UI-StatusBar")
-        demoBar:SetStatusBarColor(0.85, 0.12, 0.12, 1.0)
+        demoBar:SetStatusBarColor(0.88, 0.12, 0.12, 1.0)
         demoBar:SetMinMaxValues(0, 100)
         demoBar:SetValue(100)
 
-        local bg = demoBar:CreateTexture(nil, "BACKGROUND")
-        bg:SetAllPoints(demoBar)
-        bg:SetTexture("Interface\\Buttons\\WHITE8X8")
-        bg:SetVertexColor(0.05, 0.05, 0.06, 0.92)
-
         demoEnhancer = ns.UnitBars:CreateBarEnhancer(demoBar, nil, true)
+
+        demoNameLabel = demoEnhancer.container:CreateFontString(nil, "OVERLAY")
+        demoNameLabel:SetFont(STANDARD_TEXT_FONT or "Fonts\\FRIZQT__.TTF", 12, "OUTLINE")
+        demoNameLabel:SetPoint("BOTTOM", demoEnhancer.container, "TOP", 0, 3)
+        demoNameLabel:SetTextColor(1.0, 0.18, 0.18, 1.0)
+        demoNameLabel:SetText("Enemy Target (Demo)")
     end
     demoBar:Show()
-    demoBar:SetAlpha(1.0)
-    return demoBar, demoEnhancer
+    demoEnhancer.container:Show()
+    demoEnhancer.container:SetAlpha(1.0)
+    if demoNameLabel then
+        demoNameLabel:Show()
+    end
+    return demoEnhancer.container, demoEnhancer
 end
 
 function ns:RunInGameDemo(mode)
-    -- Prefer active target's overhead nameplate if visible, otherwise spawn center demo bar
-    local targetGUID = UnitExists("target") and UnitGUID("target") or nil
     local bar, enhancer = nil, nil
-    if targetGUID and ns.Nameplates then
-        bar, enhancer = ns.Nameplates:GetBarForGUID(targetGUID)
+    if ns.Nameplates then
+        bar, enhancer = ns.Nameplates:GetAnyActiveEnemyPlate()
     end
     local usingDemoBar = false
     if not bar or not enhancer then
@@ -47,9 +51,15 @@ function ns:RunInGameDemo(mode)
 
     if mode == "kill" then
         if usingDemoBar then
-            demoBar:SetAlpha(0.0)
+            if demoNameLabel then
+                demoNameLabel:Hide()
+            end
+            demoEnhancer.container:SetAlpha(0.0)
+            ns.CombatFX:SpawnDeathShatterBar(bar)
+        else
+            enhancer.deathTriggered = false
+            ns.Nameplates:TriggerDeathForEnhancer(enhancer)
         end
-        ns.CombatFX:SpawnDeathShatterBar(bar)
         ns.CombatText:SpawnNumber({
             text = "1420",
             r = 1.0, g = 0.82, b = 0.0,
@@ -62,10 +72,12 @@ function ns:RunInGameDemo(mode)
         return
     end
 
-    -- Reset demo bar to 100% and run a 3-hit combo (Normal -> Heavy Crit -> Killing Blow Shatter)
+    -- Reset bar to 100% and run 3-stage impact combo (Normal -> Mega Crit -> Bare Cracked Death Bar)
+    enhancer.deathTriggered = false
     enhancer.displayFrac = 1.0
     enhancer.trailFrac = 1.0
     enhancer.targetFrac = 0.78
+    enhancer.container:SetAlpha(1.0)
     if usingDemoBar then
         demoBar:SetValue(78)
     end
@@ -97,9 +109,15 @@ function ns:RunInGameDemo(mode)
 
         C_Timer.After(1.20, function()
             if usingDemoBar then
-                demoBar:SetAlpha(0.0)
+                if demoNameLabel then
+                    demoNameLabel:Hide()
+                end
+                demoEnhancer.container:SetAlpha(0.0)
+                ns.CombatFX:SpawnDeathShatterBar(bar)
+            else
+                enhancer.deathTriggered = false
+                ns.Nameplates:TriggerDeathForEnhancer(enhancer)
             end
-            ns.CombatFX:SpawnDeathShatterBar(bar)
             ns.CombatText:SpawnNumber({
                 text = "1350",
                 r = 1.0, g = 0.82, b = 0.0,
@@ -113,11 +131,25 @@ function ns:RunInGameDemo(mode)
         C_Timer.After(2.70, function()
             if usingDemoBar and demoBar then
                 demoBar:Hide()
+                demoEnhancer.container:Hide()
+            elseif enhancer and enhancer.unitFrame then
+                -- Restore live nameplate visibility after preview
+                enhancer.container:SetAlpha(1.0)
+                if enhancer.unitFrame.name then
+                    enhancer.unitFrame.name:SetAlpha(1.0)
+                end
+                if enhancer.unitFrame.LevelFrame then
+                    enhancer.unitFrame.LevelFrame:SetAlpha(1.0)
+                end
             end
         end)
     end
 
-    PrintMsg("Running 3-stage impact combo (Normal Hit -> Mega Crit -> Bare Cracked Death Bar)...")
+    if usingDemoBar then
+        PrintMsg("No enemy nameplate visible on screen — running demo on simulated Enemy Target bar (right of center).")
+    else
+        PrintMsg("Running 3-stage impact combo on active enemy overhead nameplate!")
+    end
 end
 
 local function HandleSlashCommand(msg)
@@ -126,6 +158,10 @@ local function HandleSlashCommand(msg)
         ns:RunInGameDemo("combo")
     elseif cmd == "kill" then
         ns:RunInGameDemo("kill")
+    elseif cmd == "status" then
+        local count = ns.Nameplates and ns.Nameplates:ScanExistingNameplates() or 0
+        local cvarVal = GetCVar and GetCVar("nameplateShowEnemies") or "?"
+        PrintMsg("Active enemy nameplates hooked: " .. tostring(count) .. " (nameplateShowEnemies=" .. tostring(cvarVal) .. ")")
     elseif cmd == "state" then
         local upper = string.upper(arg or "")
         if ns.StateEngine.STATES[upper] then
@@ -147,10 +183,11 @@ local function HandleSlashCommand(msg)
         PrintMsg("Configuration reset to defaults.")
     else
         PrintMsg("Commands:")
-        PrintMsg("  /fui test  - Preview Normal Hit -> Mega Crit -> Bare Cracked Death Bar")
-        PrintMsg("  /fui kill  - Preview Killing Blow bare cracked/tilted gray death bar")
+        PrintMsg("  /fui test   - Preview Normal Hit -> Mega Crit -> Bare Cracked Death Bar")
+        PrintMsg("  /fui kill   - Preview Killing Blow bare cracked/tilted gray death bar")
+        PrintMsg("  /fui status - Check how many enemy nameplates are currently hooked")
         PrintMsg("  /fui statefade - Toggle out-of-combat state fading")
-        PrintMsg("  /fui reset - Reset settings to defaults")
+        PrintMsg("  /fui reset  - Reset settings to defaults")
     end
 end
 

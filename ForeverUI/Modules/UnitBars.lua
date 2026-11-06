@@ -55,7 +55,7 @@ local function EnsureEnhancerTicker()
         local anyActive = false
 
         for enhancer in pairs(activeAnimEnhancers) do
-            if not enhancer.statusBar or not enhancer.statusBar:IsVisible() then
+            if not enhancer.statusBar or not enhancer.statusBar:IsShown() then
                 enhancer.trauma = 0
                 enhancer.flashAlpha = 0
                 enhancer.cutAlpha = 0
@@ -83,24 +83,76 @@ function UnitBars:CreateBarEnhancer(statusBar, unitToken, isNameplate)
         local existing = self.enhancers[statusBar]
         existing.unit = unitToken
         existing.isNameplate = isNameplate
+        if isNameplate then
+            statusBar:SetAlpha(0.0)
+            existing.container:Show()
+        end
         return existing
     end
 
-    local container = CreateFrame("Frame", nil, statusBar)
+    -- Parent container to statusBar's parent when on a nameplate so we can hide the static
+    -- statusBar (SetAlpha(0)) and let our container physically shake, swell, and trail without ghosting!
+    local parentFrame = (isNameplate and statusBar:GetParent()) or statusBar
+    local container = CreateFrame("Frame", nil, parentFrame)
     container:SetAllPoints(statusBar)
+    container:SetFrameLevel(math.max(1, (statusBar:GetFrameLevel() or 1) + 2))
     container:EnableMouse(false)
 
-    -- Molten damage catch-up trail chunk (spans from displayPct to trailPct)
+    -- Dark backdrop & crisp dark iron border for overhead nameplates
+    local bgTex = container:CreateTexture(nil, "BACKGROUND", nil, 0)
+    bgTex:SetAllPoints(container)
+    bgTex:SetTexture("Interface\\Buttons\\WHITE8X8")
+    bgTex:SetVertexColor(0.05, 0.05, 0.06, isNameplate and 0.92 or 0.0)
+
+    local plateBorder = nil
+    if isNameplate then
+        plateBorder = CreateFrame("Frame", nil, container)
+        plateBorder:SetAllPoints(container)
+        local bTop = plateBorder:CreateTexture(nil, "BORDER")
+        bTop:SetTexture("Interface\\Buttons\\WHITE8X8")
+        bTop:SetVertexColor(0.12, 0.10, 0.08, 0.95)
+        bTop:SetPoint("TOPLEFT", container, "TOPLEFT", -1, 1)
+        bTop:SetPoint("TOPRIGHT", container, "TOPRIGHT", 1, 1)
+        bTop:SetHeight(1)
+
+        local bBot = plateBorder:CreateTexture(nil, "BORDER")
+        bBot:SetTexture("Interface\\Buttons\\WHITE8X8")
+        bBot:SetVertexColor(0.12, 0.10, 0.08, 0.95)
+        bBot:SetPoint("BOTTOMLEFT", container, "BOTTOMLEFT", -1, -1)
+        bBot:SetPoint("BOTTOMRIGHT", container, "BOTTOMRIGHT", 1, -1)
+        bBot:SetHeight(1)
+
+        local bLeft = plateBorder:CreateTexture(nil, "BORDER")
+        bLeft:SetTexture("Interface\\Buttons\\WHITE8X8")
+        bLeft:SetVertexColor(0.12, 0.10, 0.08, 0.95)
+        bLeft:SetPoint("TOPLEFT", container, "TOPLEFT", -1, 1)
+        bLeft:SetPoint("BOTTOMLEFT", container, "BOTTOMLEFT", -1, -1)
+        bLeft:SetWidth(1)
+
+        local bRight = plateBorder:CreateTexture(nil, "BORDER")
+        bRight:SetTexture("Interface\\Buttons\\WHITE8X8")
+        bRight:SetVertexColor(0.12, 0.10, 0.08, 0.95)
+        bRight:SetPoint("TOPRIGHT", container, "TOPRIGHT", 1, 1)
+        bRight:SetPoint("BOTTOMRIGHT", container, "BOTTOMRIGHT", 1, -1)
+        bRight:SetWidth(1)
+
+        -- Hide the static native nameplate statusBar so only our animated container renders
+        statusBar:SetAlpha(0.0)
+    end
+
+    -- Molten damage catch-up trail chunk (spans from displayFrac to trailFrac)
     local trailTex = container:CreateTexture(nil, "ARTWORK", nil, 2)
     trailTex:SetTexture("Interface\\TargetingFrame\\UI-StatusBar")
     trailTex:SetVertexColor(1.0, 0.42, 0.10, 0.96)
     trailTex:Hide()
 
-    -- Smooth main health overlay (active during recoil/punch so bar swells cleanly)
+    -- Smooth main health fill
     local mainFillTex = container:CreateTexture(nil, "ARTWORK", nil, 3)
     mainFillTex:SetTexture("Interface\\TargetingFrame\\UI-StatusBar")
-    mainFillTex:SetVertexColor(0.0, 0.85, 0.0, 1.0)
-    mainFillTex:Hide()
+    mainFillTex:SetVertexColor(isNameplate and 0.88 or 0.0, isNameplate and 0.12 or 0.85, 0.12, 1.0)
+    if not isNameplate then
+        mainFillTex:Hide()
+    end
 
     -- White-hot hit flash overlay
     local hitFlash = container:CreateTexture(nil, "OVERLAY", nil, 3)
@@ -115,7 +167,7 @@ function UnitBars:CreateBarEnhancer(statusBar, unitToken, isNameplate)
     cutLine:SetTexture("Interface\\Buttons\\WHITE8X8")
     cutLine:SetBlendMode("ADD")
     cutLine:SetVertexColor(1.0, 0.92, 0.75, 0.0)
-    cutLine:SetWidth(3)
+    cutLine:SetWidth(3.5)
     cutLine:Hide()
 
     -- Execute (<20% HP) & Shockwave additive border
@@ -124,6 +176,7 @@ function UnitBars:CreateBarEnhancer(statusBar, unitToken, isNameplate)
     local enhancer = {
         statusBar = statusBar,
         container = container,
+        bgTex = bgTex,
         trailTex = trailTex,
         mainFillTex = mainFillTex,
         hitFlash = hitFlash,
@@ -142,6 +195,7 @@ function UnitBars:CreateBarEnhancer(statusBar, unitToken, isNameplate)
         trauma = 0,
         barPunchY = 1.0,
         isExecute = false,
+        lastImpactTime = 0,
     }
 
     self.enhancers[statusBar] = enhancer
@@ -183,11 +237,29 @@ function UnitBars:SyncUnitState(enhancer, forceReset)
     if curHp < prevHp then
         local dmg = prevHp - curHp
         local pctLost = dmg / maxHp
-        -- Heuristic crit detection if combat log didn't already flag it
-        local isHeavy = pctLost >= 0.16
-        self:TriggerDamageImpact(enhancer, pctLost, isHeavy)
+        local now = GetTime()
+        -- If CombatLog didn't already trigger impact within the last 50ms, trigger it from UNIT_HEALTH!
+        if (now - (enhancer.lastImpactTime or 0)) > 0.05 then
+            local isHeavy = pctLost >= 0.14
+            self:TriggerDamageImpact(enhancer, pctLost, isHeavy, pctLost >= 0.28)
+            -- Also spawn combat text if CombatLog didn't already spawn it for this hit
+            if enhancer.isNameplate and ns.CombatText then
+                ns.CombatText:SpawnNumber({
+                    text = tostring(dmg),
+                    r = isHeavy and 1.0 or 1.0,
+                    g = isHeavy and 0.82 or 1.0,
+                    b = isHeavy and 0.0 or 1.0,
+                    isCrit = isHeavy,
+                    isMega = pctLost >= 0.28,
+                    anchorFrame = enhancer.container,
+                    side = "right",
+                })
+            end
+        else
+            activeAnimEnhancers[enhancer] = true
+            EnsureEnhancerTicker()
+        end
     elseif curHp > prevHp then
-        -- Heal received: subtle vertical bar swell
         enhancer.barPunchY = math.max(enhancer.barPunchY, 1.16)
         activeAnimEnhancers[enhancer] = true
         EnsureEnhancerTicker()
@@ -202,28 +274,31 @@ function UnitBars:TriggerDamageImpact(enhancer, pctLost, isCrit, isMega)
         return
     end
 
+    enhancer.lastImpactTime = GetTime()
     enhancer.trailHoldTimer = isCrit and (cfg.trailHoldCrit or 0.38) or (cfg.trailHoldNormal or 0.24)
-    enhancer.flashAlpha = isCrit and 0.95 or 0.68
+    enhancer.flashAlpha = isCrit and 0.95 or 0.72
     enhancer.cutAlpha = 1.0
 
-    local mult = isCrit and (cfg.critTraumaMultiplier or 1.75) or 0.90
-    local rawTrauma = math.min(1.0, (pctLost / 0.26) * mult * (cfg.traumaScale or 1.0))
-    if isCrit and rawTrauma < 0.55 then
-        rawTrauma = 0.55
+    local mult = isCrit and (cfg.critTraumaMultiplier or 1.75) or 1.05
+    local rawTrauma = math.min(1.0, (pctLost / 0.22) * mult * (cfg.traumaScale or 1.0))
+    if isCrit and rawTrauma < 0.65 then
+        rawTrauma = 0.65
+    elseif rawTrauma < 0.28 then
+        rawTrauma = 0.28 -- Every hit gives a noticeable tactile jolt!
     end
     enhancer.trauma = math.min(1.0, math.max(enhancer.trauma, rawTrauma))
 
     local punch = isMega and (cfg.barPunchMega or 1.65)
-        or (isCrit and (cfg.barPunchCrit or 1.48) or (cfg.barPunchNormal or 1.18))
+        or (isCrit and (cfg.barPunchCrit or 1.48) or (cfg.barPunchNormal or 1.20))
     enhancer.barPunchY = math.max(enhancer.barPunchY, punch)
 
-    -- Spawn shatter sparks at the exact HP cut line on crits or heavy hits
-    if ns.CombatFX then
-        if isCrit or pctLost >= 0.12 then
+    local sparkAnchor = enhancer.container or enhancer.statusBar
+    if ns.CombatFX and sparkAnchor then
+        if isCrit or pctLost >= 0.10 then
             local count = isMega and 16 or (isCrit and 11 or 6)
-            ns.CombatFX:SpawnBarSparks(enhancer.statusBar, enhancer.targetFrac, count, 1.0, 0.65, 0.15, false)
+            ns.CombatFX:SpawnBarSparks(sparkAnchor, enhancer.targetFrac, count, 1.0, 0.65, 0.15, false)
         else
-            ns.CombatFX:SpawnBarSparks(enhancer.statusBar, enhancer.targetFrac, 3, 1.0, 0.82, 0.25, false)
+            ns.CombatFX:SpawnBarSparks(sparkAnchor, enhancer.targetFrac, 4, 1.0, 0.82, 0.25, false)
         end
     end
 
@@ -248,7 +323,6 @@ end
 function UnitBars:StepEnhancer(enhancer, dt, now, smoothSpeed, trailSpeed)
     local stillActive = false
 
-    -- 1. Fast smooth interpolation for main health fraction
     local diffMain = enhancer.targetFrac - enhancer.displayFrac
     if math.abs(diffMain) > 0.001 then
         enhancer.displayFrac = enhancer.displayFrac + diffMain * math.min(1.0, dt * smoothSpeed)
@@ -257,7 +331,6 @@ function UnitBars:StepEnhancer(enhancer, dt, now, smoothSpeed, trailSpeed)
         enhancer.displayFrac = enhancer.targetFrac
     end
 
-    -- 2. Delayed molten catch-up trail fraction
     if enhancer.trailFrac > enhancer.displayFrac + 0.001 then
         stillActive = true
         if enhancer.trailHoldTimer > 0 then
@@ -270,7 +343,6 @@ function UnitBars:StepEnhancer(enhancer, dt, now, smoothSpeed, trailSpeed)
         enhancer.trailFrac = enhancer.displayFrac
     end
 
-    -- 3. Hit flash & cleavage cut-line decay
     if enhancer.flashAlpha > 0.01 then
         enhancer.flashAlpha = math.max(0, enhancer.flashAlpha - dt * 4.2)
         stillActive = true
@@ -285,7 +357,6 @@ function UnitBars:StepEnhancer(enhancer, dt, now, smoothSpeed, trailSpeed)
         enhancer.cutAlpha = 0
     end
 
-    -- 4. Vertical bar scale punch spring back to 1.0
     if math.abs(enhancer.barPunchY - 1.0) > 0.005 then
         enhancer.barPunchY = enhancer.barPunchY + (1.0 - enhancer.barPunchY) * math.min(1.0, dt * 11.0)
         stillActive = true
@@ -293,20 +364,18 @@ function UnitBars:StepEnhancer(enhancer, dt, now, smoothSpeed, trailSpeed)
         enhancer.barPunchY = 1.0
     end
 
-    -- 5. Damped trauma^2 recoil shake
     local dx, dy = 0, 0
     if enhancer.trauma > 0.01 then
         stillActive = true
         local p = enhancer.trauma * enhancer.trauma
-        local maxOffset = enhancer.isNameplate and 10.0 or 8.0
-        dx = (math.sin(now * 88.0) * maxOffset + (math.random() - 0.5) * 5.0) * p
-        dy = (math.cos(now * 96.0) * (maxOffset * 0.65) + (math.random() - 0.5) * 4.0) * p
+        local maxOffset = enhancer.isNameplate and 11.0 or 8.0
+        dx = (math.sin(now * 88.0) * maxOffset + (math.random() - 0.5) * 6.0) * p
+        dy = (math.cos(now * 96.0) * (maxOffset * 0.65) + (math.random() - 0.5) * 4.5) * p
         enhancer.trauma = math.max(0, enhancer.trauma - dt * 2.35)
     else
         enhancer.trauma = 0
     end
 
-    -- 6. Execute (<20% HP) pulsing crimson glow
     if enhancer.isExecute then
         stillActive = true
         local pulse = 0.45 + 0.50 * (0.5 + 0.5 * math.sin(now * 8.5))
@@ -336,10 +405,12 @@ function UnitBars:RenderEnhancer(enhancer, dx, dy)
     local mainW = math.max(0.001, enhancer.displayFrac * w)
     local trailW = math.max(0.001, enhancer.trailFrac * w)
 
-    -- Show smooth main fill overlay during vertical punch or recoil so the bar visually swells
-    if enhancer.barPunchY > 1.01 or enhancer.trauma > 0.01 then
+    if enhancer.isNameplate or enhancer.barPunchY > 1.01 or enhancer.trauma > 0.01 then
         local r, g, b = bar:GetStatusBarColor()
-        enhancer.mainFillTex:SetVertexColor(r or 0, g or 0.85, b or 0, 1.0)
+        if not r or (r == 0 and g == 0 and b == 0) then
+            r, g, b = 0.88, 0.12, 0.12
+        end
+        enhancer.mainFillTex:SetVertexColor(r, g, b, 1.0)
         enhancer.mainFillTex:ClearAllPoints()
         enhancer.mainFillTex:SetPoint("TOPLEFT", container, "TOPLEFT", 0, 0)
         enhancer.mainFillTex:SetPoint("BOTTOMLEFT", container, "BOTTOMLEFT", 0, 0)
@@ -349,14 +420,12 @@ function UnitBars:RenderEnhancer(enhancer, dx, dy)
         enhancer.mainFillTex:Hide()
     end
 
-    -- Molten trail chunk spanning from mainW to trailW
-    if trailW > mainW + 1.0 then
+    if trailW > mainW + 0.8 then
         local chunkW = trailW - mainW
-        -- Shift color from white-hot during hold to molten orange/crimson as it drains
         if enhancer.trailHoldTimer > 0.12 then
-            enhancer.trailTex:SetVertexColor(1.0, 0.82, 0.45, 0.98)
+            enhancer.trailTex:SetVertexColor(1.0, 0.88, 0.55, 0.98)
         else
-            enhancer.trailTex:SetVertexColor(0.96, 0.28, 0.08, 0.95)
+            enhancer.trailTex:SetVertexColor(0.98, 0.30, 0.08, 0.95)
         end
         enhancer.trailTex:ClearAllPoints()
         enhancer.trailTex:SetPoint("TOPLEFT", container, "TOPLEFT", mainW, 0)
@@ -367,7 +436,6 @@ function UnitBars:RenderEnhancer(enhancer, dx, dy)
         enhancer.trailTex:Hide()
     end
 
-    -- White-hot cleavage slash at mainW
     if enhancer.cutAlpha > 0.01 and enhancer.displayFrac > 0.01 and enhancer.displayFrac < 0.99 then
         enhancer.cutLine:ClearAllPoints()
         enhancer.cutLine:SetPoint("TOP", container, "TOPLEFT", mainW, 3)
@@ -378,7 +446,6 @@ function UnitBars:RenderEnhancer(enhancer, dx, dy)
         enhancer.cutLine:Hide()
     end
 
-    -- Hit flash overlay
     if enhancer.flashAlpha > 0.01 then
         enhancer.hitFlash:SetAlpha(enhancer.flashAlpha)
         enhancer.hitFlash:Show()
@@ -414,13 +481,16 @@ function UnitBars:OnEnable()
         self.targetEnhancer = self:CreateBarEnhancer(targetBar, "target", false)
     end
 
-    ns.Events:Register("UNIT_HEALTH", function(_, _, unit)
+    local function OnUnitHealthChanged(_, _, unit)
         if unit == "player" and self.playerEnhancer then
             self:SyncUnitState(self.playerEnhancer, false)
         elseif unit == "target" and self.targetEnhancer then
             self:SyncUnitState(self.targetEnhancer, false)
         end
-    end, self)
+    end
+
+    ns.Events:Register("UNIT_HEALTH", OnUnitHealthChanged, self)
+    ns.Events:Register("UNIT_HEALTH_FREQUENT", OnUnitHealthChanged, self)
 
     ns.Events:Register("PLAYER_TARGET_CHANGED", function()
         if self.targetEnhancer and UnitExists("target") then
