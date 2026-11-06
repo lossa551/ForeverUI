@@ -5,22 +5,59 @@ ns.Nameplates = Nameplates
 Nameplates.byUnit = {}
 Nameplates.byGUID = {}
 
+local function IsHealthStatusBar(candidate, parentFrame)
+    if not candidate or not candidate.GetObjectType then
+        return false
+    end
+    if candidate:GetObjectType() ~= "StatusBar" then
+        return false
+    end
+    if parentFrame then
+        if candidate == parentFrame.castBar
+            or candidate == parentFrame.CastBar
+            or candidate == parentFrame.SpellCastBar
+            or candidate == parentFrame.manaBar
+            or candidate == parentFrame.powerBar
+        then
+            return false
+        end
+    end
+    local name = string.lower(candidate:GetName() or "")
+    if string.find(name, "cast", 1, true)
+        or string.find(name, "mana", 1, true)
+        or string.find(name, "power", 1, true)
+        or string.find(name, "resource", 1, true)
+    then
+        return false
+    end
+    return true
+end
+
 local function FindHealthStatusBarRecursive(frame, depth)
     if not frame or depth > 5 then
         return nil, nil
     end
 
-    local directCandidates = {
-        frame.healthBar,
-        frame.HealthBar,
-        frame.healthbar,
-        frame.HealthBarsContainer and frame.HealthBarsContainer.healthBar,
-        frame.HealthBarsContainer and frame.HealthBarsContainer.HealthBar,
-    }
-    for i = 1, #directCandidates do
-        local c = directCandidates[i]
-        if c and c.GetObjectType and c:GetObjectType() == "StatusBar" then
-            return c, frame
+    -- Explicit nil-safe property checks (never use # on a table with nil holes in Lua!)
+    if IsHealthStatusBar(frame.healthBar, frame) then
+        return frame.healthBar, frame
+    end
+    if IsHealthStatusBar(frame.HealthBar, frame) then
+        return frame.HealthBar, frame
+    end
+    if IsHealthStatusBar(frame.healthbar, frame) then
+        return frame.healthbar, frame
+    end
+    if frame.HealthBarsContainer then
+        local hbc = frame.HealthBarsContainer
+        if IsHealthStatusBar(hbc.healthBar, frame) then
+            return hbc.healthBar, frame
+        end
+        if IsHealthStatusBar(hbc.HealthBar, frame) then
+            return hbc.HealthBar, frame
+        end
+        if IsHealthStatusBar(hbc.healthbar, frame) then
+            return hbc.healthbar, frame
         end
     end
 
@@ -31,20 +68,21 @@ local function FindHealthStatusBarRecursive(frame, depth)
         return nil, nil
     end
 
+    -- First recurse into HealthBarsContainer if present before checking generic StatusBar children
     for i = 1, #children do
         local child = children[i]
-        if child and child.GetObjectType then
-            local objType = child:GetObjectType()
-            if objType == "StatusBar" then
-                local name = string.lower(child:GetName() or "")
-                if not string.find(name, "cast", 1, true)
-                    and not string.find(name, "mana", 1, true)
-                    and not string.find(name, "power", 1, true)
-                    and not string.find(name, "resource", 1, true)
-                then
-                    return child, frame
-                end
+        if child == frame.HealthBarsContainer then
+            local bar, owner = FindHealthStatusBarRecursive(child, depth + 1)
+            if bar then
+                return bar, owner
             end
+        end
+    end
+
+    for i = 1, #children do
+        local child = children[i]
+        if IsHealthStatusBar(child, frame) then
+            return child, frame
         end
     end
 
@@ -63,7 +101,7 @@ local function ResolveNameplateHealthBar(namePlate)
         return nil, nil
     end
     if namePlate.UnitFrame then
-        local bar, owner = FindHealthStatusBarRecursive(namePlate.UnitFrame, 0)
+        local bar = FindHealthStatusBarRecursive(namePlate.UnitFrame, 0)
         if bar then
             return bar, namePlate.UnitFrame
         end
@@ -88,7 +126,6 @@ local function SetNameplateExtrasAlpha(uf, statusBar, container, isDead)
         end
     end
     if statusBar and statusBar.SetAlpha then
-        -- Keep native health bar 100% visible while alive; hide ONLY on death when replaced by DeathShatterBar!
         statusBar:SetAlpha(alpha)
     end
     if container and container.SetAlpha then
@@ -114,7 +151,6 @@ function Nameplates:GetBarForGUID(guid)
 end
 
 function Nameplates:GetAnyActiveEnemyPlate()
-    -- 1. Prefer current target's nameplate if visible
     if UnitExists("target") then
         local targetGUID = UnitGUID("target")
         local bar, enhancer = self:GetBarForGUID(targetGUID)
@@ -122,7 +158,6 @@ function Nameplates:GetAnyActiveEnemyPlate()
             return bar, enhancer
         end
     end
-    -- 2. Otherwise pick any visible enemy nameplate on screen
     self:ScanExistingNameplates()
     for unitToken, enhancer in pairs(self.byUnit) do
         if enhancer and enhancer.container and enhancer.statusBar and enhancer.statusBar:IsShown() then
@@ -215,11 +250,6 @@ function Nameplates:OnUnitHealth(unitToken)
     end
 
     ns.UnitBars:SyncUnitState(enhancer, false)
-
-    local curHp = UnitHealth(unitToken) or 0
-    if (curHp <= 0 or UnitIsDead(unitToken)) and not enhancer.deathTriggered then
-        self:TriggerDeathForEnhancer(enhancer)
-    end
 end
 
 function Nameplates:OnUnitCombat(unitToken, action, flagText, amount)
@@ -286,7 +316,6 @@ function Nameplates:ScanExistingNameplates()
         local plate = plates[i]
         local unitToken = plate and (plate.namePlateUnitToken or (plate.UnitFrame and plate.UnitFrame.unit))
         if not unitToken then
-            -- Fallback: test nameplate1..nameplate40
             for idx = 1, 40 do
                 local tok = "nameplate" .. idx
                 if C_NamePlate.GetNamePlateForUnit(tok) == plate then
