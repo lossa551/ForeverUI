@@ -108,7 +108,8 @@ ForeverUI/
 
 ---
 
-## 4. Error Handling & Verification Plan
+## 4. Error Handling, Engine Rules & Verification Plan
 
-- **Combat Lockdown Verification**: Neither `Nameplates.lua` nor `UnitBars.lua` calls protected functions (`SetPoint`, `SetScale`, `Show`, `Hide`) on secure frames. All recoil offsets, bar trails, sparks, and text animations operate strictly on non-protected child overlay frames.
-- **In-Game Self-Test (`/fui test`)**: Simulates hits, crits, and mega shatter blows on your current target's overhead nameplate (or a simulated preview bar if no target is selected) and your player frame.
+- **WoW: Forever (`16001`) Secret Values & Restricted Regions**: See [`docs/WOW_FOREVER_ENGINE_RULES.md`](../WOW_FOREVER_ENGINE_RULES.md) for mandatory rules on handling secret values (`ns.IsSecret` + native `StatusBar:SetValue` / `FontString:SetText` pass-through) and avoiding `FrameMeasurement` getters (`:GetCenter()`, `:GetHeight()`, `:GetWidth()`) on nameplate Restricted Regions.
+- **Combat Lockdown Verification**: Neither `Nameplates.lua` nor `UnitBars.lua` calls protected functions (`SetPoint`, `SetScale`, `Show`, `Hide`) on secure frames. Top-left `PlayerFrame` and `TargetFrame` portrait bars remain 100% untouched native WoW.
+- **In-Game Self-Test (`/fui test` & `/fui kill`)**: Simulates hits, crits, mega shatter blows, and the bare cracked/tilted gray death bar on an active enemy nameplate (or a simulated preview bar offset to the right of screen center).

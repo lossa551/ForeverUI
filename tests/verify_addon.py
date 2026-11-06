@@ -92,6 +92,14 @@ def verify_feature_requirements():
     assert "CreateFontString" not in fx_code, "CombatFX.lua DeathShatterBar must be a bare bar with no text/level"
     print("[PASS] CombatFX.lua DeathShatterBar verified: bare stone-gray bar, CreateLine cracks, and tilt physics.")
 
+    # 3. Verify Secret Value guards (ns.IsSecret / issecretvalue) are present in combat modules
+    for rel in ["Core/Config.lua", "Modules/UnitBars.lua", "Modules/Nameplates.lua", "Modules/CombatFX.lua", "Modules/CombatText.lua"]:
+        mod_path = os.path.join(ADDON_DIR, rel.replace("/", os.sep))
+        with open(mod_path, "r", encoding="utf-8") as f:
+            mod_code = strip_lua_comments_and_strings(f.read())
+        assert "IsSecret" in mod_code, f"{rel} must guard secret values with ns.IsSecret"
+    print("[PASS] Secret-value guards (ns.IsSecret) verified across all combat modules.")
+
 
 if __name__ == "__main__":
     paths = verify_toc()
