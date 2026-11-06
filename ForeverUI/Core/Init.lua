@@ -79,22 +79,22 @@ function ns:RunInGameDemo(mode)
         return
     end
 
-    -- Reset bar to 100% and run 3-stage impact combo (Normal -> Mega Crit -> Bare Cracked Death Bar)
+    -- Reset bar to 100% and run Flurry Fountain -> Crit Shockwave -> Mega Crit Death Bar combo
     enhancer.deathTriggered = false
     enhancer.isSecretHealth = false
     enhancer.mainBar:SetMinMaxValues(0, 1000)
     enhancer.trailBar:SetMinMaxValues(0, 1000)
     enhancer.displayFrac = 1.0
     enhancer.trailFrac = 1.0
-    enhancer.targetFrac = 0.78
+    enhancer.targetFrac = 0.86
     enhancer.statusBar:SetAlpha(1.0)
     enhancer.container:SetAlpha(1.0)
     if usingDemoBar then
-        demoBar:SetValue(78)
+        demoBar:SetValue(86)
     end
-    ns.UnitBars:TriggerDamageImpact(enhancer, 0.22, false, false)
+    ns.UnitBars:TriggerDamageImpact(enhancer, 0.14, false, false)
     ns.CombatText:SpawnNumber({
-        text = "245",
+        text = "184",
         r = 1.0, g = 1.0, b = 1.0,
         isCrit = false,
         anchorFrame = bar,
@@ -102,23 +102,53 @@ function ns:RunInGameDemo(mode)
     })
 
     if C_Timer and C_Timer.After then
-        C_Timer.After(0.55, function()
-            enhancer.targetFrac = 0.32
+        C_Timer.After(0.24, function()
+            enhancer.targetFrac = 0.70
             if usingDemoBar then
-                demoBar:SetValue(32)
+                demoBar:SetValue(70)
             end
-            ns.UnitBars:TriggerDamageImpact(enhancer, 0.46, true, true)
+            ns.UnitBars:TriggerDamageImpact(enhancer, 0.16, false, false)
             ns.CombatText:SpawnNumber({
-                text = "984",
-                r = 1.0, g = 0.50, b = 0.0,
-                isCrit = true,
-                isMega = true,
+                text = "219",
+                r = 1.0, g = 1.0, b = 1.0,
+                isCrit = false,
                 anchorFrame = bar,
                 side = "right",
             })
         end)
 
-        C_Timer.After(1.20, function()
+        C_Timer.After(0.50, function()
+            enhancer.targetFrac = 0.54
+            if usingDemoBar then
+                demoBar:SetValue(54)
+            end
+            ns.UnitBars:TriggerDamageImpact(enhancer, 0.16, false, false)
+            ns.CombatText:SpawnNumber({
+                text = "246",
+                r = 1.0, g = 1.0, b = 1.0,
+                isCrit = false,
+                anchorFrame = bar,
+                side = "right",
+            })
+        end)
+
+        C_Timer.After(0.82, function()
+            enhancer.targetFrac = 0.22
+            if usingDemoBar then
+                demoBar:SetValue(22)
+            end
+            ns.UnitBars:TriggerDamageImpact(enhancer, 0.32, true, false)
+            ns.CombatText:SpawnNumber({
+                text = "864",
+                r = 1.0, g = 0.82, b = 0.0,
+                isCrit = true,
+                isMega = false,
+                anchorFrame = bar,
+                side = "right",
+            })
+        end)
+
+        C_Timer.After(1.38, function()
             ns.CombatFX:SpawnDeathShatterBar(bar)
             if usingDemoBar then
                 if demoNameLabel then
@@ -131,7 +161,7 @@ function ns:RunInGameDemo(mode)
                 ns.Nameplates:TriggerDeathForEnhancer(enhancer)
             end
             ns.CombatText:SpawnNumber({
-                text = "1350",
+                text = "1420",
                 r = 1.0, g = 0.82, b = 0.0,
                 isCrit = true,
                 isMega = true,
@@ -140,7 +170,7 @@ function ns:RunInGameDemo(mode)
             })
         end)
 
-        C_Timer.After(2.70, function()
+        C_Timer.After(2.90, function()
             if usingDemoBar and demoBar then
                 demoBar:Hide()
                 demoEnhancer.container:Hide()
