@@ -7,6 +7,7 @@ $SourceDir = Join-Path $PSScriptRoot "ForeverUI"
 
 if (-not $WowAddonsPath) {
     $Candidates = @(
+        "E:\Games\wow\World of Warcraft\_forever_\Interface\AddOns",
         "E:\Games\wow\_forever_\Interface\AddOns",
         "E:\Games\wow\_classic_era_\Interface\AddOns",
         "E:\Games\wow\_retail_\Interface\AddOns",
