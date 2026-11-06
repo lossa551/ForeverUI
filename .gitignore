@@ -1,0 +1,13 @@
+# Packaged addon archives
+dist/
+*.zip
+
+# Python cache
+__pycache__/
+*.py[cod]
+
+# OS / Editor metadata
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

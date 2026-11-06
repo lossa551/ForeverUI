@@ -1,0 +1,47 @@
+name: Verify & Package ForeverUI
+
+on:
+  push:
+    branches: [ master, main ]
+    tags: [ 'v*' ]
+  pull_request:
+    branches: [ master, main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Run ForeverUI verification suite
+        run: python tests/verify_addon.py
+
+      - name: Package Addon Zip
+        shell: bash
+        run: |
+          VERSION=$(grep -i '^## Version:' ForeverUI/ForeverUI.toc | sed 's/^## Version:[[:space:]]*//' | tr -d '\r')
+          mkdir -p dist
+          zip -r "dist/ForeverUI-v${VERSION}.zip" ForeverUI/
+          echo "VERSION=${VERSION}" >> "$GITHUB_ENV"
+
+      - name: Upload Package Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ForeverUI-v${{ env.VERSION }}
+          path: dist/ForeverUI-v${{ env.VERSION }}.zip
+
+      - name: Create GitHub Release on Tag
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/ForeverUI-v${{ env.VERSION }}.zip
+          generate_release_notes: true
