@@ -7,48 +7,10 @@ fxCanvas:SetAllPoints(UIParent)
 fxCanvas:SetFrameStrata("HIGH")
 fxCanvas:EnableMouse(false)
 
--- C++ Layout Probe Frames: parented to fxCanvas so GetCenter() always returns exact fxCanvas/UIParent coordinates
--- regardless of WorldFrame / NamePlate IgnoreParentScale differences!
-local probeLeft = CreateFrame("Frame", nil, fxCanvas)
-probeLeft:SetSize(1, 1)
-local probeRight = CreateFrame("Frame", nil, fxCanvas)
-probeRight:SetSize(1, 1)
-local probeTop = CreateFrame("Frame", nil, fxCanvas)
-probeTop:SetSize(1, 1)
-local probeBottom = CreateFrame("Frame", nil, fxCanvas)
-probeBottom:SetSize(1, 1)
-
-local function GetUIParentCoords(frame, xFraction, yFraction)
-    if not frame or not frame:IsVisible() then
-        return nil, nil, nil, nil
-    end
-    probeLeft:ClearAllPoints()
-    probeLeft:SetPoint("CENTER", frame, "LEFT", 0, 0)
-    probeRight:ClearAllPoints()
-    probeRight:SetPoint("CENTER", frame, "RIGHT", 0, 0)
-    probeTop:ClearAllPoints()
-    probeTop:SetPoint("CENTER", frame, "TOP", 0, 0)
-    probeBottom:ClearAllPoints()
-    probeBottom:SetPoint("CENTER", frame, "BOTTOM", 0, 0)
-
-    local lx, ly = probeLeft:GetCenter()
-    local rx, _ = probeRight:GetCenter()
-    local _, ty = probeTop:GetCenter()
-    local _, by = probeBottom:GetCenter()
-
-    if not lx or not rx or not ty or not by then
-        return nil, nil, nil, nil
-    end
-
-    local width = math.abs(rx - lx)
-    local height = math.abs(ty - by)
-    local x = lx + width * (xFraction or 0.5)
-    local y = by + height * (yFraction or 0.5)
-    return x, y, width, height
-end
-
 -- ============================================================================
 -- 1. POOLED BAR SHATTER SPARKS & DEBRIS SHARDS
+--    Anchored directly to the target frame via SetPoint("CENTER", anchorFrame, "CENTER", dx, dy)
+--    so we NEVER call Frame:GetCenter() on Restricted Regions!
 -- ============================================================================
 local sparkPool = {}
 local activeSparks = {}
@@ -66,6 +28,7 @@ end
 
 local function ReleaseSpark(sp)
     sp.tex:Hide()
+    sp.anchorFrame = nil
     if sp.tex.SetRotation then
         sp.tex:SetRotation(0)
     end
@@ -86,7 +49,7 @@ local function EnsureSparkTicker()
                 sp.vy = sp.vy - sp.gravity * dt
                 local alpha = 1.0 - (sp.age / sp.duration)
                 sp.tex:ClearAllPoints()
-                sp.tex:SetPoint("CENTER", fxCanvas, "BOTTOMLEFT", sp.x, sp.y)
+                sp.tex:SetPoint("CENTER", sp.anchorFrame or fxCanvas, "CENTER", sp.x, sp.y)
                 sp.tex:SetAlpha(alpha)
                 if sp.vRot ~= 0 then
                     sp.rot = sp.rot + sp.vRot * dt
@@ -100,34 +63,36 @@ local function EnsureSparkTicker()
     end)
 end
 
-function CombatFX:SpawnBarSparks(barFrame, cutFraction, count, r, g, b, isShards)
+function CombatFX:SpawnBarSparks(anchorFrame, cutFraction, count, r, g, b, isShards)
     local cfg = ns.Config:Get("combatFX")
-    if not cfg or not cfg.enabled or not cfg.sparksEnabled then
-        return
-    end
-    local baseX, baseY, barW, _ = GetUIParentCoords(barFrame, cutFraction, 0.5)
-    if not baseX then
+    if not cfg or not cfg.enabled or not cfg.sparksEnabled or not anchorFrame then
         return
     end
 
-    local leftX = GetUIParentCoords(barFrame, 0.0, 0.5)
+    local barW = anchorFrame.fuiWidth or 118
+    local baseX = 0
+    if not isShards and cutFraction and not ns.IsSecret(cutFraction) and barW > 12 then
+        baseX = (cutFraction - 0.5) * barW
+    end
+
     count = count or 8
     r, g, b = r or 1.0, g or 0.78, b or 0.2
 
     for i = 1, count do
         local sp = AcquireSpark()
         local spawnX = baseX
-        if isShards and barW and leftX then
-            spawnX = leftX + math.random() * barW
+        if isShards then
+            spawnX = (math.random() - 0.5) * barW
         else
             spawnX = baseX + (math.random() * 6 - 3)
         end
-        local spawnY = baseY + (math.random() * 4 - 2)
+        local spawnY = (math.random() * 6 - 3)
 
         local angle = -math.pi * 0.1 + math.random() * math.pi * 1.2
         local speed = 55 + math.random() * 135
         local size = isShards and (2.6 + math.random() * 3.0) or (2.0 + math.random() * 2.2)
 
+        sp.anchorFrame = anchorFrame
         sp.x = spawnX
         sp.y = spawnY
         sp.vx = math.cos(angle) * speed * (math.random() > 0.5 and 1 or -1)
@@ -153,7 +118,7 @@ function CombatFX:SpawnBarSparks(barFrame, cutFraction, count, r, g, b, isShards
         end
 
         sp.tex:ClearAllPoints()
-        sp.tex:SetPoint("CENTER", fxCanvas, "BOTTOMLEFT", sp.x, sp.y)
+        sp.tex:SetPoint("CENTER", anchorFrame, "CENTER", sp.x, sp.y)
         table.insert(activeSparks, sp)
     end
 
@@ -162,6 +127,8 @@ end
 
 -- ============================================================================
 -- 2. BARE CRACKED & TILTED GRAY DEATH SHATTER BAR
+--    Anchored directly to barFrame via SetPoint("CENTER", db.anchorFrame, "CENTER", cx, cy)
+--    so we NEVER call Frame:GetCenter() on Restricted Regions!
 -- ============================================================================
 local CRACK_SEGMENTS = {
     { x1 = 0.22, y1 =  0.50, x2 = 0.25, y2 =  0.10, w = 1.6 },
@@ -239,6 +206,7 @@ end
 
 local function ReleaseDeathBar(db)
     db.holder:Hide()
+    db.anchorFrame = nil
     table.insert(deathBarPool, db)
 end
 
@@ -248,13 +216,14 @@ local function UpdateDeathBarGeometry(db, thetaRad)
     local cosT = math.cos(thetaRad)
     local sinT = math.sin(thetaRad)
 
-    local hx = db.hingeX + db.shakeDx
-    local hy = db.hingeY - db.dropY + db.shakeDy
+    -- Left-edge hinge (-w * 0.5, 0) relative to db.anchorFrame's CENTER
+    local hx = (-w * 0.5) + db.shakeDx
+    local hy = -db.dropY + db.shakeDy
     local cx = hx + (w * 0.5) * cosT
     local cy = hy + (w * 0.5) * sinT
 
     db.holder:ClearAllPoints()
-    db.holder:SetPoint("CENTER", fxCanvas, "BOTTOMLEFT", cx, cy)
+    db.holder:SetPoint("CENTER", db.anchorFrame or fxCanvas, "CENTER", cx, cy)
     db.holder:SetSize(w, h)
 
     local punchedH = h * db.barPunchY
@@ -351,19 +320,14 @@ end
 
 function CombatFX:SpawnDeathShatterBar(barFrame)
     local npCfg = ns.Config:Get("nameplates")
-    if not npCfg or not npCfg.deathShatterEnabled then
-        return
-    end
-    local leftX, midY, width, height = GetUIParentCoords(barFrame, 0.0, 0.5)
-    if not leftX or not width or width <= 4 then
+    if not npCfg or not npCfg.deathShatterEnabled or not barFrame then
         return
     end
 
     local db = AcquireDeathBar()
-    db.hingeX = leftX
-    db.hingeY = midY
-    db.width = width
-    db.height = math.max(height or 12, 10)
+    db.anchorFrame = barFrame
+    db.width = barFrame.fuiWidth or 118
+    db.height = math.max(barFrame.fuiHeight or 12, 10)
     db.age = 0
     db.holdTime = npCfg.deathHoldTime or 0.85
     db.fadeTime = npCfg.deathFadeTime or 0.45
@@ -425,11 +389,18 @@ function CombatFX:UpdateLowHPWarning()
         lowHpFrame:Hide()
         return
     end
-    local maxHp = UnitHealthMax("player") or 1
-    local curHp = UnitHealth("player") or 1
+    local maxHp = UnitHealthMax("player")
+    local curHp = UnitHealth("player")
+    if not maxHp or not curHp or ns.IsSecret(maxHp) or ns.IsSecret(curHp) then
+        lowHpFrame:Hide()
+        return
+    end
     local pct = maxHp > 0 and (curHp / maxHp) or 1.0
 
-    if not UnitIsDeadOrGhost("player") and pct <= (cfg.lowHpThreshold or 0.30) then
+    local dead = UnitIsDeadOrGhost("player")
+    local isDead = (not ns.IsSecret(dead)) and dead or false
+
+    if not isDead and pct <= (cfg.lowHpThreshold or 0.30) then
         lowHpFrame:Show()
         ns.Events:RegisterTicker("CombatFX_LowHPPulse", function(_, now)
             if not lowHpFrame:IsShown() then

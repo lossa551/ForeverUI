@@ -85,13 +85,13 @@ function StateEngine:RefreshState()
             local diff = self.targetAlpha - self.currentAlpha
             if math.abs(diff) <= 0.005 then
                 self.currentAlpha = self.targetAlpha
-                if PlayerFrame and PlayerFrame.SetAlpha then
+                if not InCombatLockdown() and PlayerFrame and PlayerFrame.SetAlpha then
                     PlayerFrame:SetAlpha(self.currentAlpha)
                 end
                 return false
             end
             self.currentAlpha = self.currentAlpha + diff * math.min(1.0, dt * 6.0)
-            if PlayerFrame and PlayerFrame.SetAlpha then
+            if not InCombatLockdown() and PlayerFrame and PlayerFrame.SetAlpha then
                 PlayerFrame:SetAlpha(self.currentAlpha)
             end
             return true

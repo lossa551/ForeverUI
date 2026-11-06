@@ -1,6 +1,17 @@
 local addonName, ns = ...
 ns.Config = {}
 
+-- WoW 12.0+ / Forever (16001) Secret Value Guard:
+-- UnitHealth, UnitHealthMax, and UNIT_COMBAT amounts return opaque "secret number values"
+-- that cannot be compared (<, >, ==) or used in Lua arithmetic (+, -, *, /),
+-- but CAN be passed directly into C++ widgets (StatusBar:SetValue, StatusBar:SetMinMaxValues, FontString:SetText).
+function ns.IsSecret(val)
+    if issecretvalue then
+        return issecretvalue(val)
+    end
+    return false
+end
+
 local DEFAULTS = {
     version = "1.0.0",
     unitBars = {

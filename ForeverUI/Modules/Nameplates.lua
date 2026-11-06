@@ -5,6 +5,39 @@ ns.Nameplates = Nameplates
 Nameplates.byUnit = {}
 Nameplates.byGUID = {}
 
+local function IsPlayerUnitSafe(unitToken)
+    if not unitToken then
+        return false
+    end
+    local isPlayer = UnitIsUnit(unitToken, "player")
+    if ns.IsSecret(isPlayer) then
+        return false
+    end
+    return isPlayer and true or false
+end
+
+local function IsUnitDeadSafe(unitToken)
+    if not unitToken or not UnitExists(unitToken) then
+        return false
+    end
+    local dead = UnitIsDead(unitToken)
+    if ns.IsSecret(dead) then
+        return false
+    end
+    return dead and true or false
+end
+
+local function GetUnitGUIDSafe(unitToken)
+    if not unitToken or not UnitExists(unitToken) then
+        return nil
+    end
+    local guid = UnitGUID(unitToken)
+    if not guid or ns.IsSecret(guid) then
+        return nil
+    end
+    return guid
+end
+
 local function IsHealthStatusBar(candidate, parentFrame)
     if not candidate or not candidate.GetObjectType then
         return false
@@ -38,7 +71,6 @@ local function FindHealthStatusBarRecursive(frame, depth)
         return nil, nil
     end
 
-    -- Explicit nil-safe property checks (never use # on a table with nil holes in Lua!)
     if IsHealthStatusBar(frame.healthBar, frame) then
         return frame.healthBar, frame
     end
@@ -68,7 +100,6 @@ local function FindHealthStatusBarRecursive(frame, depth)
         return nil, nil
     end
 
-    -- First recurse into HealthBarsContainer if present before checking generic StatusBar children
     for i = 1, #children do
         local child = children[i]
         if child == frame.HealthBarsContainer then
@@ -134,7 +165,7 @@ local function SetNameplateExtrasAlpha(uf, statusBar, container, isDead)
 end
 
 function Nameplates:GetBarForGUID(guid)
-    if not guid then
+    if not guid or ns.IsSecret(guid) then
         return nil, nil
     end
     local enhancer = self.byGUID[guid]
@@ -152,7 +183,7 @@ end
 
 function Nameplates:GetAnyActiveEnemyPlate()
     if UnitExists("target") then
-        local targetGUID = UnitGUID("target")
+        local targetGUID = GetUnitGUIDSafe("target")
         local bar, enhancer = self:GetBarForGUID(targetGUID)
         if bar and enhancer then
             return bar, enhancer
@@ -161,7 +192,7 @@ function Nameplates:GetAnyActiveEnemyPlate()
     self:ScanExistingNameplates()
     for unitToken, enhancer in pairs(self.byUnit) do
         if enhancer and enhancer.container and enhancer.statusBar and enhancer.statusBar:IsShown() then
-            if not UnitIsUnit(unitToken, "player") then
+            if not IsPlayerUnitSafe(unitToken) then
                 return enhancer.container, enhancer
             end
         end
@@ -174,7 +205,7 @@ function Nameplates:OnNamePlateAdded(unitToken)
     if not cfg or not cfg.enabled or not unitToken then
         return
     end
-    if UnitIsUnit(unitToken, "player") then
+    if IsPlayerUnitSafe(unitToken) then
         return
     end
     if not C_NamePlate or not C_NamePlate.GetNamePlateForUnit then
@@ -189,7 +220,10 @@ function Nameplates:OnNamePlateAdded(unitToken)
     local enhancer = ns.UnitBars:CreateBarEnhancer(healthBar, unitToken, true)
     enhancer.unitFrame = unitFrame
     enhancer.deathTriggered = false
-    enhancer.guid = UnitGUID(unitToken)
+    enhancer.initializedSecret = false
+    enhancer.lastDamagedTime = 0
+    enhancer.lastImpactTime = 0
+    enhancer.guid = GetUnitGUIDSafe(unitToken)
 
     SetNameplateExtrasAlpha(unitFrame, healthBar, enhancer.container, false)
 
@@ -206,9 +240,16 @@ function Nameplates:OnNamePlateRemoved(unitToken)
     if not enhancer then
         return
     end
-    if enhancer.unitFrame then
-        SetNameplateExtrasAlpha(enhancer.unitFrame, enhancer.statusBar, enhancer.container, false)
+
+    if not enhancer.deathTriggered then
+        local now = GetTime()
+        local recentHit = ((now - (enhancer.lastDamagedTime or 0)) <= 0.85)
+            or ((now - (enhancer.lastImpactTime or 0)) <= 0.85)
+        if IsUnitDeadSafe(unitToken) or recentHit then
+            self:TriggerDeathForEnhancer(enhancer)
+        end
     end
+
     if enhancer.guid and self.byGUID[enhancer.guid] == enhancer then
         self.byGUID[enhancer.guid] = nil
     end
@@ -244,32 +285,51 @@ function Nameplates:OnUnitHealth(unitToken)
         end
     end
 
-    if not enhancer.guid and UnitGUID(unitToken) then
-        enhancer.guid = UnitGUID(unitToken)
-        self.byGUID[enhancer.guid] = enhancer
+    if not enhancer.guid then
+        local guid = GetUnitGUIDSafe(unitToken)
+        if guid then
+            enhancer.guid = guid
+            self.byGUID[guid] = enhancer
+        end
     end
 
     ns.UnitBars:SyncUnitState(enhancer, false)
+
+    if IsUnitDeadSafe(unitToken) then
+        self:TriggerDeathForEnhancer(enhancer)
+    end
 end
 
 function Nameplates:OnUnitCombat(unitToken, action, flagText, amount)
     local enhancer = self.byUnit[unitToken]
-    if not enhancer or action ~= "WOUND" or not amount or amount <= 0 then
+    if not enhancer then
+        self:OnNamePlateAdded(unitToken)
+        enhancer = self.byUnit[unitToken]
+    end
+    if not enhancer or ns.IsSecret(action) or action ~= "WOUND" or not amount then
         return
     end
-    local now = GetTime()
-    if (now - (enhancer.lastImpactTime or 0)) <= 0.05 then
+    if not ns.IsSecret(amount) and amount <= 0 then
         return
     end
-    local isCrit = (flagText == "CRITICAL" or flagText == "CRUSHING")
-    local maxHp = enhancer.maxHp or UnitHealthMax(unitToken) or 1
-    local pctLost = amount / math.max(1, maxHp)
+
+    local isCrit = false
+    if not ns.IsSecret(flagText) then
+        isCrit = (flagText == "CRITICAL" or flagText == "CRUSHING")
+    end
+
+    local pctLost = isCrit and 0.28 or 0.14
+    if not ns.IsSecret(amount) and not ns.IsSecret(enhancer.maxHp) and (enhancer.maxHp or 0) > 0 then
+        pctLost = amount / math.max(1, enhancer.maxHp)
+    end
     local isMega = isCrit and (pctLost >= 0.25)
 
     ns.UnitBars:TriggerDamageImpact(enhancer, pctLost, isCrit, isMega)
+
     if ns.CombatText then
+        local displayText = ns.IsSecret(amount) and amount or tostring(math.floor(amount + 0.5))
         ns.CombatText:SpawnNumber({
-            text = tostring(amount),
+            text = displayText,
             r = 1.0,
             g = isCrit and 0.82 or 1.0,
             b = isCrit and 0.0 or 1.0,
@@ -282,21 +342,19 @@ function Nameplates:OnUnitCombat(unitToken, action, flagText, amount)
 end
 
 function Nameplates:OnCombatLogImpact(destGUID, amount, isCrit, isKill)
-    if not destGUID then
+    if not destGUID or ns.IsSecret(destGUID) then
         return
     end
     local _, enhancer = self:GetBarForGUID(destGUID)
     if not enhancer then
         return
     end
-    local maxHp = enhancer.maxHp or 1
-    local pctLost = (amount or 0) / math.max(1, maxHp)
+    local pctLost = isCrit and 0.28 or 0.14
+    if amount and not ns.IsSecret(amount) and not ns.IsSecret(enhancer.maxHp) and (enhancer.maxHp or 0) > 0 then
+        pctLost = amount / math.max(1, enhancer.maxHp)
+    end
     local isMega = isCrit and (pctLost >= 0.25)
     ns.UnitBars:TriggerDamageImpact(enhancer, pctLost, isCrit, isMega)
-
-    if ns.UnitBars.targetEnhancer and UnitGUID("target") == destGUID then
-        ns.UnitBars:TriggerDamageImpact(ns.UnitBars.targetEnhancer, pctLost, isCrit, isMega)
-    end
 
     if isKill then
         self:TriggerDeathForEnhancer(enhancer)
@@ -324,7 +382,7 @@ function Nameplates:ScanExistingNameplates()
                 end
             end
         end
-        if unitToken and not UnitIsUnit(unitToken, "player") then
+        if unitToken and not IsPlayerUnitSafe(unitToken) then
             if not self.byUnit[unitToken] then
                 self:OnNamePlateAdded(unitToken)
             end
@@ -336,22 +394,7 @@ function Nameplates:ScanExistingNameplates()
     return count
 end
 
-function Nameplates:EnsureEnemyNameplatesCVar()
-    if InCombatLockdown() or not GetCVar or not SetCVar then
-        return
-    end
-    local showEnemies = GetCVar("nameplateShowEnemies")
-    if showEnemies == "0" then
-        pcall(SetCVar, "nameplateShowEnemies", 1)
-        if ns.Print then
-            ns.Print("Enabled Enemy Nameplates (V) so overhead health bars are visible.")
-        end
-    end
-end
-
 function Nameplates:OnEnable()
-    self:EnsureEnemyNameplatesCVar()
-
     ns.Events:Register("NAME_PLATE_UNIT_ADDED", function(_, _, unitToken)
         self:OnNamePlateAdded(unitToken)
     end, self)
@@ -361,7 +404,7 @@ function Nameplates:OnEnable()
     end, self)
 
     local function OnHealthEvent(_, _, unitToken)
-        if unitToken and string.find(unitToken, "^nameplate") then
+        if unitToken and not ns.IsSecret(unitToken) and string.find(unitToken, "^nameplate") then
             self:OnUnitHealth(unitToken)
         end
     end
@@ -370,7 +413,7 @@ function Nameplates:OnEnable()
     ns.Events:Register("UNIT_HEALTH_FREQUENT", OnHealthEvent, self)
 
     ns.Events:Register("UNIT_COMBAT", function(_, _, unitToken, action, flagText, amount)
-        if unitToken and string.find(unitToken, "^nameplate") then
+        if unitToken and not ns.IsSecret(unitToken) and string.find(unitToken, "^nameplate") then
             self:OnUnitCombat(unitToken, action, flagText, amount)
         end
     end, self)
@@ -380,7 +423,6 @@ function Nameplates:OnEnable()
     end, self)
 
     ns.Events:Register("PLAYER_ENTERING_WORLD", function()
-        self:EnsureEnemyNameplatesCVar()
         self:ScanExistingNameplates()
     end, self)
 

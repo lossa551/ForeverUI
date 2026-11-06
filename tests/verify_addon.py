@@ -67,7 +67,11 @@ def verify_lua_blocks_and_safety(lua_paths):
         forbidden = re.findall(r"\b(?:PlayerFrame|TargetFrame)\s*:\s*(?:SetPoint|SetScale|Show|Hide)\b", cleaned)
         assert not forbidden, f"Combat-lockdown unsafe call in {os.path.basename(path)}: {forbidden}"
 
-        print(f"[PASS] {os.path.relpath(path, ROOT)}: balanced Lua blocks & combat-lockdown safe.")
+        # Restricted Region Safety Check (WoW 12.0+ / 16001): never call FrameMeasurement getters
+        measurement = re.findall(r":\s*Get(?:Center|Left|Right|Top|Bottom|Rect|ScaledRect|Width|Height|Size)\s*\(", cleaned)
+        assert not measurement, f"Restricted-region FrameMeasurement call in {os.path.basename(path)}: {measurement}"
+
+        print(f"[PASS] {os.path.relpath(path, ROOT)}: balanced Lua blocks, combat-lockdown & restricted-region safe.")
 
 
 def verify_feature_requirements():

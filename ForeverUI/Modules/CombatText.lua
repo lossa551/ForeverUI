@@ -56,24 +56,6 @@ local function ReleaseTextEntry(entry)
     table.insert(textPool, entry)
 end
 
--- C++ layout probe parented to sctCanvas so fallback coordinates are always in exact sctCanvas space
-local sctProbe = CreateFrame("Frame", nil, sctCanvas)
-sctProbe:SetSize(1, 1)
-
-local function GetOffsetFromUIParentCenter(frame)
-    if not frame or not frame:IsVisible() then
-        return nil, nil
-    end
-    sctProbe:ClearAllPoints()
-    sctProbe:SetPoint("CENTER", frame, "TOP", 0, 0)
-    local px, py = sctProbe:GetCenter()
-    local ux, uy = sctCanvas:GetCenter()
-    if not px or not py or not ux or not uy then
-        return 0, 60
-    end
-    return px - ux, py - uy
-end
-
 local function EnsureSCTTicker()
     ns.Events:RegisterTicker("CombatText_Update", function(dt)
         for i = #activeTexts, 1, -1 do
@@ -108,17 +90,9 @@ local function EnsureSCTTicker()
                 end
 
                 ft.holder:ClearAllPoints()
-                if ft.anchorFrame and ft.anchorFrame:IsVisible() then
-                    -- Refresh cached screen position while nameplate is still visible
-                    local cx, cy = GetOffsetFromUIParentCenter(ft.anchorFrame)
-                    if cx and cy then
-                        ft.baseCenterX = cx
-                        ft.baseCenterY = cy
-                    end
+                if ft.anchorFrame then
                     ft.holder:SetPoint("CENTER", ft.anchorFrame, "TOP", ft.offsetX, ft.offsetY)
                 else
-                    -- Nameplate hid (e.g. unit died): seamlessly continue from last cached screen position
-                    ft.anchorFrame = nil
                     ft.holder:SetPoint("CENTER", UIParent, "CENTER", ft.baseCenterX + ft.offsetX, ft.baseCenterY + ft.offsetY)
                 end
 
@@ -130,10 +104,11 @@ local function EnsureSCTTicker()
     end)
 end
 
--- Pure text-only combat number spawn (no icons)
+-- Pure text-only combat number spawn (no icons).
+-- Supports WoW 12.0+ / 16001 Secret Number Values directly via FontString:SetText(secretVal).
 function CombatText:SpawnNumber(opts)
     local cfg = ns.Config:Get("combatText")
-    if not cfg or not cfg.enabled then
+    if not cfg or not cfg.enabled or not opts or opts.text == nil then
         return
     end
 
@@ -146,21 +121,17 @@ function CombatText:SpawnNumber(opts)
         or (isCrit and (cfg.critFontSize or 23) or (cfg.normalFontSize or 16))
     local fontFlags = isCrit and "THICKOUTLINE" or "OUTLINE"
     entry.fs:SetFont(fontPath, fontSize, fontFlags)
-    entry.fs:SetText(tostring(opts.text or ""))
+
+    if ns.IsSecret(opts.text) then
+        entry.fs:SetText(opts.text)
+    else
+        entry.fs:SetText(tostring(opts.text))
+    end
     entry.fs:SetTextColor(opts.r or 1.0, opts.g or 1.0, opts.b or 1.0, 1.0)
 
-    local anchor = (opts.anchorFrame and opts.anchorFrame:IsVisible()) and opts.anchorFrame or nil
-    entry.anchorFrame = anchor
-
-    if anchor then
-        local cx, cy = GetOffsetFromUIParentCenter(anchor)
-        entry.baseCenterX = cx or 0
-        entry.baseCenterY = cy or 60
-    else
-        -- Clean center-screen fallback if enemy nameplate is off-screen
-        entry.baseCenterX = (opts.side == "left") and -140 or 0
-        entry.baseCenterY = (opts.side == "left") and 20 or 75
-    end
+    entry.anchorFrame = opts.anchorFrame
+    entry.baseCenterX = (opts.side == "left") and -140 or 185
+    entry.baseCenterY = (opts.side == "left") and 20 or 55
 
     local dir = (opts.side == "left") and -1 or (math.random() > 0.5 and 1 or -1)
     entry.offsetX = (math.random() * 20 - 10)
@@ -174,8 +145,8 @@ function CombatText:SpawnNumber(opts)
     entry.duration = isCrit and (cfg.durationCrit or 1.50) or (cfg.durationNormal or 1.15)
 
     entry.holder:ClearAllPoints()
-    if anchor then
-        entry.holder:SetPoint("CENTER", anchor, "TOP", entry.offsetX, entry.offsetY)
+    if entry.anchorFrame then
+        entry.holder:SetPoint("CENTER", entry.anchorFrame, "TOP", entry.offsetX, entry.offsetY)
     else
         entry.holder:SetPoint("CENTER", UIParent, "CENTER", entry.baseCenterX + entry.offsetX, entry.baseCenterY + entry.offsetY)
     end
@@ -190,14 +161,22 @@ function CombatText:OnCombatLogEvent()
         return
     end
     local _, subEvent, _, sourceGUID, _, sourceFlags, _, destGUID, _, _, _, arg12, arg13, arg14, arg15, arg16, arg17, arg18, arg19, arg20, arg21 = CombatLogGetCurrentEventInfo()
+    if not subEvent or ns.IsSecret(subEvent) or ns.IsSecret(sourceGUID) or ns.IsSecret(destGUID) then
+        return
+    end
     local playerGUID = UnitGUID("player")
-    if not playerGUID then
+    if not playerGUID or ns.IsSecret(playerGUID) then
         return
     end
 
+    local petGUID = UnitGUID("pet")
+    if ns.IsSecret(petGUID) then
+        petGUID = nil
+    end
+
     local isMine = (sourceGUID == playerGUID)
-        or (UnitGUID("pet") and sourceGUID == UnitGUID("pet"))
-        or (sourceFlags and bit and bit.band and COMBATLOG_OBJECT_AFFILIATION_MINE and bit.band(sourceFlags, COMBATLOG_OBJECT_AFFILIATION_MINE) ~= 0)
+        or (petGUID and sourceGUID == petGUID)
+        or (sourceFlags and not ns.IsSecret(sourceFlags) and bit and bit.band and COMBATLOG_OBJECT_AFFILIATION_MINE and bit.band(sourceFlags, COMBATLOG_OBJECT_AFFILIATION_MINE) ~= 0)
 
     local isOutgoing = isMine and (destGUID ~= playerGUID)
     local isIncoming = (destGUID == playerGUID)
@@ -234,15 +213,19 @@ function CombatText:OnCombatLogEvent()
         return
     end
 
-    if not amount or amount <= 0 then
+    if not amount then
+        return
+    end
+    if not ns.IsSecret(amount) and amount <= 0 then
         return
     end
 
-    local isKill = (overkill and overkill >= 0) or false
+    local isCrit = (not ns.IsSecret(critical)) and (not not critical) or false
+    local isKill = (overkill and not ns.IsSecret(overkill) and overkill >= 0) or false
 
     if isOutgoing and not isHeal then
         if ns.Nameplates then
-            ns.Nameplates:OnCombatLogImpact(destGUID, amount, not not critical, isKill)
+            ns.Nameplates:OnCombatLogImpact(destGUID, amount, isCrit, isKill)
         end
 
         local anchorBar = nil
@@ -253,40 +236,34 @@ function CombatText:OnCombatLogEvent()
 
         local r, g, b = 1.0, 1.0, 1.0
         if not isAutoAttack then
-            local sc = SCHOOL_COLORS[school or 1] or SCHOOL_COLORS[1]
+            local schoolKey = (school and not ns.IsSecret(school)) and school or 1
+            local sc = SCHOOL_COLORS[schoolKey] or SCHOOL_COLORS[1]
             r, g, b = sc[1], sc[2], sc[3]
-        elseif critical then
+        elseif isCrit then
             r, g, b = 1.0, 0.82, 0.0
         end
 
         self:SpawnNumber({
-            text = tostring(amount),
+            text = ns.IsSecret(amount) and amount or tostring(amount),
             r = r, g = g, b = b,
-            isCrit = critical,
-            isMega = critical and isKill,
+            isCrit = isCrit,
+            isMega = isCrit and isKill,
             anchorFrame = anchorBar,
             side = "right",
         })
-    elseif isIncoming then
-        local playerBar = ns.UnitBars and ns.UnitBars.playerEnhancer and ns.UnitBars.playerEnhancer.statusBar
+    elseif isIncoming and not ns.IsSecret(amount) then
         if isHeal then
             self:SpawnNumber({
                 text = "+" .. tostring(amount),
                 r = 0.15, g = 1.0, b = 0.15,
-                isCrit = critical,
-                anchorFrame = playerBar,
+                isCrit = isCrit,
                 side = "left",
             })
         else
-            if ns.UnitBars and ns.UnitBars.playerEnhancer and critical then
-                local maxHp = UnitHealthMax("player") or 1
-                ns.UnitBars:TriggerDamageImpact(ns.UnitBars.playerEnhancer, amount / math.max(1, maxHp), true, false)
-            end
             self:SpawnNumber({
                 text = "-" .. tostring(amount),
                 r = 1.0, g = 0.15, b = 0.15,
-                isCrit = critical,
-                anchorFrame = playerBar,
+                isCrit = isCrit,
                 side = "left",
             })
         end

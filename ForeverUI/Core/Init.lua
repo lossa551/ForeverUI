@@ -20,8 +20,10 @@ local function GetOrCreateDemoBar()
         demoBar:SetStatusBarColor(0.88, 0.12, 0.12, 1.0)
         demoBar:SetMinMaxValues(0, 100)
         demoBar:SetValue(100)
+        demoBar.fuiWidth = 156
+        demoBar.fuiHeight = 14
 
-        demoEnhancer = ns.UnitBars:CreateBarEnhancer(demoBar, nil, true)
+        demoEnhancer = ns.UnitBars:CreateBarEnhancer(demoBar, nil, false)
 
         demoNameLabel = demoEnhancer.container:CreateFontString(nil, "OVERLAY")
         demoNameLabel:SetFont(STANDARD_TEXT_FONT or "Fonts\\FRIZQT__.TTF", 12, "OUTLINE")
@@ -31,6 +33,9 @@ local function GetOrCreateDemoBar()
     end
     demoBar:Show()
     demoBar:SetAlpha(1.0)
+    demoEnhancer.isSecretHealth = false
+    demoEnhancer.mainBar:SetMinMaxValues(0, 1000)
+    demoEnhancer.trailBar:SetMinMaxValues(0, 1000)
     demoEnhancer.container:Show()
     demoEnhancer.container:SetAlpha(1.0)
     if demoNameLabel then
@@ -76,6 +81,9 @@ function ns:RunInGameDemo(mode)
 
     -- Reset bar to 100% and run 3-stage impact combo (Normal -> Mega Crit -> Bare Cracked Death Bar)
     enhancer.deathTriggered = false
+    enhancer.isSecretHealth = false
+    enhancer.mainBar:SetMinMaxValues(0, 1000)
+    enhancer.trailBar:SetMinMaxValues(0, 1000)
     enhancer.displayFrac = 1.0
     enhancer.trailFrac = 1.0
     enhancer.targetFrac = 0.78
@@ -149,6 +157,10 @@ function ns:RunInGameDemo(mode)
                     if enhancer.unitFrame.LevelFrame then
                         enhancer.unitFrame.LevelFrame:SetAlpha(1.0)
                     end
+                end
+                if enhancer.unit and UnitExists(enhancer.unit) then
+                    enhancer.initializedSecret = false
+                    ns.UnitBars:SyncUnitState(enhancer, true)
                 end
             end
         end)
