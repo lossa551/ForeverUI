@@ -7,6 +7,46 @@ fxCanvas:SetAllPoints(UIParent)
 fxCanvas:SetFrameStrata("HIGH")
 fxCanvas:EnableMouse(false)
 
+-- C++ Layout Probe Frames: parented to fxCanvas so GetCenter() always returns exact fxCanvas/UIParent coordinates
+-- regardless of WorldFrame / NamePlate IgnoreParentScale differences!
+local probeLeft = CreateFrame("Frame", nil, fxCanvas)
+probeLeft:SetSize(1, 1)
+local probeRight = CreateFrame("Frame", nil, fxCanvas)
+probeRight:SetSize(1, 1)
+local probeTop = CreateFrame("Frame", nil, fxCanvas)
+probeTop:SetSize(1, 1)
+local probeBottom = CreateFrame("Frame", nil, fxCanvas)
+probeBottom:SetSize(1, 1)
+
+local function GetUIParentCoords(frame, xFraction, yFraction)
+    if not frame or not frame:IsVisible() then
+        return nil, nil, nil, nil
+    end
+    probeLeft:ClearAllPoints()
+    probeLeft:SetPoint("CENTER", frame, "LEFT", 0, 0)
+    probeRight:ClearAllPoints()
+    probeRight:SetPoint("CENTER", frame, "RIGHT", 0, 0)
+    probeTop:ClearAllPoints()
+    probeTop:SetPoint("CENTER", frame, "TOP", 0, 0)
+    probeBottom:ClearAllPoints()
+    probeBottom:SetPoint("CENTER", frame, "BOTTOM", 0, 0)
+
+    local lx, ly = probeLeft:GetCenter()
+    local rx, _ = probeRight:GetCenter()
+    local _, ty = probeTop:GetCenter()
+    local _, by = probeBottom:GetCenter()
+
+    if not lx or not rx or not ty or not by then
+        return nil, nil, nil, nil
+    end
+
+    local width = math.abs(rx - lx)
+    local height = math.abs(ty - by)
+    local x = lx + width * (xFraction or 0.5)
+    local y = by + height * (yFraction or 0.5)
+    return x, y, width, height
+end
+
 -- ============================================================================
 -- 1. POOLED BAR SHATTER SPARKS & DEBRIS SHARDS
 -- ============================================================================
@@ -26,26 +66,10 @@ end
 
 local function ReleaseSpark(sp)
     sp.tex:Hide()
-    sp.tex:SetRotation(0)
-    table.insert(sparkPool, sp)
-end
-
-local function GetUIParentCoords(frame, xFraction, yFraction)
-    if not frame or not frame:GetLeft() then
-        return nil, nil, nil, nil
+    if sp.tex.SetRotation then
+        sp.tex:SetRotation(0)
     end
-    local fScale = frame:GetEffectiveScale()
-    local uScale = UIParent:GetEffectiveScale()
-    local ratio = fScale / uScale
-
-    local left = frame:GetLeft() * ratio
-    local bottom = frame:GetBottom() * ratio
-    local width = frame:GetWidth() * ratio
-    local height = frame:GetHeight() * ratio
-
-    local x = left + width * (xFraction or 0.5)
-    local y = bottom + height * (yFraction or 0.5)
-    return x, y, width, height
+    table.insert(sparkPool, sp)
 end
 
 local function EnsureSparkTicker()
@@ -62,7 +86,7 @@ local function EnsureSparkTicker()
                 sp.vy = sp.vy - sp.gravity * dt
                 local alpha = 1.0 - (sp.age / sp.duration)
                 sp.tex:ClearAllPoints()
-                sp.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", sp.x, sp.y)
+                sp.tex:SetPoint("CENTER", fxCanvas, "BOTTOMLEFT", sp.x, sp.y)
                 sp.tex:SetAlpha(alpha)
                 if sp.vRot ~= 0 then
                     sp.rot = sp.rot + sp.vRot * dt
@@ -81,20 +105,20 @@ function CombatFX:SpawnBarSparks(barFrame, cutFraction, count, r, g, b, isShards
     if not cfg or not cfg.enabled or not cfg.sparksEnabled then
         return
     end
-    local baseX, baseY, barW, barH = GetUIParentCoords(barFrame, cutFraction, 0.5)
+    local baseX, baseY, barW, _ = GetUIParentCoords(barFrame, cutFraction, 0.5)
     if not baseX then
         return
     end
 
+    local leftX = GetUIParentCoords(barFrame, 0.0, 0.5)
     count = count or 8
     r, g, b = r or 1.0, g or 0.78, b or 0.2
 
     for i = 1, count do
         local sp = AcquireSpark()
         local spawnX = baseX
-        if isShards and barW then
-            local leftX = GetUIParentCoords(barFrame, 0.0, 0.5)
-            spawnX = (leftX or baseX) + math.random() * barW
+        if isShards and barW and leftX then
+            spawnX = leftX + math.random() * barW
         else
             spawnX = baseX + (math.random() * 6 - 3)
         end
@@ -129,7 +153,7 @@ function CombatFX:SpawnBarSparks(barFrame, cutFraction, count, r, g, b, isShards
         end
 
         sp.tex:ClearAllPoints()
-        sp.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", sp.x, sp.y)
+        sp.tex:SetPoint("CENTER", fxCanvas, "BOTTOMLEFT", sp.x, sp.y)
         table.insert(activeSparks, sp)
     end
 
@@ -139,20 +163,15 @@ end
 -- ============================================================================
 -- 2. BARE CRACKED & TILTED GRAY DEATH SHATTER BAR
 -- ============================================================================
--- Normalized fracture crack segments (x in [0..1] along bar width, y in [-0.5..0.5] along bar height)
 local CRACK_SEGMENTS = {
-    -- Left fissure
     { x1 = 0.22, y1 =  0.50, x2 = 0.25, y2 =  0.10, w = 1.6 },
     { x1 = 0.25, y1 =  0.10, x2 = 0.22, y2 = -0.22, w = 1.6 },
     { x1 = 0.22, y1 = -0.22, x2 = 0.27, y2 = -0.50, w = 1.5 },
-    -- Center major shatter fissure
     { x1 = 0.51, y1 =  0.50, x2 = 0.47, y2 =  0.15, w = 2.1 },
     { x1 = 0.47, y1 =  0.15, x2 = 0.54, y2 = -0.12, w = 2.1 },
     { x1 = 0.54, y1 = -0.12, x2 = 0.49, y2 = -0.50, w = 2.0 },
-    -- Center branching web cracks
     { x1 = 0.47, y1 =  0.15, x2 = 0.38, y2 = -0.05, w = 1.2 },
     { x1 = 0.54, y1 = -0.12, x2 = 0.64, y2 =  0.12, w = 1.2 },
-    -- Right fissure
     { x1 = 0.79, y1 = -0.50, x2 = 0.76, y2 = -0.05, w = 1.6 },
     { x1 = 0.76, y1 = -0.05, x2 = 0.81, y2 =  0.25, w = 1.6 },
     { x1 = 0.81, y1 =  0.25, x2 = 0.77, y2 =  0.50, w = 1.5 },
@@ -167,28 +186,23 @@ local function AcquireDeathBar()
         local holder = CreateFrame("Frame", nil, fxCanvas)
         holder:SetSize(120, 14)
 
-        -- Dark iron outer border texture (rotatable)
         local borderTex = holder:CreateTexture(nil, "BACKGROUND")
         borderTex:SetTexture("Interface\\Buttons\\WHITE8X8")
         borderTex:SetVertexColor(0.06, 0.06, 0.08, 0.96)
 
-        -- Metallic zinc inner trim (rotatable)
         local trimTex = holder:CreateTexture(nil, "BORDER")
         trimTex:SetTexture("Interface\\Buttons\\WHITE8X8")
         trimTex:SetVertexColor(0.34, 0.34, 0.38, 0.95)
 
-        -- Stone-gray native WoW StatusBar texture (bare bar — no text, no level, no name!)
         local fillTex = holder:CreateTexture(nil, "ARTWORK")
         fillTex:SetTexture("Interface\\TargetingFrame\\UI-StatusBar")
         fillTex:SetVertexColor(0.36, 0.36, 0.40, 1.0)
 
-        -- White-hot killing blow impact flash
         local flashTex = holder:CreateTexture(nil, "OVERLAY")
         flashTex:SetTexture("Interface\\Buttons\\WHITE8X8")
         flashTex:SetBlendMode("ADD")
         flashTex:SetVertexColor(1.0, 1.0, 1.0, 0.9)
 
-        -- Create paired bevel + dark fissure lines for the fracture cracks
         local cracks = {}
         for i = 1, #CRACK_SEGMENTS do
             local spec = CRACK_SEGMENTS[i]
@@ -234,14 +248,13 @@ local function UpdateDeathBarGeometry(db, thetaRad)
     local cosT = math.cos(thetaRad)
     local sinT = math.sin(thetaRad)
 
-    -- Center of the bar rotated around the left hinge (db.hingeX, db.hingeY - db.dropY)
     local hx = db.hingeX + db.shakeDx
     local hy = db.hingeY - db.dropY + db.shakeDy
     local cx = hx + (w * 0.5) * cosT
     local cy = hy + (w * 0.5) * sinT
 
     db.holder:ClearAllPoints()
-    db.holder:SetPoint("CENTER", UIParent, "BOTTOMLEFT", cx, cy)
+    db.holder:SetPoint("CENTER", fxCanvas, "BOTTOMLEFT", cx, cy)
     db.holder:SetSize(w, h)
 
     local punchedH = h * db.barPunchY
@@ -269,7 +282,6 @@ local function UpdateDeathBarGeometry(db, thetaRad)
         db.flashTex:SetRotation(thetaRad)
     end
 
-    -- Rotate every fracture crack segment in locked sync with the tilted bar
     for i = 1, #db.cracks do
         local c = db.cracks[i]
         local s = c.spec
@@ -301,13 +313,11 @@ local function EnsureDeathBarTicker()
                 ReleaseDeathBar(db)
                 table.remove(activeDeathBars, i)
             else
-                -- Decay impact flash and vertical punch
                 if db.flashAlpha > 0 then
                     db.flashAlpha = math.max(0, db.flashAlpha - dt * 4.0)
                 end
                 db.barPunchY = db.barPunchY + (1.0 - db.barPunchY) * math.min(1.0, dt * 12.0)
 
-                -- Damped trauma recoil on the killing blow
                 if db.trauma > 0.01 then
                     local p = db.trauma * db.trauma
                     db.shakeDx = math.sin(now * 85.0) * 9.0 * p
@@ -319,17 +329,14 @@ local function EnsureDeathBarTicker()
                     db.shakeDy = 0
                 end
 
-                -- Left-hinge downward tilt spring physics
                 local spring = (db.targetTiltDeg - db.tiltDeg) * 38.0
                 db.tiltVel = (db.tiltVel + spring * dt) * math.max(0, 1.0 - dt * 10.5)
                 db.tiltDeg = db.tiltDeg + db.tiltVel * dt
 
-                -- Slight gravity drop after 0.22s
                 if db.age > 0.22 then
                     db.dropY = db.dropY + (db.age - 0.22) * 38.0 * dt
                 end
 
-                -- Fade out after holding the bare cracked gray tilted bar
                 if db.age > db.holdTime then
                     local fadeT = (db.age - db.holdTime) / db.fadeTime
                     db.holder:SetAlpha(math.max(0, 1.0 - fadeT))
@@ -373,7 +380,6 @@ function CombatFX:SpawnDeathShatterBar(barFrame)
     UpdateDeathBarGeometry(db, 0)
     table.insert(activeDeathBars, db)
 
-    -- Burst stone/metal shards across the cracked bar
     self:SpawnBarSparks(barFrame, 0.5, 20, 0.65, 0.65, 0.70, true)
     EnsureDeathBarTicker()
 end

@@ -24,35 +24,54 @@ local SCHOOL_COLORS = {
 local function AcquireTextEntry()
     local entry = table.remove(textPool)
     if not entry then
+        -- Outer holder stays at scale 1.0 so SetPoint offsets never get multiplied by SetScale!
         local holder = CreateFrame("Frame", nil, sctCanvas)
-        holder:SetSize(200, 40)
-        local fs = holder:CreateFontString(nil, "OVERLAY")
-        fs:SetPoint("CENTER", holder, "CENTER", 0, 0)
+        holder:SetSize(1, 1)
+
+        -- Inner zoomFrame sits at (0, 0) center of holder and handles elastic Crit Pop-In scaling
+        local zoomFrame = CreateFrame("Frame", nil, holder)
+        zoomFrame:SetSize(220, 44)
+        zoomFrame:SetPoint("CENTER", holder, "CENTER", 0, 0)
+
+        local fs = zoomFrame:CreateFontString(nil, "OVERLAY")
+        fs:SetPoint("CENTER", zoomFrame, "CENTER", 0, 0)
         fs:SetShadowOffset(1.5, -1.5)
         fs:SetShadowColor(0, 0, 0, 0.95)
-        entry = { holder = holder, fs = fs }
+
+        entry = {
+            holder = holder,
+            zoomFrame = zoomFrame,
+            fs = fs,
+        }
     end
     entry.holder:Show()
     entry.holder:SetAlpha(1.0)
-    entry.holder:SetScale(1.0)
+    entry.zoomFrame:SetScale(1.0)
     return entry
 end
 
 local function ReleaseTextEntry(entry)
     entry.holder:Hide()
+    entry.anchorFrame = nil
     table.insert(textPool, entry)
 end
 
-local function GetFrameTopCenterInUIParent(frame)
-    if not frame or not frame:GetCenter() then
+-- C++ layout probe parented to sctCanvas so fallback coordinates are always in exact sctCanvas space
+local sctProbe = CreateFrame("Frame", nil, sctCanvas)
+sctProbe:SetSize(1, 1)
+
+local function GetOffsetFromUIParentCenter(frame)
+    if not frame or not frame:IsVisible() then
         return nil, nil
     end
-    local fScale = frame:GetEffectiveScale()
-    local uScale = UIParent:GetEffectiveScale()
-    local ratio = fScale / uScale
-    local cx = frame:GetCenter() * ratio
-    local top = (frame:GetTop() or 0) * ratio
-    return cx, top
+    sctProbe:ClearAllPoints()
+    sctProbe:SetPoint("CENTER", frame, "TOP", 0, 0)
+    local px, py = sctProbe:GetCenter()
+    local ux, uy = sctCanvas:GetCenter()
+    if not px or not py or not ux or not uy then
+        return 0, 60
+    end
+    return px - ux, py - uy
 end
 
 local function EnsureSCTTicker()
@@ -65,11 +84,11 @@ local function EnsureSCTTicker()
                 table.remove(activeTexts, i)
             else
                 local t = ft.age / ft.duration
-                ft.x = ft.x + ft.vx * dt
-                ft.y = ft.y + ft.vy * dt
+                ft.offsetX = ft.offsetX + ft.vx * dt
+                ft.offsetY = ft.offsetY + ft.vy * dt
                 ft.vy = ft.vy - ft.gravity * dt
 
-                -- Elastic Crit Pop-In scale curve
+                -- Elastic Crit Pop-In scale curve applied ONLY to inner zoomFrame (0,0 offset)
                 local scale = 1.0
                 if ft.isCrit then
                     local peak = ft.isMega and 1.95 or 1.68
@@ -89,8 +108,21 @@ local function EnsureSCTTicker()
                 end
 
                 ft.holder:ClearAllPoints()
-                ft.holder:SetPoint("CENTER", UIParent, "BOTTOMLEFT", ft.x, ft.y)
-                ft.holder:SetScale(scale)
+                if ft.anchorFrame and ft.anchorFrame:IsVisible() then
+                    -- Refresh cached screen position while nameplate is still visible
+                    local cx, cy = GetOffsetFromUIParentCenter(ft.anchorFrame)
+                    if cx and cy then
+                        ft.baseCenterX = cx
+                        ft.baseCenterY = cy
+                    end
+                    ft.holder:SetPoint("CENTER", ft.anchorFrame, "TOP", ft.offsetX, ft.offsetY)
+                else
+                    -- Nameplate hid (e.g. unit died): seamlessly continue from last cached screen position
+                    ft.anchorFrame = nil
+                    ft.holder:SetPoint("CENTER", UIParent, "CENTER", ft.baseCenterX + ft.offsetX, ft.baseCenterY + ft.offsetY)
+                end
+
+                ft.zoomFrame:SetScale(scale)
                 ft.holder:SetAlpha(alpha)
             end
         end
@@ -117,27 +149,24 @@ function CombatText:SpawnNumber(opts)
     entry.fs:SetText(tostring(opts.text or ""))
     entry.fs:SetTextColor(opts.r or 1.0, opts.g or 1.0, opts.b or 1.0, 1.0)
 
-    local startX, startY
-    if opts.anchorFrame and opts.anchorFrame:IsVisible() then
-        startX, startY = GetFrameTopCenterInUIParent(opts.anchorFrame)
-    end
-    if not startX or not startY then
-        local uiW = UIParent:GetWidth() or 1280
-        local uiH = UIParent:GetHeight() or 720
-        if opts.side == "left" then
-            startX = uiW * 0.36
-            startY = uiH * 0.54
-        else
-            startX = uiW * 0.62
-            startY = uiH * 0.56
-        end
+    local anchor = (opts.anchorFrame and opts.anchorFrame:IsVisible()) and opts.anchorFrame or nil
+    entry.anchorFrame = anchor
+
+    if anchor then
+        local cx, cy = GetOffsetFromUIParentCenter(anchor)
+        entry.baseCenterX = cx or 0
+        entry.baseCenterY = cy or 60
+    else
+        -- Clean center-screen fallback if enemy nameplate is off-screen
+        entry.baseCenterX = (opts.side == "left") and -140 or 0
+        entry.baseCenterY = (opts.side == "left") and 20 or 75
     end
 
     local dir = (opts.side == "left") and -1 or (math.random() > 0.5 and 1 or -1)
-    entry.x = startX + (math.random() * 22 - 11)
-    entry.y = startY + 6 + (math.random() * 8 - 4)
+    entry.offsetX = (math.random() * 20 - 10)
+    entry.offsetY = 8 + (math.random() * 6 - 3)
     entry.vx = dir * (isCrit and (12 + math.random() * 20) or (26 + math.random() * 28))
-    entry.vy = isCrit and (82 + math.random() * 18) or (88 + math.random() * 22)
+    entry.vy = isCrit and (78 + math.random() * 18) or (85 + math.random() * 20)
     entry.gravity = isCrit and 48 or 120
     entry.isCrit = isCrit
     entry.isMega = isMega
@@ -145,7 +174,13 @@ function CombatText:SpawnNumber(opts)
     entry.duration = isCrit and (cfg.durationCrit or 1.50) or (cfg.durationNormal or 1.15)
 
     entry.holder:ClearAllPoints()
-    entry.holder:SetPoint("CENTER", UIParent, "BOTTOMLEFT", entry.x, entry.y)
+    if anchor then
+        entry.holder:SetPoint("CENTER", anchor, "TOP", entry.offsetX, entry.offsetY)
+    else
+        entry.holder:SetPoint("CENTER", UIParent, "CENTER", entry.baseCenterX + entry.offsetX, entry.baseCenterY + entry.offsetY)
+    end
+    entry.zoomFrame:SetScale(isCrit and 0.55 or 1.0)
+
     table.insert(activeTexts, entry)
     EnsureSCTTicker()
 end
@@ -174,14 +209,12 @@ function CombatText:OnCombatLogEvent()
         amount, overkill, school, _, _, _, critical = arg12, arg13, arg14, arg15, arg16, arg17, arg18
         isAutoAttack = true
     elseif subEvent == "RANGE_DAMAGE" or subEvent == "SPELL_DAMAGE" or subEvent == "SPELL_PERIODIC_DAMAGE" then
-        -- arg12=spellId, arg13=spellName, arg14=spellSchool, arg15=amount, arg16=overkill, ..., arg21=critical
         school = arg14
         amount = arg15
         overkill = arg16
         critical = arg21
         isAutoAttack = (subEvent == "RANGE_DAMAGE")
     elseif subEvent == "SPELL_HEAL" or subEvent == "SPELL_PERIODIC_HEAL" then
-        -- arg15=amount, arg16=overhealing, arg17=absorbed, arg18=critical
         amount = arg15
         critical = arg18
         isHeal = true
@@ -204,7 +237,6 @@ function CombatText:OnCombatLogEvent()
     local isKill = (overkill and overkill >= 0) or false
 
     if isOutgoing and not isHeal then
-        -- Notify Nameplates & UnitBars so the overhead bar shakes violently on crits or shatters on death
         if ns.Nameplates then
             ns.Nameplates:OnCombatLogImpact(destGUID, amount, not not critical, isKill)
         end
@@ -213,9 +245,6 @@ function CombatText:OnCombatLogEvent()
         local cfg = ns.Config:Get("combatText")
         if cfg and cfg.anchorToNameplate and ns.Nameplates then
             anchorBar = ns.Nameplates:GetBarForGUID(destGUID)
-        end
-        if not anchorBar and ns.UnitBars and ns.UnitBars.targetEnhancer then
-            anchorBar = ns.UnitBars.targetEnhancer.statusBar
         end
 
         local r, g, b = 1.0, 1.0, 1.0

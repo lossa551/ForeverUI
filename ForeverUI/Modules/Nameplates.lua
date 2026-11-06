@@ -18,7 +18,6 @@ local function ResolveNameplateHealthBar(namePlate)
             return uf.HealthBarsContainer.healthBar, uf
         end
     end
-    -- Classic / fallback child scan
     local children = { namePlate:GetChildren() }
     for i = 1, #children do
         local child = children[i]
@@ -52,18 +51,36 @@ end
 
 function Nameplates:GetBarForGUID(guid)
     if not guid then
-        return nil
+        return nil, nil
     end
     local enhancer = self.byGUID[guid]
     if enhancer and enhancer.statusBar and enhancer.statusBar:IsVisible() then
         return enhancer.statusBar, enhancer
+    end
+
+    -- Fallback: scan active nameplates in case /reload occurred with plates already visible
+    if C_NamePlate and C_NamePlate.GetNamePlates then
+        local plates = C_NamePlate.GetNamePlates()
+        if plates then
+            for i = 1, #plates do
+                local plate = plates[i]
+                local unitToken = plate and (plate.namePlateUnitToken or (plate.UnitFrame and plate.UnitFrame.unit))
+                if unitToken and UnitGUID(unitToken) == guid then
+                    self:OnNamePlateAdded(unitToken)
+                    enhancer = self.byGUID[guid]
+                    if enhancer and enhancer.statusBar then
+                        return enhancer.statusBar, enhancer
+                    end
+                end
+            end
+        end
     end
     return nil, nil
 end
 
 function Nameplates:OnNamePlateAdded(unitToken)
     local cfg = ns.Config:Get("nameplates")
-    if not cfg or not cfg.enabled then
+    if not cfg or not cfg.enabled or not unitToken then
         return
     end
     if not C_NamePlate or not C_NamePlate.GetNamePlateForUnit then
@@ -112,12 +129,10 @@ function Nameplates:TriggerDeathForEnhancer(enhancer)
     end
     enhancer.deathTriggered = true
 
-    -- Spawn the bare stone-gray cracked & tilted death bar at the nameplate's coordinates
     if ns.CombatFX and enhancer.statusBar then
         ns.CombatFX:SpawnDeathShatterBar(enhancer.statusBar)
     end
 
-    -- Hide native name, level badge, and live healthbar so ONLY the bare cracked death bar shows
     local npCfg = ns.Config:Get("nameplates")
     if npCfg and npCfg.hideNameAndLevelOnDeath and enhancer.unitFrame then
         SetNameplateExtrasAlpha(enhancer.unitFrame, 0.0)
@@ -141,7 +156,7 @@ function Nameplates:OnCombatLogImpact(destGUID, amount, isCrit, isKill)
     if not destGUID then
         return
     end
-    local enhancer = self.byGUID[destGUID]
+    local _, enhancer = self:GetBarForGUID(destGUID)
     if not enhancer then
         return
     end
@@ -150,13 +165,29 @@ function Nameplates:OnCombatLogImpact(destGUID, amount, isCrit, isKill)
     local isMega = isCrit and (pctLost >= 0.28)
     ns.UnitBars:TriggerDamageImpact(enhancer, pctLost, isCrit, isMega)
 
-    -- Also mirror crit trauma onto TargetFrame enhancer if this enemy is our current target
     if ns.UnitBars.targetEnhancer and UnitGUID("target") == destGUID then
         ns.UnitBars:TriggerDamageImpact(ns.UnitBars.targetEnhancer, pctLost, isCrit, isMega)
     end
 
     if isKill then
         self:TriggerDeathForEnhancer(enhancer)
+    end
+end
+
+function Nameplates:ScanExistingNameplates()
+    if not C_NamePlate or not C_NamePlate.GetNamePlates then
+        return
+    end
+    local plates = C_NamePlate.GetNamePlates()
+    if not plates then
+        return
+    end
+    for i = 1, #plates do
+        local plate = plates[i]
+        local unitToken = plate and (plate.namePlateUnitToken or (plate.UnitFrame and plate.UnitFrame.unit))
+        if unitToken then
+            self:OnNamePlateAdded(unitToken)
+        end
     end
 end
 
@@ -174,4 +205,10 @@ function Nameplates:OnEnable()
             self:OnUnitHealth(unitToken)
         end
     end, self)
+
+    ns.Events:Register("PLAYER_ENTERING_WORLD", function()
+        self:ScanExistingNameplates()
+    end, self)
+
+    self:ScanExistingNameplates()
 end
