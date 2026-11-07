@@ -12,6 +12,410 @@ function ns.IsSecret(val)
     return false
 end
 
+-- ============================================================================
+-- ELEMENTAL COMBAT PROFILES & SPELL CLASSIFIER
+-- ============================================================================
+ns.Elements = {
+    ORDER = { "LIGHTNING", "FIRE", "EARTH", "FROST", "SHADOW", "PHYSICAL" },
+    PROFILES = {
+        PHYSICAL = {
+            key = "PHYSICAL",
+            label = "PHYSICAL",
+            demoSpell = "MORTAL STRIKE",
+            flash = { 1.00, 0.95, 0.85 },
+            cut = { 1.00, 0.95, 0.80 },
+            trailHold = { 1.00, 0.90, 0.55 },
+            trailFade = { 1.00, 0.32, 0.08 },
+            border = { 1.00, 0.82, 0.38 },
+            spark = { 1.00, 0.72, 0.18 },
+            sparkAlt = { 0.98, 0.96, 0.92 },
+            text = { 1.00, 1.00, 1.00 },
+            critText = { 1.00, 0.82, 0.00 },
+            punchNormal = 1.24,
+            punchCrit = 1.48,
+            punchMega = 1.65,
+            trailHoldNormal = 0.24,
+            trailHoldCrit = 0.38,
+            glowDuration = 0.16,
+            deathFill = { 0.36, 0.36, 0.40 },
+            deathTrim = { 0.44, 0.44, 0.48 },
+            deathCrack = { 0.88, 0.88, 0.92 },
+            deathDark = { 0.02, 0.02, 0.03 },
+            deathFlash = { 1.00, 0.96, 0.88 },
+            deathShard = { 0.65, 0.65, 0.70 },
+        },
+        LIGHTNING = {
+            key = "LIGHTNING",
+            label = "LIGHTNING",
+            demoSpell = "LIGHTNING BOLT",
+            flash = { 0.38, 0.88, 1.00 },
+            cut = { 0.85, 0.98, 1.00 },
+            trailHold = { 0.58, 0.94, 1.00 },
+            trailFade = { 0.12, 0.52, 1.00 },
+            border = { 0.25, 0.84, 1.00 },
+            spark = { 0.22, 0.82, 1.00 },
+            sparkAlt = { 0.88, 0.98, 1.00 },
+            text = { 0.32, 0.88, 1.00 },
+            critText = { 0.52, 0.95, 1.00 },
+            punchNormal = 1.34,
+            punchCrit = 1.56,
+            punchMega = 1.74,
+            trailHoldNormal = 0.22,
+            trailHoldCrit = 0.36,
+            glowDuration = 0.34,
+            deathFill = { 0.12, 0.22, 0.38 },
+            deathTrim = { 0.28, 0.78, 1.00 },
+            deathCrack = { 0.48, 0.95, 1.00 },
+            deathDark = { 0.02, 0.06, 0.14 },
+            deathFlash = { 0.50, 0.94, 1.00 },
+            deathShard = { 0.28, 0.84, 1.00 },
+        },
+        FIRE = {
+            key = "FIRE",
+            label = "FIRE",
+            demoSpell = "FLAME SHOCK",
+            flash = { 1.00, 0.26, 0.03 },
+            cut = { 1.00, 0.85, 0.22 },
+            trailHold = { 1.00, 0.48, 0.05 },
+            trailFade = { 0.88, 0.10, 0.01 },
+            border = { 1.00, 0.28, 0.02 },
+            spark = { 1.00, 0.34, 0.03 },
+            sparkAlt = { 1.00, 0.88, 0.18 },
+            text = { 1.00, 0.38, 0.08 },
+            critText = { 1.00, 0.52, 0.10 },
+            punchNormal = 1.12,
+            punchCrit = 1.24,
+            punchMega = 1.36,
+            trailHoldNormal = 0.34,
+            trailHoldCrit = 0.50,
+            glowDuration = 0.82,
+            deathFill = { 0.16, 0.05, 0.03 },
+            deathTrim = { 0.92, 0.22, 0.02 },
+            deathCrack = { 1.00, 0.38, 0.04 },
+            deathDark = { 0.05, 0.01, 0.00 },
+            deathFlash = { 1.00, 0.35, 0.04 },
+            deathShard = { 1.00, 0.32, 0.04 },
+        },
+        EARTH = {
+            key = "EARTH",
+            label = "EARTH",
+            demoSpell = "EARTH SHOCK",
+            flash = { 0.64, 0.48, 0.28 },
+            cut = { 0.86, 0.72, 0.46 },
+            trailHold = { 0.72, 0.56, 0.34 },
+            trailFade = { 0.38, 0.26, 0.14 },
+            border = { 0.54, 0.38, 0.20 },
+            spark = { 0.44, 0.30, 0.15 },
+            sparkAlt = { 0.78, 0.64, 0.40 },
+            text = { 0.82, 0.66, 0.40 },
+            critText = { 0.92, 0.76, 0.48 },
+            punchNormal = 1.64,
+            punchCrit = 1.92,
+            punchMega = 2.15,
+            trailHoldNormal = 0.28,
+            trailHoldCrit = 0.42,
+            glowDuration = 0.44,
+            deathFill = { 0.28, 0.20, 0.12 },
+            deathTrim = { 0.56, 0.42, 0.24 },
+            deathCrack = { 0.84, 0.70, 0.46 },
+            deathDark = { 0.06, 0.04, 0.02 },
+            deathFlash = { 0.72, 0.58, 0.36 },
+            deathShard = { 0.48, 0.34, 0.18 },
+        },
+        FROST = {
+            key = "FROST",
+            label = "FROST",
+            demoSpell = "FROST SHOCK",
+            flash = { 0.42, 0.88, 1.00 },
+            cut = { 0.90, 0.98, 1.00 },
+            trailHold = { 0.74, 0.95, 1.00 },
+            trailFade = { 0.22, 0.68, 0.98 },
+            border = { 0.48, 0.90, 1.00 },
+            spark = { 0.46, 0.90, 1.00 },
+            sparkAlt = { 0.92, 0.98, 1.00 },
+            text = { 0.45, 0.86, 1.00 },
+            critText = { 0.68, 0.95, 1.00 },
+            punchNormal = 1.26,
+            punchCrit = 1.50,
+            punchMega = 1.66,
+            trailHoldNormal = 0.48,
+            trailHoldCrit = 0.66,
+            glowDuration = 0.68,
+            deathFill = { 0.16, 0.32, 0.46 },
+            deathTrim = { 0.56, 0.90, 1.00 },
+            deathCrack = { 0.86, 0.98, 1.00 },
+            deathDark = { 0.03, 0.09, 0.16 },
+            deathFlash = { 0.66, 0.95, 1.00 },
+            deathShard = { 0.58, 0.92, 1.00 },
+        },
+        SHADOW = {
+            key = "SHADOW",
+            label = "SHADOW",
+            demoSpell = "SHADOW BOLT",
+            flash = { 0.68, 0.25, 1.00 },
+            cut = { 0.92, 0.55, 1.00 },
+            trailHold = { 0.76, 0.35, 1.00 },
+            trailFade = { 0.38, 0.08, 0.68 },
+            border = { 0.72, 0.28, 1.00 },
+            spark = { 0.72, 0.28, 1.00 },
+            sparkAlt = { 0.92, 0.58, 1.00 },
+            text = { 0.76, 0.44, 1.00 },
+            critText = { 0.88, 0.58, 1.00 },
+            punchNormal = 1.28,
+            punchCrit = 1.52,
+            punchMega = 1.70,
+            trailHoldNormal = 0.32,
+            trailHoldCrit = 0.48,
+            glowDuration = 0.58,
+            deathFill = { 0.16, 0.08, 0.24 },
+            deathTrim = { 0.64, 0.24, 0.94 },
+            deathCrack = { 0.86, 0.42, 1.00 },
+            deathDark = { 0.04, 0.01, 0.07 },
+            deathFlash = { 0.76, 0.32, 1.00 },
+            deathShard = { 0.68, 0.26, 0.96 },
+        },
+    },
+    lastPlayerElement = nil,
+    lastPlayerElementTime = 0,
+    lastPlayerDotElement = nil,
+    lastPlayerDotDuration = 0,
+    lastPlayerDotTime = 0,
+    lastCastStartTime = 0,
+    pendingDirectHitTime = 0,
+    pendingDirectHitWeight = 0,
+}
+
+local DOT_SPELL_PATTERNS = {
+    -- FIRE DoTs
+    { pattern = "flame shock", elem = "FIRE", dur = 12.0 },
+    { pattern = "immolate", elem = "FIRE", dur = 15.0 },
+    { pattern = "fireball", elem = "FIRE", dur = 8.0 },
+    { pattern = "pyroblast", elem = "FIRE", dur = 12.0 },
+    { pattern = "living bomb", elem = "FIRE", dur = 12.0 },
+    { pattern = "ignite", elem = "FIRE", dur = 4.0 },
+    { pattern = "combustion", elem = "FIRE", dur = 10.0 },
+    { pattern = "flamestrike", elem = "FIRE", dur = 8.0 },
+    { pattern = "conflagrate", elem = "FIRE", dur = 6.0 },
+    { pattern = "holy fire", elem = "FIRE", dur = 10.0 },
+    { pattern = "sunfire", elem = "FIRE", dur = 12.0 },
+    -- SHADOW DoTs
+    { pattern = "corruption", elem = "SHADOW", dur = 18.0 },
+    { pattern = "shadow word: pain", elem = "SHADOW", dur = 18.0 },
+    { pattern = "agony", elem = "SHADOW", dur = 24.0 },
+    { pattern = "curse of doom", elem = "SHADOW", dur = 60.0 },
+    { pattern = "vampiric touch", elem = "SHADOW", dur = 15.0 },
+    { pattern = "devouring plague", elem = "SHADOW", dur = 24.0 },
+    { pattern = "siphon life", elem = "SHADOW", dur = 30.0 },
+    { pattern = "unstable affliction", elem = "SHADOW", dur = 15.0 },
+    { pattern = "drain soul", elem = "SHADOW", dur = 12.0 },
+    { pattern = "mind flay", elem = "SHADOW", dur = 3.0 },
+    -- FROST DoTs / Chills
+    { pattern = "frost shock", elem = "FROST", dur = 8.0 },
+    { pattern = "frost fever", elem = "FROST", dur = 15.0 },
+    { pattern = "frostbolt", elem = "FROST", dur = 8.0 },
+    { pattern = "chains of ice", elem = "FROST", dur = 8.0 },
+    { pattern = "cone of cold", elem = "FROST", dur = 8.0 },
+    -- LIGHTNING / ARCANE DoTs
+    { pattern = "moonfire", elem = "LIGHTNING", dur = 12.0 },
+    { pattern = "stormstrike", elem = "LIGHTNING", dur = 12.0 },
+    { pattern = "thunder clap", elem = "LIGHTNING", dur = 10.0 },
+    { pattern = "thunderclap", elem = "LIGHTNING", dur = 10.0 },
+    { pattern = "electrocute", elem = "LIGHTNING", dur = 8.0 },
+    { pattern = "static", elem = "LIGHTNING", dur = 8.0 },
+    -- EARTH / NATURE DoTs
+    { pattern = "serpent sting", elem = "EARTH", dur = 15.0 },
+    { pattern = "insect swarm", elem = "EARTH", dur = 12.0 },
+    { pattern = "earthbind", elem = "EARTH", dur = 6.0 },
+    { pattern = "earthquake", elem = "EARTH", dur = 8.0 },
+    { pattern = "deadly poison", elem = "EARTH", dur = 12.0 },
+    -- PHYSICAL Bleeds
+    { pattern = "rend", elem = "PHYSICAL", dur = 15.0 },
+    { pattern = "deep wounds", elem = "PHYSICAL", dur = 12.0 },
+    { pattern = "garrote", elem = "PHYSICAL", dur = 18.0 },
+    { pattern = "rupture", elem = "PHYSICAL", dur = 12.0 },
+    { pattern = "rake", elem = "PHYSICAL", dur = 9.0 },
+    { pattern = "rip", elem = "PHYSICAL", dur = 12.0 },
+    { pattern = "lacerate", elem = "PHYSICAL", dur = 15.0 },
+}
+
+function ns.Elements:ClassifyDotSpell(spellName)
+    if not spellName or ns.IsSecret(spellName) or type(spellName) ~= "string" then
+        return nil, nil
+    end
+    local lower = string.lower(spellName)
+    for i = 1, #DOT_SPELL_PATTERNS do
+        local entry = DOT_SPELL_PATTERNS[i]
+        if string.find(lower, entry.pattern, 1, true) then
+            return entry.elem, entry.dur
+        end
+    end
+    return nil, nil
+end
+
+local LIGHTNING_KEYWORDS = {
+    "lightning", "thunder", "stormstrike", "storm", "overload", "static", "electr", "arc ", "chain lightning", "shock",
+}
+local EARTH_KEYWORDS = {
+    "earth", "rock", "stone", "quake", "boulder", "seismic", "tremor", "landslide", "shatter", "stomp", "maul", "slam",
+}
+local FIRE_KEYWORDS = {
+    "fire", "flame", "lava", "pyro", "scorch", "immolat", "conflag", "incinerat", "magma", "searing", "combust", "hellfire", "meteor", "inferno", "molten", "burn", "ember",
+}
+local FROST_KEYWORDS = {
+    "frost", "ice", "icy", "blizzard", "cold", "freez", "frozen", "glacial", "chill", "hail", "snow",
+}
+local SHADOW_KEYWORDS = {
+    "shadow", "void", "dark", "corruption", "agony", "pain", "mind ", "vampiric", "death coil", "drain", "haunt", "plague", "curse", "doom", "unholy", "necrotic",
+}
+
+function ns.Elements:GetProfile(elementKey)
+    if elementKey and not ns.IsSecret(elementKey) then
+        local upper = string.upper(tostring(elementKey))
+        if self.PROFILES[upper] then
+            return self.PROFILES[upper]
+        end
+    end
+    return self.PROFILES.PHYSICAL
+end
+
+function ns.Elements:ClassifyBySpellName(spellName)
+    if not spellName or ns.IsSecret(spellName) or type(spellName) ~= "string" then
+        return nil
+    end
+    local lower = string.lower(spellName)
+    -- Check specific elemental shocks first before generic "shock"
+    for i = 1, #FIRE_KEYWORDS do
+        if string.find(lower, FIRE_KEYWORDS[i], 1, true) then
+            return "FIRE"
+        end
+    end
+    for i = 1, #FROST_KEYWORDS do
+        if string.find(lower, FROST_KEYWORDS[i], 1, true) then
+            return "FROST"
+        end
+    end
+    for i = 1, #EARTH_KEYWORDS do
+        if string.find(lower, EARTH_KEYWORDS[i], 1, true) then
+            return "EARTH"
+        end
+    end
+    for i = 1, #SHADOW_KEYWORDS do
+        if string.find(lower, SHADOW_KEYWORDS[i], 1, true) then
+            return "SHADOW"
+        end
+    end
+    for i = 1, #LIGHTNING_KEYWORDS do
+        if string.find(lower, LIGHTNING_KEYWORDS[i], 1, true) then
+            return "LIGHTNING"
+        end
+    end
+    return nil
+end
+
+function ns.Elements:RecordPlayerCastStart(spellID, spellName)
+    local now = GetTime and GetTime() or 0
+    self.lastCastStartTime = now
+    self:RecordPlayerSpell(spellID, spellName, true)
+end
+
+function ns.Elements:RecordPlayerSpell(spellID, spellName, isCastStart)
+    if not spellName and spellID and not ns.IsSecret(spellID) then
+        if C_Spell and C_Spell.GetSpellName then
+            local ok, res = pcall(C_Spell.GetSpellName, spellID)
+            if ok then
+                spellName = res
+            end
+        elseif GetSpellInfo then
+            local ok, res = pcall(GetSpellInfo, spellID)
+            if ok then
+                spellName = res
+            end
+        end
+    end
+    local now = GetTime and GetTime() or 0
+    local elem = self:ClassifyBySpellName(spellName)
+    if elem then
+        self.lastPlayerElement = elem
+        self.lastPlayerElementTime = now
+    end
+    local dotElem, dotDur = self:ClassifyDotSpell(spellName)
+    if dotElem and not isCastStart then
+        self.lastPlayerDotElement = dotElem
+        self.lastPlayerDotDuration = dotDur or 8.0
+        self.lastPlayerDotTime = now
+    end
+    if not isCastStart then
+        local wasHardCast = (now - (self.lastCastStartTime or 0)) <= 4.2
+        self.pendingDirectHitTime = now
+        self.pendingDirectHitWeight = wasHardCast and 0.92 or 0.80
+    end
+    return elem, dotElem, dotDur
+end
+
+function ns.Elements:ConsumePendingDirectHit()
+    local now = GetTime and GetTime() or 0
+    if (now - (self.pendingDirectHitTime or 0)) <= 1.25 then
+        local w = self.pendingDirectHitWeight or 0.82
+        self.pendingDirectHitTime = 0
+        return true, w
+    end
+    return false, 0
+end
+
+function ns.Elements:ResolveElement(schoolMask, spellName, isAutoAttack)
+    if isAutoAttack then
+        return "PHYSICAL"
+    end
+    local byName = self:ClassifyBySpellName(spellName)
+    if byName then
+        return byName
+    end
+
+    local now = GetTime and GetTime() or 0
+    local recentCast = (self.lastPlayerElement and (now - (self.lastPlayerElementTime or 0)) <= 2.4)
+        and self.lastPlayerElement or nil
+
+    if schoolMask and not ns.IsSecret(schoolMask) and type(schoolMask) == "number" then
+        if bit and bit.band then
+            if bit.band(schoolMask, 4) ~= 0 then
+                return "FIRE"
+            elseif bit.band(schoolMask, 16) ~= 0 then
+                return "FROST"
+            elseif bit.band(schoolMask, 32) ~= 0 then
+                return "SHADOW"
+            elseif bit.band(schoolMask, 8) ~= 0 then
+                -- Nature school (8): distinguish Earth Shock vs Lightning Bolt via recent cast!
+                if recentCast == "EARTH" or recentCast == "LIGHTNING" then
+                    return recentCast
+                end
+                return "LIGHTNING"
+            elseif bit.band(schoolMask, 64) ~= 0 then
+                return "LIGHTNING"
+            elseif bit.band(schoolMask, 2) ~= 0 then
+                return "FIRE"
+            end
+        else
+            if schoolMask == 4 then
+                return "FIRE"
+            elseif schoolMask == 16 then
+                return "FROST"
+            elseif schoolMask == 32 then
+                return "SHADOW"
+            elseif schoolMask == 8 or schoolMask == 64 then
+                if recentCast == "EARTH" or recentCast == "LIGHTNING" then
+                    return recentCast
+                end
+                return "LIGHTNING"
+            end
+        end
+    end
+
+    if recentCast then
+        return recentCast
+    end
+    return "PHYSICAL"
+end
+
 local DEFAULTS = {
     version = "1.0.0",
     unitBars = {
@@ -48,13 +452,20 @@ local DEFAULTS = {
         enabled = true,
         hideVanillaDamage = true,
         anchorToNameplate = true,
-        baseOffsetY = 26,
+        anchorToWound = true,
+        elementalPhysics = true,
+        killFinisher = true,
+        baseOffsetY = 24,
         critOffsetY = 34,
-        normalFontSize = 17,
-        critFontSize = 24,
-        megaFontSize = 28,
-        durationNormal = 1.15,
-        durationCrit = 1.50,
+        dotFontSize = 16,
+        normalFontSize = 21,
+        critFontSize = 30,
+        megaFontSize = 35,
+        killFontSize = 38,
+        durationDot = 0.88,
+        durationNormal = 1.20,
+        durationCrit = 1.55,
+        durationKill = 1.95,
         critShockwave = true,
         fountainLanes = true,
         flurryEscalation = true,
@@ -71,6 +482,15 @@ local DEFAULTS = {
         alphaTravelling = 0.25,
         alphaResting = 0.20,
         alphaHarvesting = 0.30,
+    },
+    questTracker = {
+        enabled = true,
+        closeDistanceYards = 180,
+        nearbyDistanceYards = 600,
+        alphaClose = 1.0,
+        alphaNearby = 0.35,
+        autoManageWatches = true,
+        autoSuperTrackClose = true,
     },
 }
 
@@ -115,6 +535,18 @@ function ns.Config:Initialize()
             ForeverUIDB.stateEngine.alphaHarvesting = DEFAULTS.stateEngine.alphaHarvesting
         end
         MergeDefaults(ForeverUIDB, DEFAULTS)
+        if type(ForeverUIDB.questTracker) == "table" and (ForeverUIDB.questTracker.closeDistanceYards or 0) < 180 then
+            ForeverUIDB.questTracker.closeDistanceYards = 180
+            ForeverUIDB.questTracker.nearbyDistanceYards = 600
+        end
+        if type(ForeverUIDB.combatText) == "table" and (ForeverUIDB.combatText.normalFontSize or 0) < 21 then
+            ForeverUIDB.combatText.dotFontSize = DEFAULTS.combatText.dotFontSize
+            ForeverUIDB.combatText.normalFontSize = DEFAULTS.combatText.normalFontSize
+            ForeverUIDB.combatText.critFontSize = DEFAULTS.combatText.critFontSize
+            ForeverUIDB.combatText.megaFontSize = DEFAULTS.combatText.megaFontSize
+            ForeverUIDB.combatText.killFontSize = DEFAULTS.combatText.killFontSize
+            ForeverUIDB.combatText.durationKill = DEFAULTS.combatText.durationKill
+        end
     end
     self.db = ForeverUIDB
 end

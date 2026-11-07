@@ -75,13 +75,15 @@ def verify_lua_blocks_and_safety(lua_paths):
 
 
 def verify_feature_requirements():
-    # 1. Verify CombatText.lua is strictly text-only (creates FontString, no CreateTexture icons)
+    # 1. Verify CombatText.lua is strictly text-only (creates FontString, no CreateTexture icons, no FATAL banner)
     ct_path = os.path.join(ADDON_DIR, "Modules", "CombatText.lua")
     with open(ct_path, "r", encoding="utf-8") as f:
-        ct_code = strip_lua_comments_and_strings(f.read())
+        ct_raw = f.read()
+        ct_code = strip_lua_comments_and_strings(ct_raw)
     assert "CreateFontString" in ct_code, "CombatText.lua must create FontStrings"
     assert "CreateTexture" not in ct_code, "CombatText.lua must NOT create icon textures (text-only requirement)"
-    print("[PASS] CombatText.lua verified strictly text-only (no damage icons).")
+    assert '"FATAL"' not in ct_raw, "CombatText.lua must not display FATAL sub-banner text"
+    print("[PASS] CombatText.lua verified strictly text-only (no damage icons, no FATAL banner).")
 
     # 2. Verify CombatFX.lua DeathShatterBar has CreateLine cracks, SetRotation tilt, and NO FontStrings
     fx_path = os.path.join(ADDON_DIR, "Modules", "CombatFX.lua")
@@ -92,13 +94,31 @@ def verify_feature_requirements():
     assert "CreateFontString" not in fx_code, "CombatFX.lua DeathShatterBar must be a bare bar with no text/level"
     print("[PASS] CombatFX.lua DeathShatterBar verified: bare stone-gray bar, CreateLine cracks, and tilt physics.")
 
-    # 3. Verify Secret Value guards (ns.IsSecret / issecretvalue) are present in combat modules
-    for rel in ["Core/Config.lua", "Modules/UnitBars.lua", "Modules/Nameplates.lua", "Modules/CombatFX.lua", "Modules/CombatText.lua"]:
+    # 3. Verify Secret Value guards (ns.IsSecret / issecretvalue) are present in combat & quest modules
+    for rel in ["Core/Config.lua", "Core/StateEngine.lua", "Modules/UnitBars.lua", "Modules/Nameplates.lua", "Modules/CombatFX.lua", "Modules/CombatText.lua"]:
         mod_path = os.path.join(ADDON_DIR, rel.replace("/", os.sep))
         with open(mod_path, "r", encoding="utf-8") as f:
             mod_code = strip_lua_comments_and_strings(f.read())
         assert "IsSecret" in mod_code, f"{rel} must guard secret values with ns.IsSecret"
     print("[PASS] Secret-value guards (ns.IsSecret) verified across all combat modules.")
+
+    # 4. Verify DeathShatterBar never triggers on living units (no `or recentHit` in OnNamePlateRemoved,
+    #    no fake TriggerDamageImpact in secret SyncUnitState, and pooled nameplate anchors clear old FX)
+    np_path = os.path.join(ADDON_DIR, "Modules", "Nameplates.lua")
+    with open(np_path, "r", encoding="utf-8") as f:
+        np_code = strip_lua_comments_and_strings(f.read())
+    assert "or recentHit" not in np_code, "Nameplates.lua must never trigger death on 'or recentHit' when unit is still alive"
+    assert "CanTriggerDeath" in np_code, "Nameplates.lua must guard death triggers via CanTriggerDeath"
+    assert "ClearAnchorFX" in np_code, "Nameplates.lua must clear pooled anchor FX when a nameplate is added"
+
+    ub_path = os.path.join(ADDON_DIR, "Modules", "UnitBars.lua")
+    with open(ub_path, "r", encoding="utf-8") as f:
+        ub_code = strip_lua_comments_and_strings(f.read())
+    assert "self:TriggerDamageImpact(enhancer, 0.08" not in ub_code, (
+        "UnitBars.lua SyncUnitState must not fire fake TriggerDamageImpact on secret UNIT_HEALTH events"
+    )
+    assert "ClearAnchorFX" in fx_code, "CombatFX.lua must implement ClearAnchorFX for pooled nameplate frames"
+    print("[PASS] DeathShatterBar guards verified: only triggers on actual unit death and cleans up pooled frames.")
 
 
 if __name__ == "__main__":

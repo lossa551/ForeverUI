@@ -32,6 +32,11 @@ if (-not (Test-Path $TargetDir)) {
     New-Item -ItemType Directory -Path $TargetDir -Force | Out-Null
 }
 
-Copy-Item -Path (Join-Path $SourceDir "*") -Destination $TargetDir -Recurse -Force
-Write-Host "Deployed ForeverUI to: $TargetDir" -ForegroundColor Green
-Write-Host "Type /reload in World of Warcraft: Forever, then run /fui test or /fui kill!" -ForegroundColor Cyan
+$TargetItem = Get-Item $TargetDir
+if ($TargetItem.LinkType -eq "Junction" -or $TargetItem.LinkType -eq "SymbolicLink") {
+    Write-Host "ForeverUI is already linked via $($TargetItem.LinkType) to: $($TargetItem.Target)" -ForegroundColor Green
+} else {
+    Copy-Item -Path (Join-Path $SourceDir "*") -Destination $TargetDir -Recurse -Force
+    Write-Host "Deployed ForeverUI to: $TargetDir" -ForegroundColor Green
+}
+Write-Host "Type /reload in World of Warcraft: Forever, then run /fui showcase or /fui kill!" -ForegroundColor Cyan
