@@ -29,6 +29,9 @@ local DEFAULTS = {
     },
     nameplates = {
         enabled = true,
+        targetHighlight = true,
+        deflectCallouts = true,
+        interruptShatter = true,
         deathShatterEnabled = true,
         hideNameAndLevelOnDeath = true,
         deathTiltDegrees = -11.5,

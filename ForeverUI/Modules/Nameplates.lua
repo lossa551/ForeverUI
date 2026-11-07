@@ -5,6 +5,18 @@ ns.Nameplates = Nameplates
 Nameplates.byUnit = {}
 Nameplates.byGUID = {}
 
+local DEFLECT_ACTIONS = {
+    DODGE   = { label = "DODGE",    r = 0.82, g = 0.92, b = 1.00 },
+    PARRY   = { label = "PARRY!",   r = 0.90, g = 0.96, b = 1.00 },
+    BLOCK   = { label = "BLOCK",    r = 0.85, g = 0.90, b = 0.98 },
+    ABSORB  = { label = "ABSORB",   r = 0.62, g = 0.90, b = 1.00 },
+    IMMUNE  = { label = "IMMUNE",   r = 1.00, g = 0.86, b = 0.32 },
+    MISS    = { label = "MISS",     r = 0.78, g = 0.82, b = 0.88 },
+    EVADE   = { label = "EVADE",    r = 1.00, g = 0.86, b = 0.32 },
+    RESIST  = { label = "RESIST",   r = 0.78, g = 0.65, b = 1.00 },
+    DEFLECT = { label = "DEFLECT!", r = 0.90, g = 0.96, b = 1.00 },
+}
+
 local function IsPlayerUnitSafe(unitToken)
     if not unitToken then
         return false
@@ -14,6 +26,17 @@ local function IsPlayerUnitSafe(unitToken)
         return false
     end
     return isPlayer and true or false
+end
+
+local function IsTargetUnitSafe(unitToken)
+    if not unitToken or not UnitExists("target") then
+        return false
+    end
+    local isTarget = UnitIsUnit(unitToken, "target")
+    if ns.IsSecret(isTarget) then
+        return false
+    end
+    return isTarget and true or false
 end
 
 local function IsUnitDeadSafe(unitToken)
@@ -192,12 +215,30 @@ function Nameplates:GetAnyActiveEnemyPlate()
     self:ScanExistingNameplates()
     for unitToken, enhancer in pairs(self.byUnit) do
         if enhancer and enhancer.container and enhancer.statusBar and enhancer.statusBar:IsShown() then
+            if IsTargetUnitSafe(unitToken) then
+                return enhancer.container, enhancer
+            end
+        end
+    end
+    for unitToken, enhancer in pairs(self.byUnit) do
+        if enhancer and enhancer.container and enhancer.statusBar and enhancer.statusBar:IsShown() then
             if not IsPlayerUnitSafe(unitToken) then
                 return enhancer.container, enhancer
             end
         end
     end
     return nil, nil
+end
+
+function Nameplates:UpdateAllTargetStates(playPopOnNewTarget)
+    local hasAnyTarget = UnitExists("target") and not IsPlayerUnitSafe("target")
+    for unitToken, enhancer in pairs(self.byUnit) do
+        if enhancer and not enhancer.deathTriggered then
+            local isTarget = hasAnyTarget and IsTargetUnitSafe(unitToken) or false
+            local playPop = playPopOnNewTarget and isTarget and (not enhancer.isTarget)
+            ns.UnitBars:SetTargetState(enhancer, isTarget, hasAnyTarget, playPop)
+        end
+    end
 end
 
 function Nameplates:OnNamePlateAdded(unitToken)
@@ -223,6 +264,7 @@ function Nameplates:OnNamePlateAdded(unitToken)
     enhancer.initializedSecret = false
     enhancer.lastDamagedTime = 0
     enhancer.lastImpactTime = 0
+    enhancer.lastInterruptTime = 0
     enhancer.guid = GetUnitGUIDSafe(unitToken)
 
     SetNameplateExtrasAlpha(unitFrame, healthBar, enhancer.container, false)
@@ -232,6 +274,9 @@ function Nameplates:OnNamePlateAdded(unitToken)
         self.byGUID[enhancer.guid] = enhancer
     end
 
+    local hasAnyTarget = UnitExists("target") and not IsPlayerUnitSafe("target")
+    local isTarget = hasAnyTarget and IsTargetUnitSafe(unitToken) or false
+    ns.UnitBars:SetTargetState(enhancer, isTarget, hasAnyTarget, false)
     ns.UnitBars:SyncUnitState(enhancer, true)
 end
 
@@ -263,6 +308,9 @@ function Nameplates:TriggerDeathForEnhancer(enhancer)
         return
     end
     enhancer.deathTriggered = true
+    if enhancer.targetBrackets then
+        enhancer.targetBrackets:Hide()
+    end
 
     local barAnchor = enhancer.container or enhancer.statusBar
     if ns.CombatFX and barAnchor then
@@ -272,6 +320,60 @@ function Nameplates:TriggerDeathForEnhancer(enhancer)
     local npCfg = ns.Config:Get("nameplates")
     if npCfg and npCfg.hideNameAndLevelOnDeath then
         SetNameplateExtrasAlpha(enhancer.unitFrame, enhancer.statusBar, enhancer.container, true)
+    end
+end
+
+function Nameplates:TriggerInterruptForEnhancer(enhancer)
+    local npCfg = ns.Config:Get("nameplates")
+    if not enhancer or not npCfg or (npCfg.interruptShatter == false) then
+        return
+    end
+    local now = GetTime()
+    if (now - (enhancer.lastInterruptTime or 0)) < 0.30 then
+        return
+    end
+    enhancer.lastInterruptTime = now
+
+    ns.UnitBars:TriggerInterruptImpact(enhancer)
+
+    if ns.CombatText then
+        ns.CombatText:SpawnNumber({
+            text = "INTERRUPTED",
+            r = 0.22,
+            g = 0.95,
+            b = 1.00,
+            isCrit = true,
+            isMega = false,
+            isInterrupt = true,
+            anchorFrame = enhancer.container or enhancer.statusBar,
+            side = "right",
+        })
+    end
+end
+
+function Nameplates:TriggerDeflectForEnhancer(enhancer, actionKey)
+    local npCfg = ns.Config:Get("nameplates")
+    if not enhancer or not npCfg or (npCfg.deflectCallouts == false) then
+        return
+    end
+    local info = DEFLECT_ACTIONS[actionKey]
+    if not info then
+        return
+    end
+
+    ns.UnitBars:TriggerDeflectImpact(enhancer)
+
+    if ns.CombatText then
+        ns.CombatText:SpawnNumber({
+            text = info.label,
+            r = info.r,
+            g = info.g,
+            b = info.b,
+            isCrit = false,
+            isDeflect = true,
+            anchorFrame = enhancer.container or enhancer.statusBar,
+            side = "right",
+        })
     end
 end
 
@@ -306,10 +408,24 @@ function Nameplates:OnUnitCombat(unitToken, action, flagText, amount)
         self:OnNamePlateAdded(unitToken)
         enhancer = self.byUnit[unitToken]
     end
-    if not enhancer or ns.IsSecret(action) or action ~= "WOUND" or not amount then
+    if not enhancer or ns.IsSecret(action) then
+        return
+    end
+
+    -- 1. Check for Metallic Deflect / Avoidance actions (PARRY, DODGE, BLOCK, IMMUNE, ABSORB, MISS)
+    if DEFLECT_ACTIONS[action] then
+        self:TriggerDeflectForEnhancer(enhancer, action)
+        return
+    end
+
+    -- 2. Standard Damage Wound
+    if action ~= "WOUND" or not amount then
         return
     end
     if not ns.IsSecret(amount) and amount <= 0 then
+        if not ns.IsSecret(flagText) and DEFLECT_ACTIONS[flagText] then
+            self:TriggerDeflectForEnhancer(enhancer, flagText)
+        end
         return
     end
 
@@ -392,6 +508,7 @@ function Nameplates:ScanExistingNameplates()
             end
         end
     end
+    self:UpdateAllTargetStates(false)
     return count
 end
 
@@ -419,8 +536,18 @@ function Nameplates:OnEnable()
         end
     end, self)
 
+    ns.Events:Register("UNIT_SPELLCAST_INTERRUPTED", function(_, _, unitToken)
+        if unitToken and not ns.IsSecret(unitToken) and string.find(unitToken, "^nameplate") then
+            local enhancer = self.byUnit[unitToken]
+            if enhancer then
+                self:TriggerInterruptForEnhancer(enhancer)
+            end
+        end
+    end, self)
+
     ns.Events:Register("PLAYER_TARGET_CHANGED", function()
         self:ScanExistingNameplates()
+        self:UpdateAllTargetStates(true)
     end, self)
 
     ns.Events:Register("PLAYER_ENTERING_WORLD", function()

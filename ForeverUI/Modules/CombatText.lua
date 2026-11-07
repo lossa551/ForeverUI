@@ -214,16 +214,22 @@ function CombatText:SpawnNumber(opts)
         return
     end
 
+    local isDeflect = not not opts.isDeflect
+    local isInterrupt = not not opts.isInterrupt
+
     local now = GetTime()
     local flurryWindow = cfg.flurryWindow or 1.45
-    if (now - lastHitTime) <= flurryWindow then
-        flurryCount = math.min(8, flurryCount + 1)
-    else
-        flurryCount = 1
+    if not isDeflect and not isInterrupt then
+        if (now - lastHitTime) <= flurryWindow then
+            flurryCount = math.min(8, flurryCount + 1)
+        else
+            flurryCount = 1
+        end
+        lastHitTime = now
     end
-    lastHitTime = now
 
-    local flurryFactor = (cfg.flurryEscalation ~= false) and ((flurryCount - 1) / 7.0) or 0.0
+    local flurryFactor = ((not isDeflect and not isInterrupt) and cfg.flurryEscalation ~= false)
+        and ((flurryCount - 1) / 7.0) or 0.0
     local flurryScale = 1.0 + flurryFactor * 0.26
 
     local entry = AcquireTextEntry()
@@ -234,7 +240,10 @@ function CombatText:SpawnNumber(opts)
     local fontPath = STANDARD_TEXT_FONT or "Fonts\\FRIZQT__.TTF"
     local fontSize = isMega and (cfg.megaFontSize or 28)
         or (isCrit and (cfg.critFontSize or 24) or (cfg.normalFontSize or 17))
-    local fontFlags = isCrit and "THICKOUTLINE" or "OUTLINE"
+    if isDeflect then
+        fontSize = math.max(16, (cfg.normalFontSize or 17) + 1)
+    end
+    local fontFlags = (isCrit or isDeflect) and "THICKOUTLINE" or "OUTLINE"
 
     entry.fs:SetFont(fontPath, fontSize, fontFlags)
     SetFontStringTextSafe(entry.fs, opts.text)
@@ -243,11 +252,11 @@ function CombatText:SpawnNumber(opts)
     local r = opts.r or 1.0
     local g = opts.g or 1.0
     local b = opts.b or 1.0
-    if not isCrit and flurryFactor > 0.05 and r > 0.9 and g > 0.9 and b > 0.9 then
+    if not isCrit and not isDeflect and flurryFactor > 0.05 and r > 0.9 and g > 0.9 and b > 0.9 then
         r = 1.0
         g = 1.0 - flurryFactor * 0.42
         b = 1.0 - flurryFactor * 0.85
-    elseif isCrit then
+    elseif isCrit and not isInterrupt then
         r = 1.0
         g = isMega and 0.48 or math.max(0.45, (opts.g or 0.82) - flurryFactor * 0.25)
         b = 0.04
@@ -264,10 +273,12 @@ function CombatText:SpawnNumber(opts)
 
     -- Punctuation accent ("!" on Crits or high Flurry >= 5; "!!" on Mega Crits)
     local bangText = nil
-    if isMega or (isCrit and flurryCount >= 4) then
-        bangText = "!!"
-    elseif isCrit or flurryCount >= 5 then
-        bangText = "!"
+    if not isDeflect then
+        if isMega or (isCrit and flurryCount >= 4 and not isInterrupt) then
+            bangText = "!!"
+        elseif isCrit or flurryCount >= 5 then
+            bangText = "!"
+        end
     end
 
     if bangText then
@@ -281,13 +292,16 @@ function CombatText:SpawnNumber(opts)
 
     -- Crit Shockwave Echo Afterimage setup
     if hasShockwave then
+        local echoR = isInterrupt and 0.15 or 1.0
+        local echoG = isInterrupt and 0.88 or (isMega and 0.35 or 0.65)
+        local echoB = isInterrupt and 1.00 or 0.05
         entry.echoFs:SetFont(fontPath, fontSize, fontFlags)
         SetFontStringTextSafe(entry.echoFs, opts.text)
-        entry.echoFs:SetTextColor(1.0, isMega and 0.35 or 0.65, 0.05, 0.75)
+        entry.echoFs:SetTextColor(echoR, echoG, echoB, 0.75)
         if bangText then
             entry.echoBangFs:SetFont(fontPath, fontSize, fontFlags)
             entry.echoBangFs:SetText(bangText)
-            entry.echoBangFs:SetTextColor(1.0, isMega and 0.35 or 0.65, 0.05, 0.75)
+            entry.echoBangFs:SetTextColor(echoR, echoG, echoB, 0.75)
             entry.echoBangFs:Show()
         end
         entry.echoZoom:SetScale(1.0)
@@ -306,7 +320,19 @@ function CombatText:SpawnNumber(opts)
     local baseOffsetY = isCrit and (cfg.critOffsetY or 34) or (cfg.baseOffsetY or 26)
     local speedMult = 1.0 + flurryFactor * 0.22
 
-    if opts.side == "left" then
+    if isDeflect then
+        -- Metallic sideways ricochet trajectory off the bar
+        critSideToggle = -critSideToggle
+        entry.offsetX = critSideToggle * 18
+        entry.offsetY = (cfg.baseOffsetY or 26) - 4
+        entry.vx = critSideToggle * (92 + math.random() * 24)
+        entry.vy = 54 + math.random() * 14
+    elseif isInterrupt then
+        entry.offsetX = 0
+        entry.offsetY = (cfg.critOffsetY or 34) + 6
+        entry.vx = 0
+        entry.vy = 78
+    elseif opts.side == "left" then
         entry.offsetX = -12 + (math.random() * 10 - 5)
         entry.offsetY = baseOffsetY
         entry.vx = -32 * speedMult
@@ -333,7 +359,7 @@ function CombatText:SpawnNumber(opts)
     end
 
     -- Low upward-floating gravity so numbers NEVER drop back down across the health bar!
-    entry.gravity = isCrit and 36 or 52
+    entry.gravity = isDeflect and 115 or (isCrit and 36 or 52)
     entry.isCrit = isCrit
     entry.isMega = isMega
     entry.hasShockwave = hasShockwave

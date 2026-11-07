@@ -64,6 +64,45 @@ local function CreateBorderFrame(parent, r, g, b, thickness)
     return border
 end
 
+-- Crisp Golden/White L-Shaped Corner Lock-On Brackets for the Active Target
+local function CreateTargetBrackets(parent)
+    local frame = CreateFrame("Frame", nil, parent)
+    frame:SetAllPoints(parent)
+    frame:SetFrameLevel((parent:GetFrameLevel() or 1) + 6)
+
+    local armW = 8
+    local armH = 5
+    local thick = 2
+    local padX = 3
+    local padY = 2
+
+    local function MakeSegment(point, relPoint, ox, oy, w, h)
+        local tex = frame:CreateTexture(nil, "OVERLAY", nil, 7)
+        tex:SetTexture("Interface\\Buttons\\WHITE8X8")
+        tex:SetBlendMode("ADD")
+        tex:SetVertexColor(1.0, 0.86, 0.28, 0.96)
+        tex:SetPoint(point, frame, relPoint, ox, oy)
+        tex:SetSize(w, h)
+        return tex
+    end
+
+    -- Top-Left L bracket
+    MakeSegment("TOPLEFT", "TOPLEFT", -padX, padY, armW, thick)
+    MakeSegment("TOPLEFT", "TOPLEFT", -padX, padY, thick, armH)
+    -- Top-Right L bracket
+    MakeSegment("TOPRIGHT", "TOPRIGHT", padX, padY, armW, thick)
+    MakeSegment("TOPRIGHT", "TOPRIGHT", padX, padY, thick, armH)
+    -- Bottom-Left L bracket
+    MakeSegment("BOTTOMLEFT", "BOTTOMLEFT", -padX, -padY, armW, thick)
+    MakeSegment("BOTTOMLEFT", "BOTTOMLEFT", -padX, -padY, thick, armH)
+    -- Bottom-Right L bracket
+    MakeSegment("BOTTOMRIGHT", "BOTTOMRIGHT", padX, -padY, armW, thick)
+    MakeSegment("BOTTOMRIGHT", "BOTTOMRIGHT", padX, -padY, thick, armH)
+
+    frame:Hide()
+    return frame
+end
+
 local function AddClassicBarBevel(statusBar)
     local sheen = statusBar:CreateTexture(nil, "OVERLAY", nil, 1)
     sheen:SetTexture("Interface\\Buttons\\WHITE8X8")
@@ -215,11 +254,13 @@ function UnitBars:CreateBarEnhancer(statusBar, unitToken, isNameplate)
     cutLine:Hide()
 
     local executeBorder = CreateBorderFrame(fxOverlay, 1.0, 0.15, 0.15, 2)
+    local targetBrackets = CreateTargetBrackets(fxOverlay)
 
     local enhancer = {
         statusBar = statusBar,
         unit = unitToken,
         isNameplate = isNameplate,
+        isTarget = false,
         baseWidth = defaultW,
         baseHeight = defaultH,
         container = container,
@@ -230,6 +271,7 @@ function UnitBars:CreateBarEnhancer(statusBar, unitToken, isNameplate)
         hitFlash = hitFlash,
         cutLine = cutLine,
         executeBorder = executeBorder,
+        targetBrackets = targetBrackets,
         isSecretHealth = false,
         initializedSecret = false,
         secretCurHp = nil,
@@ -243,12 +285,16 @@ function UnitBars:CreateBarEnhancer(statusBar, unitToken, isNameplate)
         trailFrac = 1.0,
         trailHoldTimer = 0,
         flashAlpha = 0,
+        flashR = 1.0,
+        flashG = 0.95,
+        flashB = 0.85,
         cutAlpha = 0,
         trauma = 0,
         barPunchY = 1.0,
         isExecute = false,
         lastImpactTime = 0,
         lastDamagedTime = 0,
+        lastInterruptTime = 0,
         deathTriggered = false,
     }
 
@@ -256,6 +302,37 @@ function UnitBars:CreateBarEnhancer(statusBar, unitToken, isNameplate)
     self:RefreshBarColor(enhancer)
     self:RenderEnhancer(enhancer, 0, 0)
     return enhancer
+end
+
+function UnitBars:SetTargetState(enhancer, isTarget, hasAnyTarget, playPop)
+    if not enhancer or enhancer.deathTriggered then
+        return
+    end
+    local npCfg = ns.Config:Get("nameplates")
+    local highlightEnabled = not npCfg or (npCfg.targetHighlight ~= false)
+    enhancer.isTarget = isTarget and highlightEnabled
+
+    if enhancer.isNameplate then
+        if enhancer.isTarget then
+            enhancer.baseHeight = 14
+            enhancer.targetBrackets:Show()
+            enhancer.container:SetAlpha(1.0)
+            if playPop then
+                enhancer.barPunchY = math.max(enhancer.barPunchY, 1.28)
+                enhancer.flashR, enhancer.flashG, enhancer.flashB = 1.0, 0.95, 0.75
+                enhancer.flashAlpha = math.max(enhancer.flashAlpha, 0.45)
+                activeAnimEnhancers[enhancer] = true
+                EnsureEnhancerTicker()
+            end
+        else
+            enhancer.baseHeight = 11
+            enhancer.targetBrackets:Hide()
+            -- Subtly dim untargeted mobs (86%) when a target is selected so your target pops out!
+            enhancer.container:SetAlpha(hasAnyTarget and 0.86 or 1.0)
+        end
+    end
+
+    self:RenderEnhancer(enhancer, 0, 0)
 end
 
 function UnitBars:RefreshBarColor(enhancer)
@@ -310,8 +387,6 @@ function UnitBars:SyncUnitState(enhancer, forceReset)
             return
         end
 
-        -- Health changed: snap mainBar immediately so cutLine sits at the new HP seam
-        -- while trailBar holds the previous HP chunk until trailHoldTimer expires!
         enhancer.mainBar:SetMinMaxValues(0, maxHp)
         enhancer.mainBar:SetValue(curHp, interpImmediate)
         enhancer.trailBar:SetMinMaxValues(0, maxHp)
@@ -390,6 +465,7 @@ function UnitBars:TriggerDamageImpact(enhancer, pctLost, isCrit, isMega)
     enhancer.lastImpactTime = now
     enhancer.lastDamagedTime = now
     enhancer.trailHoldTimer = isCrit and (cfg.trailHoldCrit or 0.38) or (cfg.trailHoldNormal or 0.24)
+    enhancer.flashR, enhancer.flashG, enhancer.flashB = 1.0, 0.95, 0.85
     enhancer.flashAlpha = isCrit and 0.95 or 0.75
     enhancer.cutAlpha = 1.0
 
@@ -406,7 +482,6 @@ function UnitBars:TriggerDamageImpact(enhancer, pctLost, isCrit, isMega)
         or (isCrit and (cfg.barPunchCrit or 1.48) or (cfg.barPunchNormal or 1.24))
     enhancer.barPunchY = math.max(enhancer.barPunchY, punch)
 
-    -- Anchor sparks directly to cutLine (which C++ places at the exact right edge of mainBar!)
     local sparkAnchor = enhancer.cutLine or enhancer.container
     if ns.CombatFX and sparkAnchor then
         if isCrit or pctLost >= 0.10 then
@@ -415,6 +490,42 @@ function UnitBars:TriggerDamageImpact(enhancer, pctLost, isCrit, isMega)
         else
             ns.CombatFX:SpawnBarSparks(sparkAnchor, nil, 4, 1.0, 0.82, 0.25, false)
         end
+    end
+
+    activeAnimEnhancers[enhancer] = true
+    EnsureEnhancerTicker()
+end
+
+-- Metallic glint jolt when an attack is Parried, Dodged, Blocked, or Immune
+function UnitBars:TriggerDeflectImpact(enhancer)
+    if not enhancer then
+        return
+    end
+    enhancer.flashR, enhancer.flashG, enhancer.flashB = 0.85, 0.92, 1.0
+    enhancer.flashAlpha = math.max(enhancer.flashAlpha, 0.65)
+    enhancer.barPunchY = math.max(enhancer.barPunchY, 1.18)
+    enhancer.trauma = math.max(enhancer.trauma, 0.34)
+
+    if ns.CombatFX and enhancer.container then
+        ns.CombatFX:SpawnBarSparks(enhancer.container, 0.5, 7, 0.82, 0.92, 1.0, false)
+    end
+
+    activeAnimEnhancers[enhancer] = true
+    EnsureEnhancerTicker()
+end
+
+-- Electric cyan shatter jolt when an enemy spellcast is Interrupted!
+function UnitBars:TriggerInterruptImpact(enhancer)
+    if not enhancer then
+        return
+    end
+    enhancer.flashR, enhancer.flashG, enhancer.flashB = 0.25, 0.95, 1.0
+    enhancer.flashAlpha = 0.98
+    enhancer.barPunchY = math.max(enhancer.barPunchY, 1.55)
+    enhancer.trauma = math.max(enhancer.trauma, 0.85)
+
+    if ns.CombatFX and enhancer.container then
+        ns.CombatFX:SpawnBarSparks(enhancer.container, 0.5, 16, 0.22, 0.92, 1.0, false)
     end
 
     activeAnimEnhancers[enhancer] = true
@@ -530,9 +641,10 @@ function UnitBars:RenderEnhancer(enhancer, dx, dy)
     end
 
     -- Never call bar:GetHeight() on Restricted Regions; use enhancer.baseHeight!
-    local h = enhancer.baseHeight or 12
-    local punchedH = h * enhancer.barPunchY
-    local yPad = (punchedH - h) * 0.5
+    local defaultH = enhancer.isNameplate and 12 or 14
+    local targetH = enhancer.baseHeight or defaultH
+    local punchedH = targetH * enhancer.barPunchY
+    local yPad = (punchedH - defaultH) * 0.5
 
     local container = enhancer.container
     container:ClearAllPoints()
@@ -562,7 +674,12 @@ function UnitBars:RenderEnhancer(enhancer, dx, dy)
     end
 
     if enhancer.flashAlpha > 0.01 then
-        enhancer.hitFlash:SetAlpha(enhancer.flashAlpha)
+        enhancer.hitFlash:SetVertexColor(
+            enhancer.flashR or 1.0,
+            enhancer.flashG or 0.95,
+            enhancer.flashB or 0.85,
+            enhancer.flashAlpha
+        )
         enhancer.hitFlash:Show()
     else
         enhancer.hitFlash:Hide()

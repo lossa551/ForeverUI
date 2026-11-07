@@ -38,6 +38,9 @@ local function GetOrCreateDemoBar()
     demoEnhancer.trailBar:SetMinMaxValues(0, 1000)
     demoEnhancer.container:Show()
     demoEnhancer.container:SetAlpha(1.0)
+    if demoEnhancer.targetBrackets then
+        demoEnhancer.targetBrackets:Show()
+    end
     if demoNameLabel then
         demoNameLabel:Show()
     end
@@ -55,7 +58,19 @@ function ns:RunInGameDemo(mode)
         usingDemoBar = true
     end
 
-    if mode == "kill" then
+    if mode == "interrupt" then
+        enhancer.lastInterruptTime = 0
+        ns.Nameplates:TriggerInterruptForEnhancer(enhancer)
+        PrintMsg("Triggered Interrupt Shatter (electric cyan shockwave + arcane sparks).")
+        return
+    elseif mode == "parry" then
+        ns.Nameplates:TriggerDeflectForEnhancer(enhancer, "PARRY")
+        PrintMsg("Triggered Metallic Deflect Callout (sideways ricochet PARRY! + silver glint sparks).")
+        return
+    elseif mode == "kill" then
+        if usingDemoBar and demoEnhancer.targetBrackets then
+            demoEnhancer.targetBrackets:Hide()
+        end
         ns.CombatFX:SpawnDeathShatterBar(bar)
         if usingDemoBar then
             if demoNameLabel then
@@ -79,7 +94,7 @@ function ns:RunInGameDemo(mode)
         return
     end
 
-    -- Reset bar to 100% and run Flurry Fountain -> Crit Shockwave -> Mega Crit Death Bar combo
+    -- Reset bar to 100% and run Flurry Fountain -> Parry Ricochet -> Interrupt Shatter -> Crit Shockwave -> Mega Crit Death Bar
     enhancer.deathTriggered = false
     enhancer.isSecretHealth = false
     enhancer.mainBar:SetMinMaxValues(0, 1000)
@@ -89,6 +104,9 @@ function ns:RunInGameDemo(mode)
     enhancer.targetFrac = 0.86
     enhancer.statusBar:SetAlpha(1.0)
     enhancer.container:SetAlpha(1.0)
+    if enhancer.targetBrackets then
+        enhancer.targetBrackets:Show()
+    end
     if usingDemoBar then
         demoBar:SetValue(86)
     end
@@ -103,13 +121,13 @@ function ns:RunInGameDemo(mode)
 
     if C_Timer and C_Timer.After then
         C_Timer.After(0.24, function()
-            enhancer.targetFrac = 0.70
+            enhancer.targetFrac = 0.68
             if usingDemoBar then
-                demoBar:SetValue(70)
+                demoBar:SetValue(68)
             end
-            ns.UnitBars:TriggerDamageImpact(enhancer, 0.16, false, false)
+            ns.UnitBars:TriggerDamageImpact(enhancer, 0.18, false, false)
             ns.CombatText:SpawnNumber({
-                text = "219",
+                text = "235",
                 r = 1.0, g = 1.0, b = 1.0,
                 isCrit = false,
                 anchorFrame = bar,
@@ -118,26 +136,20 @@ function ns:RunInGameDemo(mode)
         end)
 
         C_Timer.After(0.50, function()
-            enhancer.targetFrac = 0.54
-            if usingDemoBar then
-                demoBar:SetValue(54)
-            end
-            ns.UnitBars:TriggerDamageImpact(enhancer, 0.16, false, false)
-            ns.CombatText:SpawnNumber({
-                text = "246",
-                r = 1.0, g = 1.0, b = 1.0,
-                isCrit = false,
-                anchorFrame = bar,
-                side = "right",
-            })
+            ns.Nameplates:TriggerDeflectForEnhancer(enhancer, "PARRY")
         end)
 
-        C_Timer.After(0.82, function()
-            enhancer.targetFrac = 0.22
+        C_Timer.After(0.80, function()
+            enhancer.lastInterruptTime = 0
+            ns.Nameplates:TriggerInterruptForEnhancer(enhancer)
+        end)
+
+        C_Timer.After(1.18, function()
+            enhancer.targetFrac = 0.24
             if usingDemoBar then
-                demoBar:SetValue(22)
+                demoBar:SetValue(24)
             end
-            ns.UnitBars:TriggerDamageImpact(enhancer, 0.32, true, false)
+            ns.UnitBars:TriggerDamageImpact(enhancer, 0.44, true, false)
             ns.CombatText:SpawnNumber({
                 text = "864",
                 r = 1.0, g = 0.82, b = 0.0,
@@ -148,7 +160,10 @@ function ns:RunInGameDemo(mode)
             })
         end)
 
-        C_Timer.After(1.38, function()
+        C_Timer.After(1.75, function()
+            if enhancer.targetBrackets then
+                enhancer.targetBrackets:Hide()
+            end
             ns.CombatFX:SpawnDeathShatterBar(bar)
             if usingDemoBar then
                 if demoNameLabel then
@@ -170,7 +185,7 @@ function ns:RunInGameDemo(mode)
             })
         end)
 
-        C_Timer.After(2.90, function()
+        C_Timer.After(3.25, function()
             if usingDemoBar and demoBar then
                 demoBar:Hide()
                 demoEnhancer.container:Hide()
@@ -209,6 +224,10 @@ local function HandleSlashCommand(msg)
         ns:RunInGameDemo("combo")
     elseif cmd == "kill" then
         ns:RunInGameDemo("kill")
+    elseif cmd == "interrupt" then
+        ns:RunInGameDemo("interrupt")
+    elseif cmd == "parry" or cmd == "deflect" then
+        ns:RunInGameDemo("parry")
     elseif cmd == "status" then
         local count = ns.Nameplates and ns.Nameplates:ScanExistingNameplates() or 0
         local cvarVal = GetCVar and GetCVar("nameplateShowEnemies") or "?"
@@ -234,8 +253,10 @@ local function HandleSlashCommand(msg)
         PrintMsg("Configuration reset to defaults.")
     else
         PrintMsg("Commands:")
-        PrintMsg("  /fui test      - Preview Flurry Fountain -> Crit Shockwave -> Bare Cracked Death Bar")
+        PrintMsg("  /fui test      - Preview Flurry -> Parry -> Interrupt -> Crit Shockwave -> Death Bar")
         PrintMsg("  /fui kill      - Preview Killing Blow bare cracked/tilted gray death bar")
+        PrintMsg("  /fui interrupt - Preview Electric Cyan Interrupt Shatter")
+        PrintMsg("  /fui parry     - Preview Metallic Deflect Ricochet (PARRY!)")
         PrintMsg("  /fui status    - Check how many enemy nameplates are currently hooked")
         PrintMsg("  /fui statefade - Toggle out-of-combat state fading")
         PrintMsg("  /fui reset     - Reset settings to defaults")
