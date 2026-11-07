@@ -61,9 +61,80 @@ local HUD_FRAME_NAMES = {
     "DebuffFrame",
 }
 
+-- Direct bounding-box hover check list (excludes wide/tall empty layout containers like ObjectiveTrackerFrame)
+local HOVER_FRAME_NAMES = {
+    "PlayerFrame",
+    "PetFrame",
+    "TargetFrame",
+    "FocusFrame",
+    "PartyFrame",
+    "PartyMemberFrame1",
+    "PartyMemberFrame2",
+    "PartyMemberFrame3",
+    "PartyMemberFrame4",
+    "CompactPartyFrame",
+    "MainMenuBar",
+    "MainActionBar",
+    "MultiBarBottomLeft",
+    "MultiBarBottomRight",
+    "MultiBarRight",
+    "MultiBarLeft",
+    "MultiBar5",
+    "MultiBar6",
+    "MultiBar7",
+    "StanceBar",
+    "StanceBarFrame",
+    "ShapeshiftBarFrame",
+    "PetActionBar",
+    "PetActionBarFrame",
+    "PossessActionBar",
+    "PossessBarFrame",
+    "StatusTrackingBarManager",
+    "MainStatusTrackingBarContainer",
+    "SecondaryStatusTrackingBarContainer",
+    "MainMenuExpBar",
+    "ReputationWatchBar",
+    "BagsBar",
+    "MicroMenuContainer",
+    "MicroMenu",
+    "MicroButtonAndBagsBar",
+}
+
+local HOVER_NAME_PREFIXES = {
+    "PlayerFrame",
+    "PetFrame",
+    "TargetFrame",
+    "FocusFrame",
+    "Party",
+    "Compact",
+    "ActionButton",
+    "MultiBar",
+    "MainMenu",
+    "MainActionBar",
+    "Stance",
+    "Shapeshift",
+    "PetAction",
+    "Possess",
+    "StatusTracking",
+    "Reputation",
+    "BagsBar",
+    "CharacterBag",
+    "KeyRing",
+    "Micro",
+    "Buff",
+    "Debuff",
+    "TempEnchant",
+    "ObjectiveTracker",
+    "WatchFrame",
+    "Quest",
+}
+
 StateEngine.currentState = StateEngine.STATES.EXPLORING
 StateEngine.isHarvesting = false
 StateEngine.overrideState = nil
+StateEngine.isMouseHovered = false
+StateEngine.unhoverTimer = 0
+StateEngine.hoverCheckAccum = 0
 StateEngine.currentAlpha = 1.0
 StateEngine.targetAlpha = 1.0
 
@@ -77,6 +148,93 @@ local function IsHarvestSpell(spellName)
             return true
         end
     end
+    return false
+end
+
+local function MatchesHoverPrefix(name)
+    if type(name) ~= "string" or name == "" then
+        return false
+    end
+    for i = 1, #HOVER_NAME_PREFIXES do
+        if string.find(name, HOVER_NAME_PREFIXES[i], 1, true) == 1 then
+            return true
+        end
+    end
+    return false
+end
+
+function StateEngine:IsMouseOverHUD()
+    local hudSet = {}
+    for i = 1, #HUD_FRAME_NAMES do
+        local f = _G[HUD_FRAME_NAMES[i]]
+        if f then
+            hudSet[f] = true
+        end
+    end
+
+    -- 1. Check active mouse focus frames (GetMouseFoci in 16001, GetMouseFocus fallback)
+    local foci = nil
+    if GetMouseFoci then
+        local ok, res = pcall(GetMouseFoci)
+        if ok and type(res) == "table" then
+            foci = res
+        end
+    elseif GetMouseFocus then
+        local ok, res = pcall(GetMouseFocus)
+        if ok and res then
+            foci = { res }
+        end
+    end
+
+    if foci then
+        for i = 1, #foci do
+            local focus = foci[i]
+            if focus and focus ~= WorldFrame and focus ~= UIParent then
+                local cur = focus
+                local depth = 0
+                local isNameplate = false
+                local matchedHUD = false
+                while cur and cur ~= UIParent and cur ~= WorldFrame and depth < 14 do
+                    if hudSet[cur] then
+                        matchedHUD = true
+                        break
+                    end
+                    local okN, fName = pcall(cur.GetName, cur)
+                    if okN and type(fName) == "string" then
+                        if string.find(fName, "NamePlate", 1, true) == 1 then
+                            isNameplate = true
+                            break
+                        end
+                        if MatchesHoverPrefix(fName) then
+                            matchedHUD = true
+                            break
+                        end
+                    end
+                    local okP, parent = pcall(cur.GetParent, cur)
+                    cur = okP and parent or nil
+                    depth = depth + 1
+                end
+                if matchedHUD and not isNameplate then
+                    return true
+                end
+            end
+        end
+    end
+
+    -- 2. Check bounding-box IsMouseOver on visible unit frames & action bars (catches gaps/bars with EnableMouse(false))
+    for i = 1, #HOVER_FRAME_NAMES do
+        local f = _G[HOVER_FRAME_NAMES[i]]
+        if f and f.IsShown and f.IsMouseOver then
+            local okS, shown = pcall(f.IsShown, f)
+            if okS and shown then
+                local okM, over = pcall(f.IsMouseOver, f)
+                if okM and over then
+                    return true
+                end
+            end
+        end
+    end
+
     return false
 end
 
@@ -128,6 +286,10 @@ function StateEngine:GetTargetAlphaForState(state)
     end
     if state == self.STATES.COMBAT then
         return cfg.alphaCombat or 1.0
+    end
+    -- Wake HUD to 100% normal opacity whenever mousing over any HUD element
+    if self.isMouseHovered and cfg.wakeOnMouseover ~= false then
+        return 1.0
     end
     -- Wake HUD to 100% opacity when a target is actively selected (unless testing an explicit /fui state override)
     if not self.overrideState and cfg.wakeOnTarget ~= false and UnitExists and UnitExists("target") then
@@ -241,6 +403,50 @@ function StateEngine:OnEnable()
             self:RefreshState(false)
         end
     end, self)
+
+    -- Lightweight hover watcher: restores HUD to 100% normal opacity on mouseover and smoothly fades back out after leaving
+    ns.Events:RegisterTicker("StateEngineHoverWatcher", function(dt)
+        self.hoverCheckAccum = (self.hoverCheckAccum or 0) + dt
+        if self.hoverCheckAccum < 0.06 then
+            return true
+        end
+        local stepDt = self.hoverCheckAccum
+        self.hoverCheckAccum = 0
+
+        local cfg = ns.Config:Get("stateEngine")
+        if not cfg or (cfg.fadeHUD == false and cfg.fadeUnitFrames == false) or cfg.wakeOnMouseover == false then
+            if self.isMouseHovered then
+                self.isMouseHovered = false
+                self.unhoverTimer = 0
+                self:RefreshState(false)
+            end
+            return true
+        end
+
+        if InCombatLockdown() or UnitAffectingCombat("player") then
+            self.isMouseHovered = false
+            self.unhoverTimer = 0
+            return true
+        end
+
+        local overNow = self:IsMouseOverHUD()
+        if overNow then
+            self.unhoverTimer = 0.16
+            if not self.isMouseHovered then
+                self.isMouseHovered = true
+                self:RefreshState(false)
+            end
+        elseif self.isMouseHovered then
+            self.unhoverTimer = (self.unhoverTimer or 0) - stepDt
+            if self.unhoverTimer <= 0 then
+                self.isMouseHovered = false
+                self.unhoverTimer = 0
+                self:RefreshState(false)
+            end
+        end
+
+        return true
+    end)
 
     self:RefreshState(false)
 end

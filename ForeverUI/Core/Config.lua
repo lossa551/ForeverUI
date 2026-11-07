@@ -65,6 +65,7 @@ local DEFAULTS = {
         fadeHUD = true,
         fadeUnitFrames = true,
         wakeOnTarget = true,
+        wakeOnMouseover = true,
         alphaCombat = 1.0,
         alphaExploring = 0.35,
         alphaTravelling = 0.25,
