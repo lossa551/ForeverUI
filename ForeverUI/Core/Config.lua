@@ -62,12 +62,14 @@ local DEFAULTS = {
     },
     stateEngine = {
         enabled = true,
-        fadeUnitFrames = false, -- Ready for Phase 2 toggle (/fui statefade)
+        fadeHUD = true,
+        fadeUnitFrames = true,
+        wakeOnTarget = true,
         alphaCombat = 1.0,
-        alphaExploring = 0.72,
-        alphaTravelling = 0.65,
-        alphaResting = 0.42,
-        alphaHarvesting = 0.60,
+        alphaExploring = 0.35,
+        alphaTravelling = 0.25,
+        alphaResting = 0.20,
+        alphaHarvesting = 0.30,
     },
 }
 
@@ -100,6 +102,17 @@ function ns.Config:Initialize()
     if type(ForeverUIDB) ~= "table" then
         ForeverUIDB = DeepCopy(DEFAULTS)
     else
+        -- Migrate pre-HUD-fade SavedVariables where fadeUnitFrames defaulted to false
+        if type(ForeverUIDB.stateEngine) == "table" and ForeverUIDB.stateEngine.fadeHUD == nil then
+            ForeverUIDB.stateEngine.fadeHUD = true
+            ForeverUIDB.stateEngine.fadeUnitFrames = true
+            ForeverUIDB.stateEngine.wakeOnTarget = true
+            ForeverUIDB.stateEngine.alphaCombat = DEFAULTS.stateEngine.alphaCombat
+            ForeverUIDB.stateEngine.alphaExploring = DEFAULTS.stateEngine.alphaExploring
+            ForeverUIDB.stateEngine.alphaTravelling = DEFAULTS.stateEngine.alphaTravelling
+            ForeverUIDB.stateEngine.alphaResting = DEFAULTS.stateEngine.alphaResting
+            ForeverUIDB.stateEngine.alphaHarvesting = DEFAULTS.stateEngine.alphaHarvesting
+        end
         MergeDefaults(ForeverUIDB, DEFAULTS)
     end
     self.db = ForeverUIDB

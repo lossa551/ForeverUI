@@ -231,22 +231,26 @@ local function HandleSlashCommand(msg)
     elseif cmd == "status" then
         local count = ns.Nameplates and ns.Nameplates:ScanExistingNameplates() or 0
         local cvarVal = GetCVar and GetCVar("nameplateShowEnemies") or "?"
-        PrintMsg("Active enemy nameplates hooked: " .. tostring(count) .. " (nameplateShowEnemies=" .. tostring(cvarVal) .. ")")
+        local stateStr = tostring(ns.StateEngine and ns.StateEngine.currentState or "?")
+        local alphaStr = string.format("%.2f", ns.StateEngine and ns.StateEngine.currentAlpha or 1.0)
+        PrintMsg("Active enemy nameplates hooked: " .. tostring(count) .. " (nameplateShowEnemies=" .. tostring(cvarVal) .. ") | State: " .. stateStr .. " (HUD alpha=" .. alphaStr .. ")")
     elseif cmd == "state" then
         local upper = string.upper(arg or "")
         if ns.StateEngine.STATES[upper] then
             ns.StateEngine:SetOverrideState(upper)
-            PrintMsg("State override set to " .. upper)
+            PrintMsg("State override set to " .. upper .. " (target alpha=" .. string.format("%.2f", ns.StateEngine.targetAlpha or 1.0) .. ")")
         else
             ns.StateEngine:SetOverrideState(nil)
-            PrintMsg("State override cleared (current: " .. tostring(ns.StateEngine.currentState) .. ")")
+            PrintMsg("State override cleared (current: " .. tostring(ns.StateEngine.currentState) .. ", target alpha=" .. string.format("%.2f", ns.StateEngine.targetAlpha or 1.0) .. ")")
         end
     elseif cmd == "statefade" then
         local seCfg = ns.Config:Get("stateEngine")
         if seCfg then
-            seCfg.fadeUnitFrames = not seCfg.fadeUnitFrames
-            ns.StateEngine:RefreshState()
-            PrintMsg("Context state unit-frame fade: " .. (seCfg.fadeUnitFrames and "ON" or "OFF"))
+            local newState = not (seCfg.fadeHUD ~= false and seCfg.fadeUnitFrames ~= false)
+            seCfg.fadeHUD = newState
+            seCfg.fadeUnitFrames = newState
+            ns.StateEngine:RefreshState(false)
+            PrintMsg("Context state HUD fade: " .. (newState and "ON" or "OFF") .. " (target alpha=" .. string.format("%.2f", ns.StateEngine.targetAlpha or 1.0) .. ")")
         end
     elseif cmd == "reset" then
         ns.Config:Reset()
