@@ -31,7 +31,7 @@ def verify_toc():
     assert sv_lines and "ForeverUIDB" in sv_lines[0], "Missing ## SavedVariables: ForeverUIDB"
 
     lua_files = [l.replace("\\", os.sep) for l in lines if l and not l.startswith("#")]
-    assert len(lua_files) == 9, f"Expected 9 Lua files in TOC, found {len(lua_files)}"
+    assert len(lua_files) == 10, f"Expected 10 Lua files in TOC, found {len(lua_files)}"
 
     for rel_path in lua_files:
         full_path = os.path.join(ADDON_DIR, rel_path)
@@ -129,6 +129,16 @@ def verify_feature_requirements():
     )
     assert "ClearAnchorFX" in fx_code, "CombatFX.lua must implement ClearAnchorFX for pooled nameplate frames"
     print("[PASS] DeathShatterBar guards verified: only triggers on actual unit death and cleans up pooled frames.")
+
+    # 5. Verify Options.lua and Art Presets system
+    opt_path = os.path.join(ADDON_DIR, "Core", "Options.lua")
+    with open(opt_path, "r", encoding="utf-8") as f:
+        opt_raw = f.read()
+        opt_code = strip_lua_comments_and_strings(opt_raw)
+    assert "CreateMinimapButton" in opt_code, "Options.lua must create the Minimap button"
+    assert "ForeverUI_OptionsFrame" in opt_raw, "Options.lua must define ForeverUI_OptionsFrame"
+    assert "BuildPresetsTab" in opt_code, "Options.lua must provide the Art Presets tab"
+    print("[PASS] Options.lua verified: OptionsFrame, MinimapButton, and Art Presets tab implemented.")
 
 
 if __name__ == "__main__":

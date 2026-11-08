@@ -419,7 +419,13 @@ end
 
 local function HandleSlashCommand(msg)
     local cmd, arg = string.match(string.lower(msg or ""), "^(%S*)%s*(.-)$")
-    if cmd == "test" or cmd == "showcase" or cmd == "elements" or cmd == "" then
+    if cmd == "" or cmd == "config" or cmd == "options" or cmd == "opt" or cmd == "menu" or cmd == "settings" then
+        if ns.Options and ns.Options.Toggle then
+            ns.Options:Toggle()
+        else
+            ns:RunInGameDemo("showcase")
+        end
+    elseif cmd == "test" or cmd == "showcase" or cmd == "elements" then
         ns:RunInGameDemo("showcase")
     elseif cmd == "lightning" or cmd == "bolt" then
         ns:RunElementSingleDemo("LIGHTNING")
@@ -497,6 +503,7 @@ local function HandleSlashCommand(msg)
         PrintMsg("Configuration reset to defaults.")
     else
         PrintMsg("Commands:")
+        PrintMsg("  /fui           - Open Settings & Art Presets configuration panel")
         PrintMsg("  /fui showcase  - Run full 6-Element Showcase (Lightning -> Fire -> Earth -> Frost -> Shadow -> Physical -> Kill)")
         PrintMsg("  /fui lightning - Preview Lightning Bolt crackle arcs + electric blue bar jolt")
         PrintMsg("  /fui fire      - Preview Fire burning glow + heat shimmer + rising embers")
@@ -543,5 +550,8 @@ ns.Events:Register("PLAYER_LOGIN", function()
     if ns.Castbars and ns.Castbars.OnEnable then
         ns.Castbars:OnEnable()
     end
-    PrintMsg("Loaded (v1.0.0). Type |cffffd100/fui test|r or |cffffd100/fui kill|r to preview effects.")
+    if ns.Options and ns.Options.OnEnable then
+        ns.Options:OnEnable()
+    end
+    PrintMsg("Loaded (v1.0.0). Type |cffffd100/fui|r to open settings & art presets, or click the minimap icon.")
 end, ns)

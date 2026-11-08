@@ -26,6 +26,16 @@ It enhances unit health bars, overhead enemy nameplates, and floating combat num
   - **Pushback Recoil Engine**: when taking damage while casting, the bar visibly recoils, flashes red, and undergoes physical trauma vibration.
 - **Context-Aware State Engine (`StateEngine`)**
   - Tracks player state (`COMBAT`, `EXPLORING`, `TRAVELLING`, `RESTING`, `HARVESTING`) with configurable unit-frame alpha fading (`/fui statefade`).
+- **Interactive Control Panel & Minimap Icon (`Options`)**
+  - Sleek dark HUD settings window with tab navigation, real-time sliders, and live elemental preview buttons.
+  - Circular draggable minimap button with tooltips for quick settings access and showcase triggers.
+  - Curated **Art Presets**:
+    - **High-Impact (Signature)**: Heavy trauma recoil, violent punch scale, delayed amber trails, and -11.5° death bar tilt.
+    - **Brutal (Heavy Metal)**: Exaggerated combat violence, massive punch scale (up to 1.90x), amplified trauma (1.6x), and -16.0° tilt.
+    - **Minimal (Clean Esports)**: Snappy rapid trails, zero tilt (0°), subdued 0.25x recoil, compact fonts for competitive clarity.
+    - **Arcade (Bouncy Pop)**: Exaggerated bounce, rapid flurry escalation, bouncy scale pops, and bright responsive numbers.
+    - **Cinematic (Immersive)**: Lingering damage trails, gentle trauma recoil, slow death fade, and deep out-of-combat HUD fade.
+  - Built to cleanly integrate future art presets, textures, and community styles.
 
 ---
 
@@ -55,7 +65,8 @@ Use `/fui` or `/foreverui` in-game:
 
 | Command | Description |
 | :--- | :--- |
-| `/fui` or `/fui test` | Run the 3-stage impact combo preview (Flurry Fountain -> Crit Shockwave -> Killing Blow Shatter) on an active enemy nameplate or simulated target bar |
+| `/fui` or `/fui config` | Open the Settings & Art Presets configuration panel |
+| `/fui test` or `/fui showcase` | Run the full 6-element combat combo preview (Lightning -> Fire -> Earth -> Frost -> Shadow -> Physical -> Kill) |
 | `/fui kill` | Preview the Killing Blow bare cracked/tilted gray death bar and shatter shards |
 | `/fui cast [heal\|bolt]` | Preview Shaman Dynamic Castbar with school-adaptive Lead Spark, Latency Safe-Zone, and Pushback Recoil |
 | `/fui status` | Show how many active enemy nameplates are currently hooked |

@@ -551,6 +551,260 @@ local DEFAULTS = {
         width = 220,
         height = 18,
     },
+    minimap = {
+        hide = false,
+        angle = 225,
+        radius = 80,
+    },
+    activePreset = "DEFAULT",
+}
+
+ns.Config.PRESETS = {
+    DEFAULT = {
+        name = "High-Impact (Signature)",
+        desc = "Visceral kinetic feedback: heavy bar trauma recoil, violent punch scale, delayed amber trail bars, -11.5 deg death bar tilt, and dynamic fountain arcs.",
+        values = {
+            unitBars = {
+                smoothSpeed = 18.0,
+                trailSpeed = 5.5,
+                trailHoldNormal = 0.24,
+                trailHoldCrit = 0.38,
+                traumaScale = 1.0,
+                critTraumaMultiplier = 1.75,
+                barPunchNormal = 1.18,
+                barPunchCrit = 1.48,
+                barPunchMega = 1.65,
+                executeThreshold = 0.20,
+            },
+            nameplates = {
+                deathTiltDegrees = -11.5,
+                deathHoldTime = 0.85,
+                deathFadeTime = 0.45,
+                deathShatterEnabled = true,
+                hideNameAndLevelOnDeath = true,
+                deflectCallouts = true,
+                interruptShatter = true,
+            },
+            combatFX = {
+                sparksEnabled = true,
+                lowHpVignette = true,
+                lowHpThreshold = 0.30,
+            },
+            combatText = {
+                fountainLanes = true,
+                critShockwave = true,
+                flurryEscalation = true,
+                flurryWindow = 1.45,
+                normalFontSize = 21,
+                critFontSize = 30,
+                megaFontSize = 35,
+                killFontSize = 38,
+            },
+            stateEngine = {
+                alphaCombat = 1.0,
+                alphaExploring = 0.35,
+                alphaTravelling = 0.25,
+                alphaResting = 0.20,
+                alphaHarvesting = 0.30,
+            },
+        },
+    },
+    BRUTAL = {
+        name = "Brutal (Heavy Metal)",
+        desc = "Exaggerated combat violence: massive scale punches (up to 1.90x), amplified trauma recoil (1.6x), steep death tilt (-16 deg), longer lingering trails, and large numbers.",
+        values = {
+            unitBars = {
+                smoothSpeed = 16.0,
+                trailSpeed = 4.0,
+                trailHoldNormal = 0.35,
+                trailHoldCrit = 0.55,
+                traumaScale = 1.6,
+                critTraumaMultiplier = 2.0,
+                barPunchNormal = 1.28,
+                barPunchCrit = 1.65,
+                barPunchMega = 1.90,
+                executeThreshold = 0.25,
+            },
+            nameplates = {
+                deathTiltDegrees = -16.0,
+                deathHoldTime = 1.10,
+                deathFadeTime = 0.50,
+                deathShatterEnabled = true,
+                hideNameAndLevelOnDeath = true,
+                deflectCallouts = true,
+                interruptShatter = true,
+            },
+            combatFX = {
+                sparksEnabled = true,
+                lowHpVignette = true,
+                lowHpThreshold = 0.35,
+            },
+            combatText = {
+                fountainLanes = true,
+                critShockwave = true,
+                flurryEscalation = true,
+                flurryWindow = 1.80,
+                normalFontSize = 23,
+                critFontSize = 34,
+                megaFontSize = 42,
+                killFontSize = 48,
+            },
+            stateEngine = {
+                alphaCombat = 1.0,
+                alphaExploring = 0.40,
+                alphaTravelling = 0.25,
+                alphaResting = 0.15,
+                alphaHarvesting = 0.30,
+            },
+        },
+    },
+    CLEAN = {
+        name = "Minimal (Clean Esports)",
+        desc = "Tournament clarity: zero tilt (0 deg), snappy rapid trails, subdued bar recoil (0.25x), compact font sizes, and minimal clutter for competitive gameplay.",
+        values = {
+            unitBars = {
+                smoothSpeed = 24.0,
+                trailSpeed = 9.0,
+                trailHoldNormal = 0.12,
+                trailHoldCrit = 0.20,
+                traumaScale = 0.25,
+                critTraumaMultiplier = 1.25,
+                barPunchNormal = 1.05,
+                barPunchCrit = 1.12,
+                barPunchMega = 1.20,
+                executeThreshold = 0.20,
+            },
+            nameplates = {
+                deathTiltDegrees = 0.0,
+                deathHoldTime = 0.40,
+                deathFadeTime = 0.25,
+                deathShatterEnabled = false,
+                hideNameAndLevelOnDeath = false,
+                deflectCallouts = true,
+                interruptShatter = true,
+            },
+            combatFX = {
+                sparksEnabled = false,
+                lowHpVignette = false,
+                lowHpThreshold = 0.25,
+            },
+            combatText = {
+                fountainLanes = true,
+                critShockwave = false,
+                flurryEscalation = false,
+                flurryWindow = 1.00,
+                normalFontSize = 18,
+                critFontSize = 24,
+                megaFontSize = 28,
+                killFontSize = 32,
+            },
+            stateEngine = {
+                alphaCombat = 1.0,
+                alphaExploring = 0.60,
+                alphaTravelling = 0.50,
+                alphaResting = 0.40,
+                alphaHarvesting = 0.50,
+            },
+        },
+    },
+    ARCADE = {
+        name = "Arcade (Bouncy Pop)",
+        desc = "Snappy arcade feel: bouncy scale pops, wider flurry escalation window, exaggerated fountain arcs, bright crits, and lively responsive numbers.",
+        values = {
+            unitBars = {
+                smoothSpeed = 20.0,
+                trailSpeed = 7.0,
+                trailHoldNormal = 0.18,
+                trailHoldCrit = 0.30,
+                traumaScale = 0.85,
+                critTraumaMultiplier = 1.60,
+                barPunchNormal = 1.24,
+                barPunchCrit = 1.55,
+                barPunchMega = 1.75,
+                executeThreshold = 0.20,
+            },
+            nameplates = {
+                deathTiltDegrees = -8.0,
+                deathHoldTime = 0.70,
+                deathFadeTime = 0.35,
+                deathShatterEnabled = true,
+                hideNameAndLevelOnDeath = true,
+                deflectCallouts = true,
+                interruptShatter = true,
+            },
+            combatFX = {
+                sparksEnabled = true,
+                lowHpVignette = true,
+                lowHpThreshold = 0.30,
+            },
+            combatText = {
+                fountainLanes = true,
+                critShockwave = true,
+                flurryEscalation = true,
+                flurryWindow = 2.00,
+                normalFontSize = 22,
+                critFontSize = 32,
+                megaFontSize = 38,
+                killFontSize = 42,
+            },
+            stateEngine = {
+                alphaCombat = 1.0,
+                alphaExploring = 0.40,
+                alphaTravelling = 0.30,
+                alphaResting = 0.25,
+                alphaHarvesting = 0.35,
+            },
+        },
+    },
+    CINEMATIC = {
+        name = "Cinematic (Immersive)",
+        desc = "Atmospheric RPG immersion: lingering damage trails, smooth gentle trauma recoil, slow death fade, deep out-of-combat HUD fade, and dramatic killing blow pauses.",
+        values = {
+            unitBars = {
+                smoothSpeed = 14.0,
+                trailSpeed = 3.5,
+                trailHoldNormal = 0.40,
+                trailHoldCrit = 0.65,
+                traumaScale = 0.60,
+                critTraumaMultiplier = 1.40,
+                barPunchNormal = 1.12,
+                barPunchCrit = 1.35,
+                barPunchMega = 1.50,
+                executeThreshold = 0.20,
+            },
+            nameplates = {
+                deathTiltDegrees = -6.5,
+                deathHoldTime = 1.40,
+                deathFadeTime = 0.80,
+                deathShatterEnabled = true,
+                hideNameAndLevelOnDeath = true,
+                deflectCallouts = true,
+                interruptShatter = true,
+            },
+            combatFX = {
+                sparksEnabled = true,
+                lowHpVignette = true,
+                lowHpThreshold = 0.25,
+            },
+            combatText = {
+                fountainLanes = true,
+                critShockwave = true,
+                flurryEscalation = true,
+                flurryWindow = 1.50,
+                normalFontSize = 19,
+                critFontSize = 28,
+                megaFontSize = 32,
+                killFontSize = 36,
+            },
+            stateEngine = {
+                alphaCombat = 1.0,
+                alphaExploring = 0.20,
+                alphaTravelling = 0.15,
+                alphaResting = 0.10,
+                alphaHarvesting = 0.20,
+            },
+        },
+    },
 }
 
 local function DeepCopy(src)
@@ -623,4 +877,34 @@ function ns.Config:Get(section, key)
         return self.db[section]
     end
     return self.db[section] and self.db[section][key]
+end
+
+function ns.Config:Set(section, key, val)
+    if not self.db then
+        self:Initialize()
+    end
+    if not self.db[section] then
+        self.db[section] = {}
+    end
+    self.db[section][key] = val
+    self.db.activePreset = "CUSTOM"
+end
+
+function ns.Config:ApplyPreset(presetKey)
+    local preset = ns.Config.PRESETS[presetKey]
+    if not preset then
+        return false
+    end
+    if not self.db then
+        self:Initialize()
+    end
+    for secName, secValues in pairs(preset.values) do
+        if type(self.db[secName]) == "table" then
+            for k, v in pairs(secValues) do
+                self.db[secName][k] = v
+            end
+        end
+    end
+    self.db.activePreset = presetKey
+    return true
 end
