@@ -20,6 +20,10 @@ It enhances unit health bars, overhead enemy nameplates, and floating combat num
   - **Flurry Escalation**: consecutive hits within the flurry window progressively scale up font size and color warmth.
   - **Crit Shockwave Echo**: critical strikes fire a sharp punch-in scale animation with an expanding ghost shockwave number.
   - Automatically suppresses duplicate vanilla 3D world floating combat numbers while keeping the target's nameplate unobstructed.
+- **Shaman Dynamic Castbar & Pushback Recoil (`Castbars`)**
+  - Classic weathered stone-bronze framing with school-adaptive Lead Spark (Nature cyan for *Lightning Bolt*, Frost aqua for *Healing Wave*, Fire amber for *Flame Shock*).
+  - **Dynamic Latency Safe-Zone**: real-time ping sliver at the tail end of the bar derived from `GetNetStats()` to safely chain into instant shocks without clipping.
+  - **Pushback Recoil Engine**: when taking damage while casting, the bar visibly recoils, flashes red, and undergoes physical trauma vibration.
 - **Context-Aware State Engine (`StateEngine`)**
   - Tracks player state (`COMBAT`, `EXPLORING`, `TRAVELLING`, `RESTING`, `HARVESTING`) with configurable unit-frame alpha fading (`/fui statefade`).
 
@@ -53,6 +57,7 @@ Use `/fui` or `/foreverui` in-game:
 | :--- | :--- |
 | `/fui` or `/fui test` | Run the 3-stage impact combo preview (Flurry Fountain -> Crit Shockwave -> Killing Blow Shatter) on an active enemy nameplate or simulated target bar |
 | `/fui kill` | Preview the Killing Blow bare cracked/tilted gray death bar and shatter shards |
+| `/fui cast [heal\|bolt]` | Preview Shaman Dynamic Castbar with school-adaptive Lead Spark, Latency Safe-Zone, and Pushback Recoil |
 | `/fui status` | Show how many active enemy nameplates are currently hooked |
 | `/fui state <STATE>` | Override the state engine (`COMBAT`, `EXPLORING`, `TRAVELLING`, `RESTING`, `HARVESTING`, or empty to clear) |
 | `/fui statefade` | Toggle out-of-combat unit-frame alpha fading on/off |

@@ -31,7 +31,7 @@ def verify_toc():
     assert sv_lines and "ForeverUIDB" in sv_lines[0], "Missing ## SavedVariables: ForeverUIDB"
 
     lua_files = [l.replace("\\", os.sep) for l in lines if l and not l.startswith("#")]
-    assert len(lua_files) == 8, f"Expected 8 Lua files in TOC, found {len(lua_files)}"
+    assert len(lua_files) == 9, f"Expected 9 Lua files in TOC, found {len(lua_files)}"
 
     for rel_path in lua_files:
         full_path = os.path.join(ADDON_DIR, rel_path)
@@ -91,11 +91,14 @@ def verify_feature_requirements():
         fx_code = strip_lua_comments_and_strings(f.read())
     assert "CreateLine" in fx_code, "CombatFX.lua must draw fracture cracks via CreateLine"
     assert "SetRotation" in fx_code, "CombatFX.lua must tilt the death bar via SetRotation"
+    assert "TriggerDeathBarBreak" in fx_code and "NUM_DEATH_CHUNKS" in fx_code, (
+        "CombatFX.lua DeathShatterBar must implement multi-chunk Pop & Break elemental animations"
+    )
     assert "CreateFontString" not in fx_code, "CombatFX.lua DeathShatterBar must be a bare bar with no text/level"
-    print("[PASS] CombatFX.lua DeathShatterBar verified: bare stone-gray bar, CreateLine cracks, and tilt physics.")
+    print("[PASS] CombatFX.lua DeathShatterBar verified: multi-chunk Pop & Break, CreateLine cracks, and elemental physics.")
 
     # 3. Verify Secret Value guards (ns.IsSecret / issecretvalue) are present in combat & quest modules
-    for rel in ["Core/Config.lua", "Core/StateEngine.lua", "Modules/UnitBars.lua", "Modules/Nameplates.lua", "Modules/CombatFX.lua", "Modules/CombatText.lua"]:
+    for rel in ["Core/Config.lua", "Core/StateEngine.lua", "Modules/UnitBars.lua", "Modules/Nameplates.lua", "Modules/CombatFX.lua", "Modules/CombatText.lua", "Modules/Castbars.lua"]:
         mod_path = os.path.join(ADDON_DIR, rel.replace("/", os.sep))
         with open(mod_path, "r", encoding="utf-8") as f:
             mod_code = strip_lua_comments_and_strings(f.read())
@@ -110,6 +113,13 @@ def verify_feature_requirements():
     assert "or recentHit" not in np_code, "Nameplates.lua must never trigger death on 'or recentHit' when unit is still alive"
     assert "CanTriggerDeath" in np_code, "Nameplates.lua must guard death triggers via CanTriggerDeath"
     assert "ClearAnchorFX" in np_code, "Nameplates.lua must clear pooled anchor FX when a nameplate is added"
+    assert "ScheduleInterruptForEnhancer" in np_code, "Nameplates.lua must defer and verify unit survival before showing INTERRUPTED"
+    assert "ClearInterruptsForAnchor" in np_code and "ClearInterruptsForAnchor" in ct_code, (
+        "TriggerDeathForEnhancer must clear any active INTERRUPTED callouts when an enemy dies"
+    )
+    assert "HasRecentPlayerInterrupt" in np_code, (
+        "UNIT_SPELLCAST_INTERRUPTED must require a genuine player interrupt so dying/cancelling mobs never trigger INTERRUPTED"
+    )
 
     ub_path = os.path.join(ADDON_DIR, "Modules", "UnitBars.lua")
     with open(ub_path, "r", encoding="utf-8") as f:

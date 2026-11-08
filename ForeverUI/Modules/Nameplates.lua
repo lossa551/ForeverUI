@@ -280,6 +280,22 @@ function Nameplates:OnNamePlateAdded(unitToken)
     end
 
     local alreadyDead = IsUnitDeadSafe(unitToken)
+    local isCurrentlyCasting = false
+    if not alreadyDead then
+        if UnitCastingInfo then
+            local ok, name = pcall(UnitCastingInfo, unitToken)
+            if ok and name ~= nil then
+                isCurrentlyCasting = true
+            end
+        end
+        if not isCurrentlyCasting and UnitChannelInfo then
+            local ok, name = pcall(UnitChannelInfo, unitToken)
+            if ok and name ~= nil then
+                isCurrentlyCasting = true
+            end
+        end
+    end
+    local now = GetTime and GetTime() or 0
     local enhancer = ns.UnitBars:CreateBarEnhancer(healthBar, unitToken, true)
     enhancer.unitFrame = unitFrame
     enhancer.wasAlive = not alreadyDead
@@ -288,6 +304,11 @@ function Nameplates:OnNamePlateAdded(unitToken)
     enhancer.lastDamagedTime = 0
     enhancer.lastImpactTime = 0
     enhancer.lastInterruptTime = 0
+    enhancer.isCasting = isCurrentlyCasting
+    enhancer.lastCastStartTime = isCurrentlyCasting and now or 0
+    enhancer.lastCastStopTime = 0
+    enhancer.lastCastSucceededTime = 0
+    enhancer.pendingInterruptGen = (enhancer.pendingInterruptGen or 0) + 1
     enhancer.guid = GetUnitGUIDSafe(unitToken)
 
     ns.UnitBars:SetDotState(enhancer, nil, 0)
@@ -323,6 +344,9 @@ function Nameplates:OnNamePlateRemoved(unitToken)
         return
     end
 
+    enhancer.isCasting = false
+    enhancer.lastCastStartTime = 0
+    enhancer.pendingInterruptGen = (enhancer.pendingInterruptGen or 0) + 1
     ns.UnitBars:SetDotState(enhancer, nil, 0)
 
     if self:CanTriggerDeath(enhancer, unitToken) then
@@ -342,7 +366,13 @@ function Nameplates:TriggerDeathForEnhancer(enhancer, elementKey)
         return
     end
     enhancer.deathTriggered = true
+    enhancer.isCasting = false
+    enhancer.lastCastStartTime = 0
+    enhancer.pendingInterruptGen = (enhancer.pendingInterruptGen or 0) + 1
     ns.UnitBars:SetDotState(enhancer, nil, 0)
+    if ns.CombatText and ns.CombatText.ClearInterruptsForAnchor then
+        ns.CombatText:ClearInterruptsForAnchor(enhancer.container, enhancer.statusBar)
+    end
     if enhancer.targetBrackets then
         enhancer.targetBrackets:Hide()
     end
@@ -367,10 +397,15 @@ function Nameplates:TriggerDeathForEnhancer(enhancer, elementKey)
     end
 end
 
-function Nameplates:TriggerInterruptForEnhancer(enhancer)
+function Nameplates:TriggerInterruptForEnhancer(enhancer, isDemo)
     local npCfg = ns.Config:Get("nameplates")
     if not enhancer or not npCfg or (npCfg.interruptShatter == false) then
         return
+    end
+    if not isDemo then
+        if enhancer.deathTriggered or not enhancer.unit or IsUnitDeadSafe(enhancer.unit) then
+            return
+        end
     end
     local now = GetTime()
     if (now - (enhancer.lastInterruptTime or 0)) < 0.30 then
@@ -392,6 +427,41 @@ function Nameplates:TriggerInterruptForEnhancer(enhancer)
             anchorFrame = enhancer.container or enhancer.statusBar,
             side = "right",
         })
+    end
+end
+
+function Nameplates:ScheduleInterruptForEnhancer(enhancer)
+    local npCfg = ns.Config:Get("nameplates")
+    if not enhancer or not npCfg or (npCfg.interruptShatter == false) then
+        return
+    end
+    local unitToken = enhancer.unit
+    if not unitToken or enhancer.deathTriggered or IsUnitDeadSafe(unitToken) then
+        return
+    end
+
+    enhancer.isCasting = false
+    enhancer.lastCastStartTime = 0
+    local myGen = (enhancer.pendingInterruptGen or 0) + 1
+    enhancer.pendingInterruptGen = myGen
+
+    -- Defer briefly so server death packets (which fire UNIT_SPELLCAST_INTERRUPTED right
+    -- before UNIT_HEALTH / NAME_PLATE_UNIT_REMOVED when an enemy dies) never show INTERRUPTED!
+    if C_Timer and C_Timer.After then
+        C_Timer.After(0.12, function()
+            if enhancer.pendingInterruptGen ~= myGen then
+                return
+            end
+            if not enhancer.unit or enhancer.unit ~= unitToken or not UnitExists(unitToken) then
+                return
+            end
+            if enhancer.deathTriggered or IsUnitDeadSafe(unitToken) then
+                return
+            end
+            self:TriggerInterruptForEnhancer(enhancer, false)
+        end)
+    else
+        self:TriggerInterruptForEnhancer(enhancer, false)
     end
 end
 
@@ -467,6 +537,12 @@ function Nameplates:OnUnitCombat(unitToken, action, flagText, amount, schoolMask
     -- 1. Check for Metallic Deflect / Avoidance actions (PARRY, DODGE, BLOCK, IMMUNE, ABSORB, MISS)
     if DEFLECT_ACTIONS[action] then
         self:TriggerDeflectForEnhancer(enhancer, action)
+        return
+    end
+    if action == "INTERRUPT" then
+        if not enhancer.deathTriggered and not IsUnitDeadSafe(unitToken) then
+            self:ScheduleInterruptForEnhancer(enhancer)
+        end
         return
     end
 
@@ -713,13 +789,28 @@ function Nameplates:OnEnable()
         end
     end, self)
 
-    ns.Events:Register("UNIT_SPELLCAST_START", function(_, _, unitTarget, _, spellID)
+    local function OnSpellcastStart(_, _, unitTarget, _, spellID)
+        if not unitTarget or ns.IsSecret(unitTarget) then
+            return
+        end
         if unitTarget == "player" and ns.Elements then
             ns.Elements:RecordPlayerCastStart(spellID, nil)
+        elseif string.find(unitTarget, "^nameplate") then
+            local enhancer = self.byUnit[unitTarget]
+            if enhancer and not enhancer.deathTriggered then
+                enhancer.isCasting = true
+                enhancer.lastCastStartTime = GetTime()
+            end
         end
-    end, self)
+    end
+
+    ns.Events:Register("UNIT_SPELLCAST_START", OnSpellcastStart, self)
+    ns.Events:Register("UNIT_SPELLCAST_CHANNEL_START", OnSpellcastStart, self)
 
     ns.Events:Register("UNIT_SPELLCAST_SUCCEEDED", function(_, _, unitTarget, _, spellID)
+        if not unitTarget or ns.IsSecret(unitTarget) then
+            return
+        end
         if unitTarget == "player" and ns.Elements then
             local _, dotElem, dotDur = ns.Elements:RecordPlayerSpell(spellID, nil)
             if dotElem and UnitExists("target") and not IsPlayerUnitSafe("target") then
@@ -728,8 +819,29 @@ function Nameplates:OnEnable()
                     ns.UnitBars:SetDotState(targetEnhancer, dotElem, dotDur or 8.0)
                 end
             end
+        elseif string.find(unitTarget, "^nameplate") then
+            local enhancer = self.byUnit[unitTarget]
+            if enhancer then
+                enhancer.isCasting = false
+                enhancer.lastCastStartTime = 0
+                enhancer.lastCastSucceededTime = GetTime()
+                enhancer.pendingInterruptGen = (enhancer.pendingInterruptGen or 0) + 1
+            end
         end
     end, self)
+
+    local function OnSpellcastStop(_, _, unitTarget)
+        if unitTarget and not ns.IsSecret(unitTarget) and string.find(unitTarget, "^nameplate") then
+            local enhancer = self.byUnit[unitTarget]
+            if enhancer then
+                enhancer.isCasting = false
+                enhancer.lastCastStopTime = GetTime()
+            end
+        end
+    end
+
+    ns.Events:Register("UNIT_SPELLCAST_STOP", OnSpellcastStop, self)
+    ns.Events:Register("UNIT_SPELLCAST_CHANNEL_STOP", OnSpellcastStop, self)
 
     ns.Events:Register("UNIT_AURA", function(_, _, unitToken)
         if unitToken and not ns.IsSecret(unitToken) and string.find(unitToken, "^nameplate") then
@@ -740,8 +852,16 @@ function Nameplates:OnEnable()
     ns.Events:Register("UNIT_SPELLCAST_INTERRUPTED", function(_, _, unitToken)
         if unitToken and not ns.IsSecret(unitToken) and string.find(unitToken, "^nameplate") then
             local enhancer = self.byUnit[unitToken]
-            if enhancer then
-                self:TriggerInterruptForEnhancer(enhancer)
+            if not enhancer or enhancer.deathTriggered or IsUnitDeadSafe(unitToken) then
+                return
+            end
+            local now = GetTime()
+            local wasCasting = enhancer.isCasting or ((now - (enhancer.lastCastStopTime or 0)) <= 0.15)
+            local recentlyStarted = ((enhancer.lastCastStartTime or 0) > 0) and ((now - enhancer.lastCastStartTime) <= 15.0)
+            local justSucceeded = (now - (enhancer.lastCastSucceededTime or 0)) <= 0.25
+            local playerInterrupted = ns.Elements and ns.Elements.HasRecentPlayerInterrupt and ns.Elements:HasRecentPlayerInterrupt()
+            if wasCasting and recentlyStarted and not justSucceeded and playerInterrupted then
+                self:ScheduleInterruptForEnhancer(enhancer)
             end
         end
     end, self)

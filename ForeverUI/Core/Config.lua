@@ -37,12 +37,13 @@ ns.Elements = {
             trailHoldNormal = 0.24,
             trailHoldCrit = 0.38,
             glowDuration = 0.16,
-            deathFill = { 0.36, 0.36, 0.40 },
-            deathTrim = { 0.44, 0.44, 0.48 },
-            deathCrack = { 0.88, 0.88, 0.92 },
-            deathDark = { 0.02, 0.02, 0.03 },
-            deathFlash = { 1.00, 0.96, 0.88 },
-            deathShard = { 0.65, 0.65, 0.70 },
+            deathFill = { 0.32, 0.33, 0.38 },
+            deathTrim = { 0.78, 0.74, 0.66 },
+            deathCrack = { 1.00, 0.94, 0.78 },
+            deathDark = { 0.03, 0.03, 0.04 },
+            deathFlash = { 1.00, 0.95, 0.82 },
+            deathShard = { 0.88, 0.84, 0.76 },
+            deathStyle = "Clean Cleave & Buckle Snap",
         },
         LIGHTNING = {
             key = "LIGHTNING",
@@ -63,12 +64,13 @@ ns.Elements = {
             trailHoldNormal = 0.22,
             trailHoldCrit = 0.36,
             glowDuration = 0.34,
-            deathFill = { 0.12, 0.22, 0.38 },
-            deathTrim = { 0.28, 0.78, 1.00 },
-            deathCrack = { 0.48, 0.95, 1.00 },
-            deathDark = { 0.02, 0.06, 0.14 },
-            deathFlash = { 0.50, 0.94, 1.00 },
-            deathShard = { 0.28, 0.84, 1.00 },
+            deathFill = { 0.12, 0.24, 0.42 },
+            deathTrim = { 0.36, 0.86, 1.00 },
+            deathCrack = { 0.78, 0.98, 1.00 },
+            deathDark = { 0.02, 0.06, 0.16 },
+            deathFlash = { 0.62, 0.96, 1.00 },
+            deathShard = { 0.38, 0.90, 1.00 },
+            deathStyle = "High-Voltage Overload & Magnetic Rip",
         },
         FIRE = {
             key = "FIRE",
@@ -89,12 +91,13 @@ ns.Elements = {
             trailHoldNormal = 0.34,
             trailHoldCrit = 0.50,
             glowDuration = 0.82,
-            deathFill = { 0.16, 0.05, 0.03 },
-            deathTrim = { 0.92, 0.22, 0.02 },
-            deathCrack = { 1.00, 0.38, 0.04 },
-            deathDark = { 0.05, 0.01, 0.00 },
-            deathFlash = { 1.00, 0.35, 0.04 },
-            deathShard = { 1.00, 0.32, 0.04 },
+            deathFill = { 0.24, 0.06, 0.02 },
+            deathTrim = { 1.00, 0.38, 0.04 },
+            deathCrack = { 1.00, 0.82, 0.18 },
+            deathDark = { 0.06, 0.01, 0.00 },
+            deathFlash = { 1.00, 0.48, 0.06 },
+            deathShard = { 1.00, 0.38, 0.04 },
+            deathStyle = "Molten Detonation & Ash Burn-Away",
         },
         EARTH = {
             key = "EARTH",
@@ -115,12 +118,13 @@ ns.Elements = {
             trailHoldNormal = 0.28,
             trailHoldCrit = 0.42,
             glowDuration = 0.44,
-            deathFill = { 0.28, 0.20, 0.12 },
-            deathTrim = { 0.56, 0.42, 0.24 },
-            deathCrack = { 0.84, 0.70, 0.46 },
+            deathFill = { 0.30, 0.21, 0.12 },
+            deathTrim = { 0.68, 0.52, 0.30 },
+            deathCrack = { 0.95, 0.80, 0.52 },
             deathDark = { 0.06, 0.04, 0.02 },
-            deathFlash = { 0.72, 0.58, 0.36 },
-            deathShard = { 0.48, 0.34, 0.18 },
+            deathFlash = { 0.85, 0.68, 0.42 },
+            deathShard = { 0.56, 0.40, 0.22 },
+            deathStyle = "Tectonic Crush & Avalanche Collapse",
         },
         FROST = {
             key = "FROST",
@@ -141,12 +145,13 @@ ns.Elements = {
             trailHoldNormal = 0.48,
             trailHoldCrit = 0.66,
             glowDuration = 0.68,
-            deathFill = { 0.16, 0.32, 0.46 },
-            deathTrim = { 0.56, 0.90, 1.00 },
-            deathCrack = { 0.86, 0.98, 1.00 },
-            deathDark = { 0.03, 0.09, 0.16 },
-            deathFlash = { 0.66, 0.95, 1.00 },
-            deathShard = { 0.58, 0.92, 1.00 },
+            deathFill = { 0.18, 0.38, 0.56 },
+            deathTrim = { 0.64, 0.94, 1.00 },
+            deathCrack = { 0.92, 0.99, 1.00 },
+            deathDark = { 0.03, 0.10, 0.18 },
+            deathFlash = { 0.78, 0.97, 1.00 },
+            deathShard = { 0.68, 0.95, 1.00 },
+            deathStyle = "Flash-Freeze & Crystalline Glass Shatter",
         },
         SHADOW = {
             key = "SHADOW",
@@ -167,12 +172,13 @@ ns.Elements = {
             trailHoldNormal = 0.32,
             trailHoldCrit = 0.48,
             glowDuration = 0.58,
-            deathFill = { 0.16, 0.08, 0.24 },
-            deathTrim = { 0.64, 0.24, 0.94 },
-            deathCrack = { 0.86, 0.42, 1.00 },
-            deathDark = { 0.04, 0.01, 0.07 },
-            deathFlash = { 0.76, 0.32, 1.00 },
-            deathShard = { 0.68, 0.26, 0.96 },
+            deathFill = { 0.18, 0.07, 0.28 },
+            deathTrim = { 0.74, 0.30, 1.00 },
+            deathCrack = { 0.94, 0.58, 1.00 },
+            deathDark = { 0.04, 0.01, 0.08 },
+            deathFlash = { 0.82, 0.36, 1.00 },
+            deathShard = { 0.74, 0.30, 0.98 },
+            deathStyle = "Void Rift Pop & Singularity Implosion",
         },
     },
     lastPlayerElement = nil,
@@ -180,10 +186,49 @@ ns.Elements = {
     lastPlayerDotElement = nil,
     lastPlayerDotDuration = 0,
     lastPlayerDotTime = 0,
+    lastPlayerInterruptTime = 0,
     lastCastStartTime = 0,
     pendingDirectHitTime = 0,
     pendingDirectHitWeight = 0,
 }
+
+local INTERRUPT_KEYWORDS = {
+    "earth shock", "wind shear", "kick", "pummel", "shield bash", "counterspell",
+    "rebuke", "silence", "mind freeze", "skull bash", "solar beam", "quell",
+    "muzzle", "counter shot", "silencing shot", "spear hand", "disrupt",
+    "spell lock", "optical blast", "axe toss", "avenger's shield", "strangulate",
+    "arcane torrent", "war stomp", "quaking palm", "haymaker", "bull rush",
+    "hammer of justice", "fist of justice", "repentance", "blinding light",
+    "cheap shot", "kidney shot", "gouge", "blind", "sap", "between the eyes",
+    "concussion blow", "shockwave", "storm bolt", "intimidating shout", "charge", "intercept",
+    "bash", "mighty bash", "maim", "cyclone", "typhoon", "incapacitating roar", "feral charge",
+    "psychic scream", "psychic horror", "mind bomb", "chastise",
+    "death coil", "mortal coil", "shadowfury", "fear", "howl of terror", "banish",
+    "scatter shot", "wyvern sting", "intimidation", "freezing trap",
+    "asphyxiate", "gnaw", "death grip", "blinding sleet",
+    "leg sweep", "paralysis", "ring of peace",
+    "chaos nova", "fel eruption", "imprison", "sigil of silence", "sigil of misery",
+    "dragon's breath", "polymorph", "supernova", "ring of frost",
+    "hex", "sundering", "capacitor", "grounding", "tail swipe", "wing buffet",
+}
+
+function ns.Elements:ClassifyInterruptSpell(spellName)
+    if not spellName or ns.IsSecret(spellName) or type(spellName) ~= "string" then
+        return false
+    end
+    local lower = string.lower(spellName)
+    for i = 1, #INTERRUPT_KEYWORDS do
+        if string.find(lower, INTERRUPT_KEYWORDS[i], 1, true) then
+            return true
+        end
+    end
+    return false
+end
+
+function ns.Elements:HasRecentPlayerInterrupt()
+    local now = GetTime and GetTime() or 0
+    return (now - (self.lastPlayerInterruptTime or 0)) <= 1.6
+end
 
 local DOT_SPELL_PATTERNS = {
     -- FIRE DoTs
@@ -344,6 +389,9 @@ function ns.Elements:RecordPlayerSpell(spellID, spellName, isCastStart)
         self.lastPlayerDotDuration = dotDur or 8.0
         self.lastPlayerDotTime = now
     end
+    if not isCastStart and self:ClassifyInterruptSpell(spellName) then
+        self.lastPlayerInterruptTime = now
+    end
     if not isCastStart then
         local wasHardCast = (now - (self.lastCastStartTime or 0)) <= 4.2
         self.pendingDirectHitTime = now
@@ -491,6 +539,17 @@ local DEFAULTS = {
         alphaNearby = 0.35,
         autoManageWatches = true,
         autoSuperTrackClose = true,
+    },
+    castbars = {
+        enabled = true,
+        player = true,
+        target = true,
+        showLatency = true,
+        pushbackRecoil = true,
+        recoilShake = true,
+        leadSpark = true,
+        width = 220,
+        height = 18,
     },
 }
 

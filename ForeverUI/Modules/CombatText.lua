@@ -356,7 +356,7 @@ end
 -- D. Upgrades an active in-flight damage number into a Killing Blow Finisher when the enemy dies!
 function CombatText:PromoteToKillingBlow(entry, elementKey)
     local cfg = ns.Config:Get("combatText")
-    if not entry or not entry.active or entry.isKill or not cfg or (cfg.killFinisher == false) then
+    if not entry or not entry.active or entry.isKill or entry.isInterrupt or entry.isDeflect or not cfg or (cfg.killFinisher == false) then
         return
     end
 
@@ -410,6 +410,27 @@ function CombatText:PromoteToKillingBlow(entry, elementKey)
     entry.vx = 0
     entry.vy = 24
     entry.gravity = 12
+end
+
+function CombatText:ClearInterruptsForAnchor(...)
+    local matchSet = {}
+    local n = select("#", ...)
+    for i = 1, n do
+        local f = select(i, ...)
+        if f then
+            matchSet[f] = true
+        end
+    end
+    if not next(matchSet) then
+        return
+    end
+    for i = #activeTexts, 1, -1 do
+        local ft = activeTexts[i]
+        if ft.isInterrupt and (not ft.anchorFrame or matchSet[ft.anchorFrame]) then
+            ReleaseTextEntry(ft)
+            table.remove(activeTexts, i)
+        end
+    end
 end
 
 -- Pure text-only combat number spawn (no icons).
@@ -768,6 +789,19 @@ function CombatText:OnCombatLogEvent()
         critical = arg18
         isHeal = true
         isPeriodic = (subEvent == "SPELL_PERIODIC_HEAL")
+    elseif subEvent == "SPELL_INTERRUPT" then
+        if isOutgoing then
+            if ns.Elements then
+                ns.Elements.lastPlayerInterruptTime = GetTime()
+            end
+            if ns.Nameplates and destGUID then
+                local _, enhancer = ns.Nameplates:GetBarForGUID(destGUID)
+                if enhancer and ns.Nameplates.ScheduleInterruptForEnhancer then
+                    ns.Nameplates:ScheduleInterruptForEnhancer(enhancer)
+                end
+            end
+        end
+        return
     elseif subEvent == "UNIT_DIED" or subEvent == "PARTY_KILL" then
         if ns.Nameplates and destGUID then
             local _, enhancer = ns.Nameplates:GetBarForGUID(destGUID)

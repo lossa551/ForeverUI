@@ -244,7 +244,7 @@ function ns:RunInGameDemo(mode, arg)
 
     if mode == "interrupt" then
         enhancer.lastInterruptTime = 0
-        ns.Nameplates:TriggerInterruptForEnhancer(enhancer)
+        ns.Nameplates:TriggerInterruptForEnhancer(enhancer, true)
         PrintMsg("Triggered Interrupt Shatter (electric cyan shockwave + arcane sparks).")
         return
     elseif mode == "parry" then
@@ -307,6 +307,7 @@ function ns:RunInGameDemo(mode, arg)
         end
         local prof = ns.Elements:GetProfile(elemKey)
         local hex = ELEMENT_HEX[prof.key] or "|cffffd100"
+        local styleName = prof.deathStyle or "Pop & Break Shatter"
 
         FireElementKillStage(bar, enhancer, usingDemoBar, prof.key, prof.label .. " KILL 1640")
         if C_Timer and C_Timer.After then
@@ -317,7 +318,7 @@ function ns:RunInGameDemo(mode, arg)
                 RestoreEnhancerAfterDemo(enhancer, usingDemoBar)
             end)
         end
-        PrintMsg("Triggered " .. hex .. prof.label .. "|r Killing Blow shatter bar! (Run |cffffd100/fui kill|r again to cycle elements)")
+        PrintMsg("Triggered " .. hex .. prof.label .. "|r Killing Blow [" .. styleName .. "]! (Run |cffffd100/fui kill|r again to cycle elements)")
         return
     end
 
@@ -464,6 +465,15 @@ local function HandleSlashCommand(msg)
             ns.StateEngine:RefreshState(false)
             PrintMsg("Context state HUD fade: " .. (newState and "ON" or "OFF") .. " (target alpha=" .. string.format("%.2f", ns.StateEngine.targetAlpha or 1.0) .. ")")
         end
+    elseif cmd == "cast" or cmd == "castbar" then
+        if ns.Castbars and ns.Castbars.RunDemoCast then
+            local spell = (arg == "heal" or arg == "hw") and "Healing Wave" or "Lightning Bolt"
+            local dur = (spell == "Healing Wave") and 3.0 or 2.5
+            local delayAt = (spell == "Healing Wave") and 1.4 or 1.1
+            local delayAmount = (spell == "Healing Wave") and 0.8 or 0.6
+            ns.Castbars:RunDemoCast(spell, dur, delayAt, delayAmount)
+            PrintMsg("Simulating Shaman Cast: |cffffd100" .. spell .. "|r with Lead Spark, Latency Safe-Zone & Pushback Recoil!")
+        end
     elseif cmd == "quests" or cmd == "quest" then
         if ns.QuestTracker and ns.QuestTracker.PrintQuestStatus then
             ns.QuestTracker:PrintQuestStatus()
@@ -499,6 +509,7 @@ local function HandleSlashCommand(msg)
         PrintMsg("  /fui parry     - Preview Metallic Deflect Ricochet (PARRY!)")
         PrintMsg("  /fui quests    - Show quest distances & tracker tier (Close / Nearby / Far)")
         PrintMsg("  /fui questfade - Toggle proximity-based Quest Objective Tracker opacity & filter")
+        PrintMsg("  /fui cast [heal|bolt] - Preview Shaman Dynamic Castbar with Lead Spark, Latency Pip & Pushback Recoil")
     end
 end
 
@@ -528,6 +539,9 @@ ns.Events:Register("PLAYER_LOGIN", function()
     end
     if ns.CombatText and ns.CombatText.OnEnable then
         ns.CombatText:OnEnable()
+    end
+    if ns.Castbars and ns.Castbars.OnEnable then
+        ns.Castbars:OnEnable()
     end
     PrintMsg("Loaded (v1.0.0). Type |cffffd100/fui test|r or |cffffd100/fui kill|r to preview effects.")
 end, ns)

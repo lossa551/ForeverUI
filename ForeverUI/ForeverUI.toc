@@ -13,4 +13,5 @@ Modules\CombatFX.lua
 Modules\UnitBars.lua
 Modules\Nameplates.lua
 Modules\CombatText.lua
+Modules\Castbars.lua
 Core\Init.lua
