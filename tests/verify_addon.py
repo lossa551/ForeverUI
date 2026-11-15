@@ -85,17 +85,22 @@ def verify_feature_requirements():
     assert '"FATAL"' not in ct_raw, "CombatText.lua must not display FATAL sub-banner text"
     print("[PASS] CombatText.lua verified strictly text-only (no damage icons, no FATAL banner).")
 
-    # 2. Verify CombatFX.lua DeathShatterBar has CreateLine cracks, SetRotation tilt, and NO FontStrings
+    # 2. Verify CombatFX.lua DeathShatterBar uses a clean Vanilla+ single cracked & tilted bar
     fx_path = os.path.join(ADDON_DIR, "Modules", "CombatFX.lua")
     with open(fx_path, "r", encoding="utf-8") as f:
-        fx_code = strip_lua_comments_and_strings(f.read())
+        fx_raw = f.read()
+        fx_code = strip_lua_comments_and_strings(fx_raw)
     assert "CreateLine" in fx_code, "CombatFX.lua must draw fracture cracks via CreateLine"
     assert "SetRotation" in fx_code, "CombatFX.lua must tilt the death bar via SetRotation"
-    assert "TriggerDeathBarBreak" in fx_code and "NUM_DEATH_CHUNKS" in fx_code, (
-        "CombatFX.lua DeathShatterBar must implement multi-chunk Pop & Break elemental animations"
+    assert "SpawnDeathShatterBar" in fx_code and "deathTiltDegrees" in fx_code, (
+        "CombatFX.lua DeathShatterBar must honor deathTiltDegrees on a single cracked death bar"
     )
+    assert "NUM_DEATH_CHUNKS" not in fx_code and "TriggerDeathBarBreak" not in fx_code, (
+        "CombatFX.lua must not contain the overkill 5-chunk Pop & Break system"
+    )
+    assert "UI-StatusBar" in fx_raw, "CombatFX.lua must use Blizzard UI-StatusBar texture for Vanilla+ consistency"
     assert "CreateFontString" not in fx_code, "CombatFX.lua DeathShatterBar must be a bare bar with no text/level"
-    print("[PASS] CombatFX.lua DeathShatterBar verified: multi-chunk Pop & Break, CreateLine cracks, and elemental physics.")
+    print("[PASS] CombatFX.lua DeathShatterBar verified: Vanilla+ cracked & tilted bar, CreateLine cracks, and UI-StatusBar.")
 
     # 3. Verify Secret Value guards (ns.IsSecret / issecretvalue) are present in combat & quest modules
     for rel in ["Core/Config.lua", "Core/StateEngine.lua", "Modules/UnitBars.lua", "Modules/Nameplates.lua", "Modules/CombatFX.lua", "Modules/CombatText.lua", "Modules/Castbars.lua"]:
@@ -123,12 +128,14 @@ def verify_feature_requirements():
 
     ub_path = os.path.join(ADDON_DIR, "Modules", "UnitBars.lua")
     with open(ub_path, "r", encoding="utf-8") as f:
-        ub_code = strip_lua_comments_and_strings(f.read())
+        ub_raw = f.read()
+        ub_code = strip_lua_comments_and_strings(ub_raw)
     assert "self:TriggerDamageImpact(enhancer, 0.08" not in ub_code, (
         "UnitBars.lua SyncUnitState must not fire fake TriggerDamageImpact on secret UNIT_HEALTH events"
     )
+    assert "UI-StatusBar" in ub_raw, "UnitBars.lua must use Blizzard UI-StatusBar texture for Vanilla+ look"
     assert "ClearAnchorFX" in fx_code, "CombatFX.lua must implement ClearAnchorFX for pooled nameplate frames"
-    print("[PASS] DeathShatterBar guards verified: only triggers on actual unit death and cleans up pooled frames.")
+    print("[PASS] DeathShatterBar guards & Vanilla+ healthbar texture verified.")
 
     # 5. Verify Options.lua and Art Presets system
     opt_path = os.path.join(ADDON_DIR, "Core", "Options.lua")

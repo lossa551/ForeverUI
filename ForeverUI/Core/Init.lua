@@ -307,7 +307,7 @@ function ns:RunInGameDemo(mode, arg)
         end
         local prof = ns.Elements:GetProfile(elemKey)
         local hex = ELEMENT_HEX[prof.key] or "|cffffd100"
-        local styleName = prof.deathStyle or "Pop & Break Shatter"
+        local styleName = prof.deathStyle or "Cracked & Tilted Death Bar"
 
         FireElementKillStage(bar, enhancer, usingDemoBar, prof.key, prof.label .. " KILL 1640")
         if C_Timer and C_Timer.After then
@@ -553,5 +553,5 @@ ns.Events:Register("PLAYER_LOGIN", function()
     if ns.Options and ns.Options.OnEnable then
         ns.Options:OnEnable()
     end
-    PrintMsg("Loaded (v1.0.0). Type |cffffd100/fui|r to open settings & art presets, or click the minimap icon.")
+    PrintMsg("Loaded (v1.1.0). Type |cffffd100/fui|r to open settings & art presets, or click the minimap icon.")
 end, ns)

@@ -1,8 +1,8 @@
 ## Interface: 16001, 16000, 11505
 ## Title: |cffffb833Forever|r|cffffffffUI|r
-## Notes: High-impact violent health bar trauma, bare cracked death bars, dynamic text-only combat text, and state-aware immersive UI for World of Warcraft: Forever.
+## Notes: Vanilla+ health bar trauma, cracked & tilted death bars, dynamic text-only combat text, and state-aware immersive UI for World of Warcraft: Forever.
 ## Author: ForeverUI
-## Version: 1.0.0
+## Version: 1.1.0
 ## SavedVariables: ForeverUIDB
 ## AllowLoadGameType: standard, camelot
 

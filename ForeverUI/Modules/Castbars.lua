@@ -11,6 +11,19 @@ local activeCastbarCount = 0
 
 -- Resolve elemental school profile from spell name
 local function ResolveSpellSchool(spellName)
+    local fxCfg = ns.Config and ns.Config:Get("combatFX")
+    local useWow = fxCfg and fxCfg.wowSpellColors and true or false
+
+    if useWow and ns.Elements and spellName and not ns.IsSecret(spellName) and type(spellName) == "string" then
+        local elemKey = ns.Elements:ClassifyBySpellName(spellName)
+        if elemKey then
+            local prof = ns.Elements:GetProfile(elemKey)
+            if prof then
+                return elemKey, prof.trailHold or prof.border, prof.cut or prof.flash
+            end
+        end
+    end
+
     if not spellName or ns.IsSecret(spellName) or type(spellName) ~= "string" then
         return "PHYSICAL", { 1.00, 0.78, 0.20 }, { 1.00, 0.95, 0.75 }
     end

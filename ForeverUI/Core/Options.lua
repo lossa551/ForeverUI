@@ -328,7 +328,7 @@ end
 -- TAB 2: UNIT BARS & TRAUMA
 -- ============================================================================
 local function BuildUnitBarsTab(panel)
-    CreateSectionHeader(panel, 16, -14, "Unit Bars & Violent Damage Trauma")
+    CreateSectionHeader(panel, 16, -14, "Unit Bars & Kinetic Damage Trauma")
 
     CreateCheckbox(panel, 16, -42, "Enable Health Bar Enhancements", "Enable kinetic trauma shake, delayed damage trail bars, and scale punches on unit frames.",
         function() return ns.Config:Get("unitBars", "enabled") end,
@@ -419,12 +419,12 @@ local function BuildNameplatesTab(panel)
         function(v) ns.Config:Set("nameplates", "enabled", v) end
     )
 
-    CreateCheckbox(panel, 16, -72, "Bare Cracked Death Bar & Shatter", "On enemy death, morph nameplate into a bare tilted corpse bar with fracture cracks and flying shards.",
+    CreateCheckbox(panel, 16, -72, "Cracked & Tilted Death Bar", "On enemy death, morph nameplate into a bare weathered corpse bar with fracture cracks and gentle tilt.",
         function() return ns.Config:Get("nameplates", "deathShatterEnabled") end,
         function(v) ns.Config:Set("nameplates", "deathShatterEnabled", v) end
     )
 
-    CreateCheckbox(panel, 16, -102, "Strip Clutter On Death (Hide Name & Level)", "Hide name and level text on death to leave a clean, cinematic cracked death bar.",
+    CreateCheckbox(panel, 16, -102, "Strip Clutter On Death (Hide Name & Level)", "Hide name and level text on death to leave a clean, understated cracked death bar.",
         function() return ns.Config:Get("nameplates", "hideNameAndLevelOnDeath") end,
         function(v) ns.Config:Set("nameplates", "hideNameAndLevelOnDeath", v) end
     )
@@ -824,7 +824,7 @@ local function CreateOptionsFrame()
 
     local verLabel = optionsFrame:CreateFontString(nil, "ARTWORK", "GameFontDisableSmall")
     verLabel:SetPoint("RIGHT", bottomCloseBtn, "LEFT", -16, 0)
-    verLabel:SetText("v1.0.0")
+    verLabel:SetText("v1.1.0")
 
     SelectTab(1)
     return optionsFrame
@@ -844,7 +844,7 @@ local function RegisterBlizzardCategory()
     local cSub = canvas:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
     cSub:SetPoint("TOPLEFT", cTitle, "BOTTOMLEFT", 0, -8)
     cSub:SetPoint("RIGHT", canvas, "RIGHT", -16, 0)
-    cSub:SetText("High-impact violent health bar trauma, bare cracked death bars, dynamic high-fountain combat text, and context-aware HUD fading.")
+    cSub:SetText("Vanilla+ kinetic health bar trauma, cracked & tilted death bars, dynamic high-fountain combat text, and context-aware HUD fading.")
     cSub:SetJustifyH("LEFT")
 
     local openBtn = CreateStyledButton(canvas, 16, -70, 220, 30, "|cffffd100Open ForeverUI Control Panel|r", function()

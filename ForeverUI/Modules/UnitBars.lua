@@ -65,23 +65,23 @@ local function CreateBorderFrame(parent, r, g, b, thickness)
     return border
 end
 
--- Crisp Golden/White L-Shaped Corner Lock-On Brackets for the Active Target
+-- Crisp Golden L-Shaped Corner Lock-On Brackets for the Active Target
 local function CreateTargetBrackets(parent)
     local frame = CreateFrame("Frame", nil, parent)
     frame:SetAllPoints(parent)
     frame:SetFrameLevel((parent:GetFrameLevel() or 1) + 6)
 
-    local armW = 8
-    local armH = 5
-    local thick = 2
-    local padX = 3
-    local padY = 2
+    local armW = 7
+    local armH = 4
+    local thick = 1.5
+    local padX = 2.5
+    local padY = 2.5
 
     local function MakeSegment(point, relPoint, ox, oy, w, h)
         local tex = frame:CreateTexture(nil, "OVERLAY", nil, 7)
         tex:SetTexture("Interface\\Buttons\\WHITE8X8")
-        tex:SetBlendMode("ADD")
-        tex:SetVertexColor(1.0, 0.86, 0.28, 0.96)
+        tex:SetBlendMode("BLEND")
+        tex:SetVertexColor(1.0, 0.84, 0.28, 0.94)
         tex:SetPoint(point, frame, relPoint, ox, oy)
         tex:SetSize(w, h)
         return tex
@@ -107,13 +107,13 @@ end
 local function AddClassicBarBevel(statusBar)
     local sheen = statusBar:CreateTexture(nil, "OVERLAY", nil, 1)
     sheen:SetTexture("Interface\\Buttons\\WHITE8X8")
-    sheen:SetVertexColor(1.0, 1.0, 1.0, 0.22)
+    sheen:SetVertexColor(1.0, 1.0, 1.0, 0.10)
     sheen:SetPoint("TOPLEFT", statusBar, "TOPLEFT", 0, 0)
     sheen:SetPoint("BOTTOMRIGHT", statusBar, "RIGHT", 0, 0)
 
     local shadow = statusBar:CreateTexture(nil, "OVERLAY", nil, 1)
     shadow:SetTexture("Interface\\Buttons\\WHITE8X8")
-    shadow:SetVertexColor(0.0, 0.0, 0.0, 0.28)
+    shadow:SetVertexColor(0.0, 0.0, 0.0, 0.16)
     shadow:SetPoint("TOPLEFT", statusBar, "LEFT", 0, 0)
     shadow:SetPoint("BOTTOMRIGHT", statusBar, "BOTTOMRIGHT", 0, 0)
 end
@@ -201,20 +201,20 @@ function UnitBars:CreateBarEnhancer(statusBar, unitToken, isNameplate)
     local bgTex = container:CreateTexture(nil, "BACKGROUND", nil, 0)
     bgTex:SetAllPoints(container)
     bgTex:SetTexture("Interface\\Buttons\\WHITE8X8")
-    bgTex:SetVertexColor(0.06, 0.06, 0.07, 0.96)
+    bgTex:SetVertexColor(0.06, 0.06, 0.07, 0.94)
 
     local trailBar = CreateFrame("StatusBar", nil, container)
     trailBar:SetAllPoints(container)
     trailBar:SetFrameLevel(baseLevel + 1)
-    trailBar:SetStatusBarTexture("Interface\\Buttons\\WHITE8X8")
-    trailBar:SetStatusBarColor(1.0, 0.65, 0.12, 0.98)
+    trailBar:SetStatusBarTexture("Interface\\TargetingFrame\\UI-StatusBar")
+    trailBar:SetStatusBarColor(1.0, 0.72, 0.24, 0.94)
     trailBar:SetMinMaxValues(0, 1000)
     trailBar:SetValue(1000)
 
     local mainBar = CreateFrame("StatusBar", nil, container)
     mainBar:SetAllPoints(container)
     mainBar:SetFrameLevel(baseLevel + 2)
-    mainBar:SetStatusBarTexture("Interface\\Buttons\\WHITE8X8")
+    mainBar:SetStatusBarTexture("Interface\\TargetingFrame\\UI-StatusBar")
     mainBar:SetStatusBarColor(0.92, 0.12, 0.12, 1.0)
     mainBar:SetMinMaxValues(0, 1000)
     mainBar:SetValue(1000)
@@ -236,33 +236,63 @@ function UnitBars:CreateBarEnhancer(statusBar, unitToken, isNameplate)
     fxOverlay:SetAllPoints(container)
     fxOverlay:SetFrameLevel(baseLevel + 3)
 
-    local bTop = fxOverlay:CreateTexture(nil, "BORDER")
+    -- Outer weathered iron frame (1px)
+    local bTop = fxOverlay:CreateTexture(nil, "BORDER", nil, 0)
     bTop:SetTexture("Interface\\Buttons\\WHITE8X8")
     bTop:SetVertexColor(0.08, 0.07, 0.06, 0.96)
-    bTop:SetPoint("TOPLEFT", container, "TOPLEFT", -1, 1)
-    bTop:SetPoint("TOPRIGHT", container, "TOPRIGHT", 1, 1)
+    bTop:SetPoint("TOPLEFT", container, "TOPLEFT", -2, 2)
+    bTop:SetPoint("TOPRIGHT", container, "TOPRIGHT", 2, 2)
     bTop:SetHeight(1)
 
-    local bBot = fxOverlay:CreateTexture(nil, "BORDER")
+    local bBot = fxOverlay:CreateTexture(nil, "BORDER", nil, 0)
     bBot:SetTexture("Interface\\Buttons\\WHITE8X8")
     bBot:SetVertexColor(0.08, 0.07, 0.06, 0.96)
-    bBot:SetPoint("BOTTOMLEFT", container, "BOTTOMLEFT", -1, -1)
-    bBot:SetPoint("BOTTOMRIGHT", container, "BOTTOMRIGHT", 1, -1)
+    bBot:SetPoint("BOTTOMLEFT", container, "BOTTOMLEFT", -2, -2)
+    bBot:SetPoint("BOTTOMRIGHT", container, "BOTTOMRIGHT", 2, -2)
     bBot:SetHeight(1)
 
-    local bLeft = fxOverlay:CreateTexture(nil, "BORDER")
+    local bLeft = fxOverlay:CreateTexture(nil, "BORDER", nil, 0)
     bLeft:SetTexture("Interface\\Buttons\\WHITE8X8")
     bLeft:SetVertexColor(0.08, 0.07, 0.06, 0.96)
-    bLeft:SetPoint("TOPLEFT", container, "TOPLEFT", -1, 1)
-    bLeft:SetPoint("BOTTOMLEFT", container, "BOTTOMLEFT", -1, -1)
+    bLeft:SetPoint("TOPLEFT", container, "TOPLEFT", -2, 2)
+    bLeft:SetPoint("BOTTOMLEFT", container, "BOTTOMLEFT", -2, -2)
     bLeft:SetWidth(1)
 
-    local bRight = fxOverlay:CreateTexture(nil, "BORDER")
+    local bRight = fxOverlay:CreateTexture(nil, "BORDER", nil, 0)
     bRight:SetTexture("Interface\\Buttons\\WHITE8X8")
     bRight:SetVertexColor(0.08, 0.07, 0.06, 0.96)
-    bRight:SetPoint("TOPRIGHT", container, "TOPRIGHT", 1, 1)
-    bRight:SetPoint("BOTTOMRIGHT", container, "BOTTOMRIGHT", 1, -1)
+    bRight:SetPoint("TOPRIGHT", container, "TOPRIGHT", 2, 2)
+    bRight:SetPoint("BOTTOMRIGHT", container, "BOTTOMRIGHT", 2, -2)
     bRight:SetWidth(1)
+
+    -- Inner weathered stone-bronze bevel rim (1px, matching Castbars)
+    local rTop = fxOverlay:CreateTexture(nil, "BORDER", nil, 1)
+    rTop:SetTexture("Interface\\Buttons\\WHITE8X8")
+    rTop:SetVertexColor(0.40, 0.36, 0.28, 0.78)
+    rTop:SetPoint("TOPLEFT", container, "TOPLEFT", -1, 1)
+    rTop:SetPoint("TOPRIGHT", container, "TOPRIGHT", 1, 1)
+    rTop:SetHeight(1)
+
+    local rBot = fxOverlay:CreateTexture(nil, "BORDER", nil, 1)
+    rBot:SetTexture("Interface\\Buttons\\WHITE8X8")
+    rBot:SetVertexColor(0.20, 0.18, 0.15, 0.82)
+    rBot:SetPoint("BOTTOMLEFT", container, "BOTTOMLEFT", -1, -1)
+    rBot:SetPoint("BOTTOMRIGHT", container, "BOTTOMRIGHT", 1, -1)
+    rBot:SetHeight(1)
+
+    local rLeft = fxOverlay:CreateTexture(nil, "BORDER", nil, 1)
+    rLeft:SetTexture("Interface\\Buttons\\WHITE8X8")
+    rLeft:SetVertexColor(0.34, 0.30, 0.24, 0.78)
+    rLeft:SetPoint("TOPLEFT", container, "TOPLEFT", -1, 1)
+    rLeft:SetPoint("BOTTOMLEFT", container, "BOTTOMLEFT", -1, -1)
+    rLeft:SetWidth(1)
+
+    local rRight = fxOverlay:CreateTexture(nil, "BORDER", nil, 1)
+    rRight:SetTexture("Interface\\Buttons\\WHITE8X8")
+    rRight:SetVertexColor(0.22, 0.20, 0.16, 0.82)
+    rRight:SetPoint("TOPRIGHT", container, "TOPRIGHT", 1, 1)
+    rRight:SetPoint("BOTTOMRIGHT", container, "BOTTOMRIGHT", 1, -1)
+    rRight:SetWidth(1)
 
     local mainFillTexture = mainBar:GetStatusBarTexture()
     local trailFillTexture = trailBar:GetStatusBarTexture()
@@ -322,17 +352,17 @@ function UnitBars:CreateBarEnhancer(statusBar, unitToken, isNameplate)
     cutLine:SetTexture("Interface\\Buttons\\WHITE8X8")
     cutLine:SetBlendMode("ADD")
     cutLine:SetVertexColor(1.0, 0.95, 0.80, 0.0)
-    cutLine:SetWidth(3.5)
-    cutLine.fuiWidth = 4
+    cutLine:SetWidth(2.0)
+    cutLine.fuiWidth = 2
     cutLine.fuiHeight = defaultH
     if mainFillTexture then
-        cutLine:SetPoint("TOP", mainFillTexture, "TOPRIGHT", 0, 3)
-        cutLine:SetPoint("BOTTOM", mainFillTexture, "BOTTOMRIGHT", 0, -3)
+        cutLine:SetPoint("TOP", mainFillTexture, "TOPRIGHT", 0, 2)
+        cutLine:SetPoint("BOTTOM", mainFillTexture, "BOTTOMRIGHT", 0, -2)
     end
     cutLine:Hide()
 
-    local executeBorder = CreateBorderFrame(fxOverlay, 1.0, 0.15, 0.15, 2)
-    local elemBorder = CreateBorderFrame(fillOverlay, 1.0, 0.50, 0.10, 2)
+    local executeBorder = CreateBorderFrame(fxOverlay, 1.0, 0.15, 0.15, 1.5)
+    local elemBorder = CreateBorderFrame(fillOverlay, 1.0, 0.50, 0.10, 1.5)
     local targetBrackets = CreateTargetBrackets(fxOverlay)
 
     local enhancer = {
@@ -414,9 +444,13 @@ function UnitBars:SetTargetState(enhancer, isTarget, hasAnyTarget, playPop)
             enhancer.targetBrackets:Show()
             enhancer.container:SetAlpha(1.0)
             if playPop then
-                enhancer.barPunchY = math.max(enhancer.barPunchY, 1.28)
-                enhancer.flashR, enhancer.flashG, enhancer.flashB = 1.0, 0.95, 0.75
-                enhancer.flashAlpha = math.max(enhancer.flashAlpha, 0.45)
+                local ubCfg = ns.Config:Get("unitBars")
+                local isVanilla = ubCfg and ubCfg.vanillaBarMode
+                if not isVanilla then
+                    enhancer.barPunchY = math.max(enhancer.barPunchY, 1.12)
+                end
+                enhancer.flashR, enhancer.flashG, enhancer.flashB = 1.0, 0.95, 0.78
+                enhancer.flashAlpha = math.max(enhancer.flashAlpha, isVanilla and 0.18 or 0.28)
                 activeAnimEnhancers[enhancer] = true
                 EnsureEnhancerTicker()
             end
@@ -621,16 +655,15 @@ function UnitBars:TriggerDamageImpact(enhancer, pctLost, isCrit, isMega, element
     enhancer.elemGlowDuration = recentImpact and math.max(enhancer.elemGlowDuration or 0, newGlowDur) or newGlowDur
     enhancer.elemGlowTimer = math.max(enhancer.elemGlowTimer or 0, newGlowDur)
 
-    local holdTime = isCrit
-        and ((prof and prof.trailHoldCrit) or (cfg.trailHoldCrit or 0.38))
-        or ((prof and prof.trailHoldNormal) or (cfg.trailHoldNormal or 0.24))
-    enhancer.trailHoldTimer = math.max(enhancer.trailHoldTimer or 0, holdTime * (0.85 + 0.35 * intensity))
-    local newDissolveDur = (isCrit and 0.72 or 0.54) * (0.72 + 0.28 * intensity)
+    local holdTime = isCrit and (cfg.trailHoldCrit or 0.32) or (cfg.trailHoldNormal or 0.20)
+    enhancer.trailHoldTimer = math.max(enhancer.trailHoldTimer or 0, holdTime * (0.88 + 0.25 * intensity))
+    local newDissolveDur = (isCrit and 0.62 or 0.44) * (0.75 + 0.25 * intensity)
     enhancer.trailDissolveDuration = math.max(enhancer.trailDissolveDuration or 0, newDissolveDur)
     enhancer.trailDissolveTimer = math.max(enhancer.trailDissolveTimer or 0, newDissolveDur)
-    enhancer.trailEmitTimer = 0.08
+    enhancer.trailEmitTimer = 0.14
     enhancer.lastDmgFrac = dmgFrac
 
+    local vanillaMode = cfg.vanillaBarMode and true or false
     local elemBlend = (resolvedKey == "EARTH") and "BLEND" or "ADD"
     if enhancer.hitFlash then
         enhancer.hitFlash:SetBlendMode(elemBlend)
@@ -643,57 +676,64 @@ function UnitBars:TriggerDamageImpact(enhancer, pctLost, isCrit, isMega, element
         if enhancer.cutLine then
             enhancer.cutLine:SetVertexColor(prof.cut[1], prof.cut[2], prof.cut[3], 1.0)
         end
-        if enhancer.elemBorder and prof.border then
-            enhancer.elemBorder:SetBorderColor(prof.border[1], prof.border[2], prof.border[3], 0.95 * enhancer.elemIntensity, elemBlend)
-            -- Show full outer elemental border rim on medium-to-heavy hits (intensity >= 0.42)
-            if resolvedKey ~= "PHYSICAL" and enhancer.elemIntensity >= 0.42 then
-                enhancer.elemBorder:Show()
-            elseif not recentImpact then
+        if enhancer.elemBorder then
+            if vanillaMode then
                 enhancer.elemBorder:Hide()
+            elseif prof.border then
+                enhancer.elemBorder:SetBorderColor(prof.border[1], prof.border[2], prof.border[3], 0.65 * enhancer.elemIntensity, elemBlend)
+                -- Show subtle elemental border rim on medium-to-heavy hits (intensity >= 0.50)
+                if resolvedKey ~= "PHYSICAL" and enhancer.elemIntensity >= 0.50 then
+                    enhancer.elemBorder:Show()
+                elseif not recentImpact then
+                    enhancer.elemBorder:Hide()
+                end
             end
         end
     else
         enhancer.flashR, enhancer.flashG, enhancer.flashB = 1.0, 0.95, 0.85
     end
 
-    -- Keep remaining-health flash subtle so the elemental disintegration stands out on the FADING health chunk!
-    local newFlash = isCrit and 0.36 or (0.10 + 0.20 * intensity)
+    -- Subtle remaining-health flash so the delayed damage trail stands out cleanly
+    local newFlash = vanillaMode
+        and (isCrit and 0.16 or (0.04 + 0.08 * intensity))
+        or (isCrit and 0.26 or (0.07 + 0.14 * intensity))
     enhancer.flashAlpha = math.max(enhancer.flashAlpha or 0, newFlash)
-    enhancer.cutAlpha = math.max(enhancer.cutAlpha or 0, 0.55 + 0.45 * intensity)
+    local newCut = vanillaMode and (0.22 + 0.30 * intensity) or (0.35 + 0.45 * intensity)
+    enhancer.cutAlpha = math.max(enhancer.cutAlpha or 0, newCut)
 
-    local traumaScale = cfg.traumaScale or 1.0
+    local traumaScale = cfg.traumaScale or 0.70
+    local critMult = cfg.critTraumaMultiplier or 1.45
     local rawTrauma
     if isDot then
-        rawTrauma = 0.18 * traumaScale
+        rawTrauma = 0.12 * traumaScale
     elseif isMega then
-        rawTrauma = 1.28 * traumaScale
+        rawTrauma = 1.10 * traumaScale
     elseif isCrit then
-        rawTrauma = (1.02 + 0.20 * weight) * traumaScale
+        rawTrauma = (0.62 + 0.14 * weight) * critMult * traumaScale
     else
-        rawTrauma = intensity * traumaScale
+        rawTrauma = intensity * 0.85 * traumaScale
     end
     if not isDot then
         if resolvedKey == "EARTH" then
-            rawTrauma = rawTrauma * 1.14
-        elseif resolvedKey == "LIGHTNING" then
             rawTrauma = rawTrauma * 1.10
+        elseif resolvedKey == "LIGHTNING" then
+            rawTrauma = rawTrauma * 1.06
         end
     end
-    enhancer.trauma = math.min(1.38, math.max(enhancer.trauma or 0, rawTrauma))
+    enhancer.trauma = math.min(1.45, math.max(enhancer.trauma or 0, rawTrauma))
 
-    local normalPunchMax = (prof and prof.punchNormal) or (cfg.barPunchNormal or 1.24)
-    local critPunchMax = (prof and prof.punchCrit) or (cfg.barPunchCrit or 1.48)
-    local megaPunchMax = (prof and prof.punchMega) or (cfg.barPunchMega or 1.65)
+    local normalPunchMax = cfg.barPunchNormal or 1.08
+    local critPunchMax = cfg.barPunchCrit or 1.22
+    local megaPunchMax = cfg.barPunchMega or 1.32
     local scaledPunch
     if isDot then
-        scaledPunch = 1.04
+        scaledPunch = vanillaMode and 1.00 or 1.02
     elseif isMega then
         scaledPunch = megaPunchMax
     elseif isCrit then
-        scaledPunch = critPunchMax + (megaPunchMax - critPunchMax) * 0.45 * weight
+        scaledPunch = critPunchMax + (megaPunchMax - critPunchMax) * 0.40 * weight
     else
-        -- Heavy normal hits (weight ~0.95) punch up toward the bottom of critPunchMax!
-        local heavyTarget = normalPunchMax + (critPunchMax - normalPunchMax) * 0.48
+        local heavyTarget = normalPunchMax + (critPunchMax - normalPunchMax) * 0.35
         scaledPunch = 1.0 + (heavyTarget - 1.0) * math.pow(intensity, 1.18)
     end
     enhancer.barPunchY = math.max(enhancer.barPunchY or 1.0, scaledPunch)
@@ -741,72 +781,73 @@ function UnitBars:TriggerDamageImpact(enhancer, pctLost, isCrit, isMega, element
         enhancer.trailChunkOverlay.fuiHeight = baseH
     end
 
-    -- Seed the 8 disintegrating elemental fragments inside trailChunkOverlay
+    -- Seed subtle elemental fragments inside trailChunkOverlay
     if enhancer.trailFragments then
         local n = #enhancer.trailFragments
         for i = 1, n do
             local f = enhancer.trailFragments[i]
-            f.u = ((i - 0.5) / n - 0.5) * 0.88 + (math.random() - 0.5) * 0.08
-            f.v = (math.random() - 0.5) * 0.65
-            f.vx = (math.random() - 0.5) * 14
+            f.u = ((i - 0.5) / n - 0.5) * 0.85 + (math.random() - 0.5) * 0.06
+            f.v = (math.random() - 0.5) * 0.55
+            f.vx = (math.random() - 0.5) * 10
             if resolvedKey == "FIRE" then
-                f.vy = 14 + math.random() * 20
-                f.sizeW = 3.0 + math.random() * 2.5
-                f.sizeH = 3.0 + math.random() * 2.5
+                f.vy = 10 + math.random() * 14
+                f.sizeW = 2.5 + math.random() * 2.0
+                f.sizeH = 2.5 + math.random() * 2.0
             elseif resolvedKey == "EARTH" then
-                f.vy = -(16 + math.random() * 22)
-                f.sizeW = 4.2 + math.random() * 3.0
-                f.sizeH = 3.4 + math.random() * 2.4
+                f.vy = -(12 + math.random() * 16)
+                f.sizeW = 3.2 + math.random() * 2.2
+                f.sizeH = 2.6 + math.random() * 1.8
             elseif resolvedKey == "FROST" then
-                f.vy = -(12 + math.random() * 18)
-                f.sizeW = 4.5 + math.random() * 2.5
-                f.sizeH = 2.2 + math.random() * 1.4
+                f.vy = -(10 + math.random() * 14)
+                f.sizeW = 3.4 + math.random() * 2.0
+                f.sizeH = 1.8 + math.random() * 1.2
             elseif resolvedKey == "SHADOW" then
-                f.vy = 8 + math.random() * 14
-                f.sizeW = 3.8 + math.random() * 2.6
-                f.sizeH = 3.8 + math.random() * 2.6
+                f.vy = 6 + math.random() * 10
+                f.sizeW = 2.8 + math.random() * 2.0
+                f.sizeH = 2.8 + math.random() * 2.0
             else
-                f.vy = (math.random() - 0.5) * 20
-                f.sizeW = 3.5 + math.random() * 2.0
-                f.sizeH = 2.2 + math.random() * 1.5
+                f.vy = (math.random() - 0.5) * 14
+                f.sizeW = 2.6 + math.random() * 1.6
+                f.sizeH = 1.8 + math.random() * 1.2
             end
         end
     end
 
-    if ns.CombatFX and trailAnchor then
+    if ns.CombatFX and trailAnchor and not isDot and intensity >= 0.35 then
         local spR = (prof and prof.spark and prof.spark[1]) or 1.0
         local spG = (prof and prof.spark and prof.spark[2]) or 0.72
         local spB = (prof and prof.spark and prof.spark[3]) or 0.18
-        local baseCount = math.max(3, math.floor(3 + intensity * (isMega and 16 or (isCrit and 12 or 8)) + 0.5))
+        local rawCount = math.max(2, math.floor(1 + intensity * (isMega and 7 or (isCrit and 5 or 3)) + 0.5))
+        local baseCount = vanillaMode and math.max(1, math.floor(rawCount * 0.55 + 0.5)) or rawCount
+        local spInt = vanillaMode and (intensity * 0.58) or (intensity * 0.75)
 
         if resolvedKey == "LIGHTNING" then
-            local boltCount = isMega and 2 or (isCrit and 2 or 1)
-            local boltDur = (isCrit and 0.26 or 0.16) * (0.65 + 0.35 * intensity)
-            ns.CombatFX:SpawnBarLightning(trailAnchor, boltCount, boltDur, intensity)
-            ns.CombatFX:SpawnBarSparks(trailAnchor, nil, math.max(3, baseCount), spR, spG, spB, false, "LIGHTNING", intensity)
-        elseif resolvedKey == "FIRE" then
-            ns.CombatFX:SpawnBarSparks(trailAnchor, nil, baseCount + math.floor(intensity * 6), spR, spG, spB, false, "FIRE", intensity)
-        elseif resolvedKey == "EARTH" then
-            if intensity >= 0.30 and ns.CombatFX.SpawnBarEarthCracks then
-                local crackCount = isMega and 3 or (isCrit and 3 or (intensity >= 0.55 and 2 or 1))
-                local crackDur = (isCrit and 0.42 or 0.30) * (0.70 + 0.30 * intensity)
-                ns.CombatFX:SpawnBarEarthCracks(trailAnchor, crackCount, crackDur, intensity)
+            local boltCount = ((isMega or isCrit) and not vanillaMode) and 1 or 0
+            if boltCount > 0 then
+                local boltDur = (isCrit and 0.18 or 0.12) * (0.70 + 0.30 * intensity)
+                ns.CombatFX:SpawnBarLightning(trailAnchor, boltCount, boltDur, spInt)
             end
-            ns.CombatFX:SpawnBarSparks(trailAnchor, nil, baseCount + math.floor(intensity * 4), spR, spG, spB, true, "EARTH", intensity)
-        elseif resolvedKey == "FROST" then
-            ns.CombatFX:SpawnBarSparks(trailAnchor, nil, baseCount + math.floor(intensity * 3), spR, spG, spB, false, "FROST", intensity)
-        elseif resolvedKey == "SHADOW" then
-            ns.CombatFX:SpawnBarSparks(trailAnchor, nil, baseCount + math.floor(intensity * 3), spR, spG, spB, false, "SHADOW", intensity)
+            ns.CombatFX:SpawnBarSparks(trailAnchor, nil, baseCount, spR, spG, spB, false, "LIGHTNING", spInt)
+        elseif resolvedKey == "FIRE" then
+            ns.CombatFX:SpawnBarSparks(trailAnchor, nil, baseCount + (vanillaMode and 0 or 1), spR, spG, spB, false, "FIRE", spInt)
+        elseif resolvedKey == "EARTH" then
+            if intensity >= 0.45 and ns.CombatFX.SpawnBarEarthCracks and not vanillaMode then
+                local crackCount = (isMega or isCrit) and 2 or 1
+                local crackDur = (isCrit and 0.32 or 0.24) * (0.75 + 0.25 * intensity)
+                ns.CombatFX:SpawnBarEarthCracks(trailAnchor, crackCount, crackDur, intensity * 0.80)
+            end
+            ns.CombatFX:SpawnBarSparks(trailAnchor, nil, baseCount, spR, spG, spB, true, "EARTH", spInt)
         else
-            ns.CombatFX:SpawnBarSparks(trailAnchor, nil, baseCount, spR, spG, spB, false, "PHYSICAL", intensity)
+            ns.CombatFX:SpawnBarSparks(trailAnchor, nil, baseCount, spR, spG, spB, false, resolvedKey, spInt)
         end
     end
 
-    -- Apply immediate Frame-0 impact kick so the bar jolts on the exact millisecond of impact!
+    -- Apply immediate Frame-0 impact kick so the bar jolts cleanly on impact
     local p0 = math.pow(enhancer.trauma, 1.45)
     local kickDir = (math.random() > 0.5) and 1 or -1
-    local initDx = kickDir * 7.5 * p0
-    local initDy = ((resolvedKey == "EARTH") and -6.5 or 3.5) * p0
+    local kickScale = vanillaMode and 0.48 or 1.0
+    local initDx = kickDir * 4.5 * p0 * kickScale
+    local initDy = ((resolvedKey == "EARTH") and -4.0 or 2.2) * p0 * kickScale
     self:RenderEnhancer(enhancer, initDx, initDy)
 end
 
@@ -924,41 +965,23 @@ function UnitBars:StepEnhancer(enhancer, dt, now, smoothSpeed, trailSpeed)
         end
     end
 
-    -- Elemental Disintegration of the Fading/Damaged Health Chunk (turns into embers, sparks, rubble, shards!)
+    -- Subtle elemental trail emission on heavy hits only
     local elem = enhancer.activeElement or "PHYSICAL"
     if (enhancer.trailDissolveTimer or 0) > 0.01 then
         enhancer.trailDissolveTimer = math.max(0, enhancer.trailDissolveTimer - dt)
         stillActive = true
         enhancer.trailEmitTimer = (enhancer.trailEmitTimer or 0) - dt
-        if enhancer.trailEmitTimer <= 0 and enhancer.trailDissolveTimer > 0.12 then
+        local elemInt = enhancer.elemIntensity or 0.6
+        if elemInt >= 0.55 and enhancer.trailEmitTimer <= 0 and enhancer.trailDissolveTimer > 0.14 then
             local trailAnchor = enhancer.trailChunkOverlay or enhancer.cutLine
             local prof = ns.Elements and ns.Elements:GetProfile(elem)
-            local elemInt = enhancer.elemIntensity or 0.6
-            local remFrac = enhancer.trailDissolveTimer / math.max(0.1, enhancer.trailDissolveDuration or 0.55)
+            local remFrac = enhancer.trailDissolveTimer / math.max(0.1, enhancer.trailDissolveDuration or 0.45)
             if ns.CombatFX and trailAnchor and prof then
                 local spR = (prof.spark and prof.spark[1]) or 1.0
                 local spG = (prof.spark and prof.spark[2]) or 0.6
                 local spB = (prof.spark and prof.spark[3]) or 0.1
-                if elem == "FIRE" then
-                    enhancer.trailEmitTimer = 0.09
-                    ns.CombatFX:SpawnBarSparks(trailAnchor, nil, 3, spR, spG, spB, false, "FIRE", elemInt * remFrac)
-                elseif elem == "LIGHTNING" then
-                    enhancer.trailEmitTimer = 0.13
-                    ns.CombatFX:SpawnBarLightning(trailAnchor, 1, 0.11, elemInt * remFrac)
-                    ns.CombatFX:SpawnBarSparks(trailAnchor, nil, 2, spR, spG, spB, false, "LIGHTNING", elemInt * remFrac)
-                elseif elem == "EARTH" then
-                    enhancer.trailEmitTimer = 0.11
-                    ns.CombatFX:SpawnBarSparks(trailAnchor, nil, 2, spR, spG, spB, true, "EARTH", elemInt * remFrac)
-                elseif elem == "FROST" then
-                    enhancer.trailEmitTimer = 0.11
-                    ns.CombatFX:SpawnBarSparks(trailAnchor, nil, 2, spR, spG, spB, false, "FROST", elemInt * remFrac)
-                elseif elem == "SHADOW" then
-                    enhancer.trailEmitTimer = 0.10
-                    ns.CombatFX:SpawnBarSparks(trailAnchor, nil, 2, spR, spG, spB, false, "SHADOW", elemInt * remFrac)
-                else
-                    enhancer.trailEmitTimer = 0.12
-                    ns.CombatFX:SpawnBarSparks(trailAnchor, nil, 2, spR, spG, spB, false, "PHYSICAL", elemInt * remFrac)
-                end
+                enhancer.trailEmitTimer = 0.18
+                ns.CombatFX:SpawnBarSparks(trailAnchor, nil, 1, spR, spG, spB, (elem == "EARTH"), elem, elemInt * remFrac * 0.65)
             end
         end
     else
@@ -966,57 +989,55 @@ function UnitBars:StepEnhancer(enhancer, dt, now, smoothSpeed, trailSpeed)
     end
 
     if enhancer.flashAlpha > 0.01 then
-        enhancer.flashAlpha = math.max(0, enhancer.flashAlpha - dt * 4.2)
+        enhancer.flashAlpha = math.max(0, enhancer.flashAlpha - dt * 4.5)
         stillActive = true
     else
         enhancer.flashAlpha = 0
     end
 
     if enhancer.cutAlpha > 0.01 then
-        enhancer.cutAlpha = math.max(0, enhancer.cutAlpha - dt * 2.8)
+        enhancer.cutAlpha = math.max(0, enhancer.cutAlpha - dt * 3.2)
         stillActive = true
     else
         enhancer.cutAlpha = 0
     end
 
     if math.abs(enhancer.barPunchY - 1.0) > 0.005 then
-        local punchRecover = (enhancer.activeElement == "EARTH") and 8.5 or 11.0
+        local punchRecover = (enhancer.activeElement == "EARTH") and 9.5 or 12.0
         enhancer.barPunchY = enhancer.barPunchY + (1.0 - enhancer.barPunchY) * math.min(1.0, dt * punchRecover)
         stillActive = true
     else
         enhancer.barPunchY = 1.0
     end
 
+    local ubCfg = ns.Config:Get("unitBars")
+    local vanillaMode = ubCfg and ubCfg.vanillaBarMode and true or false
+
     local dx, dy = 0, 0
     if enhancer.trauma > 0.01 then
         stillActive = true
-        -- Power 1.45 curve preserves a crisp ~2px nudge on light hits while scaling up to
-        -- ~9px on heavy normal hits (25 dmg) and ~14-17px on Crits & Mega Crits!
         local p = math.pow(enhancer.trauma, 1.45)
-        local maxOffset = 11.8
+        local maxOffset = vanillaMode and 3.2 or 6.8
         if elem == "LIGHTNING" then
-            -- High-voltage staccato electric crackle snap
-            dx = (math.sin(now * 175.0) * (maxOffset * 1.25) + (math.random() - 0.5) * 9.0) * p
-            dy = (math.cos(now * 190.0) * (maxOffset * 0.70) + (math.random() - 0.5) * 6.0) * p
+            dx = (math.sin(now * 165.0) * (maxOffset * 1.18) + (math.random() - 0.5) * 4.5) * p
+            dy = (math.cos(now * 180.0) * (maxOffset * 0.65) + (math.random() - 0.5) * 3.0) * p
         elseif elem == "EARTH" then
-            -- Heavy low-frequency vertical ground-slam seismic thud
-            dx = (math.sin(now * 58.0) * (maxOffset * 0.75) + (math.random() - 0.5) * 4.0) * p
-            dy = (math.cos(now * 52.0) * (maxOffset * 1.45) + (math.random() - 0.5) * 6.0) * p
+            dx = (math.sin(now * 58.0) * (maxOffset * 0.70) + (math.random() - 0.5) * 2.5) * p
+            dy = (math.cos(now * 52.0) * (maxOffset * 1.35) + (math.random() - 0.5) * 3.5) * p
         elseif elem == "SHADOW" then
-            -- Deep warping void dread wave
-            dx = math.sin(now * 62.0) * (maxOffset * 0.95) * p
-            dy = math.cos(now * 48.0) * (maxOffset * 0.75) * p
+            dx = math.sin(now * 62.0) * (maxOffset * 0.90) * p
+            dy = math.cos(now * 48.0) * (maxOffset * 0.70) * p
         else
-            dx = (math.sin(now * 88.0) * maxOffset + (math.random() - 0.5) * 6.0) * p
-            dy = (math.cos(now * 96.0) * (maxOffset * 0.65) + (math.random() - 0.5) * 4.5) * p
+            dx = (math.sin(now * 88.0) * maxOffset + (math.random() - 0.5) * 3.5) * p
+            dy = (math.cos(now * 96.0) * (maxOffset * 0.60) + (math.random() - 0.5) * 2.5) * p
         end
-        local decayRate = (enhancer.trauma < 0.36) and 2.55 or 2.10
+        local decayRate = (enhancer.trauma < 0.36) and 2.80 or 2.40
         enhancer.trauma = math.max(0, enhancer.trauma - dt * decayRate)
     else
         enhancer.trauma = 0
     end
 
-    -- Elemental Border Glow & Fire Heat Shimmer (scaled by hit intensity!)
+    -- Subtle Elemental Border Glow (scaled by hit intensity!)
     local borderShown = false
     local bestBorderAlpha = 0
     local bestBorderProf = nil
@@ -1025,22 +1046,22 @@ function UnitBars:StepEnhancer(enhancer, dt, now, smoothSpeed, trailSpeed)
     if (enhancer.elemGlowTimer or 0) > 0.01 then
         enhancer.elemGlowTimer = math.max(0, enhancer.elemGlowTimer - dt)
         stillActive = true
-        local glowFrac = enhancer.elemGlowTimer / math.max(0.1, enhancer.elemGlowDuration or 0.4)
+        local glowFrac = enhancer.elemGlowTimer / math.max(0.1, enhancer.elemGlowDuration or 0.35)
         local elemInt = enhancer.elemIntensity or 0.5
         local prof = ns.Elements and ns.Elements:GetProfile(elem)
         if elem == "FIRE" then
-            enhancer.flashAlpha = math.max(enhancer.flashAlpha, glowFrac * 0.38 * elemInt)
+            enhancer.flashAlpha = math.max(enhancer.flashAlpha, glowFrac * (vanillaMode and 0.14 or 0.24) * elemInt)
         end
-        if prof and prof.border and elem ~= "PHYSICAL" and elemInt >= 0.42 then
+        if not vanillaMode and prof and prof.border and elem ~= "PHYSICAL" and elemInt >= 0.50 then
             local flicker = 1.0
             if elem == "FIRE" then
-                flicker = 0.68 + 0.32 * math.sin(now * 28.0)
+                flicker = 0.72 + 0.28 * math.sin(now * 24.0)
             elseif elem == "LIGHTNING" then
-                flicker = (math.sin(now * 95.0) > 0) and 1.0 or 0.45
+                flicker = (math.sin(now * 80.0) > 0) and 1.0 or 0.50
             elseif elem == "SHADOW" then
-                flicker = 0.65 + 0.35 * math.sin(now * 18.0)
+                flicker = 0.70 + 0.30 * math.sin(now * 16.0)
             end
-            bestBorderAlpha = math.min(1.0, glowFrac * flicker * elemInt)
+            bestBorderAlpha = math.min(0.75, glowFrac * flicker * elemInt * 0.70)
             bestBorderProf = prof
             bestBorderElem = elem
             borderShown = true
@@ -1049,7 +1070,7 @@ function UnitBars:StepEnhancer(enhancer, dt, now, smoothSpeed, trailSpeed)
         enhancer.elemGlowTimer = 0
     end
 
-    -- Continuous Elemental DoT Burning / Crackling / Chilling / Corrupting over Remaining Health
+    -- Continuous Elemental DoT indicator over Remaining Health
     if (enhancer.dotTimer or 0) > 0.01 and not enhancer.deathTriggered then
         enhancer.dotTimer = math.max(0, enhancer.dotTimer - dt)
         stillActive = true
@@ -1061,7 +1082,7 @@ function UnitBars:StepEnhancer(enhancer, dt, now, smoothSpeed, trailSpeed)
         if dotProf then
             local dotBorderAlpha = 0
             if dotElem == "FIRE" then
-                local smolderAlpha = (0.11 + 0.07 * math.sin(now * 12.0)) * dotFade
+                local smolderAlpha = (0.08 + 0.05 * math.sin(now * 10.0)) * dotFade
                 if enhancer.flashAlpha < smolderAlpha then
                     enhancer.flashR, enhancer.flashG, enhancer.flashB = dotProf.flash[1], dotProf.flash[2], dotProf.flash[3]
                     if enhancer.hitFlash then
@@ -1069,11 +1090,11 @@ function UnitBars:StepEnhancer(enhancer, dt, now, smoothSpeed, trailSpeed)
                     end
                     enhancer.flashAlpha = smolderAlpha
                 end
-                dotBorderAlpha = (0.36 + 0.22 * math.sin(now * 16.0)) * dotFade
+                dotBorderAlpha = (0.28 + 0.16 * math.sin(now * 14.0)) * dotFade
             elseif dotElem == "LIGHTNING" then
-                dotBorderAlpha = (0.26 + 0.18 * math.sin(now * 38.0)) * dotFade
+                dotBorderAlpha = (0.22 + 0.14 * math.sin(now * 32.0)) * dotFade
             elseif dotElem == "FROST" then
-                local rimeAlpha = (0.09 + 0.04 * math.sin(now * 7.0)) * dotFade
+                local rimeAlpha = (0.07 + 0.03 * math.sin(now * 6.0)) * dotFade
                 if enhancer.flashAlpha < rimeAlpha then
                     enhancer.flashR, enhancer.flashG, enhancer.flashB = dotProf.flash[1], dotProf.flash[2], dotProf.flash[3]
                     if enhancer.hitFlash then
@@ -1081,22 +1102,22 @@ function UnitBars:StepEnhancer(enhancer, dt, now, smoothSpeed, trailSpeed)
                     end
                     enhancer.flashAlpha = rimeAlpha
                 end
-                dotBorderAlpha = (0.34 + 0.12 * math.sin(now * 8.0)) * dotFade
-            elseif dotElem == "SHADOW" then
-                local voidAlpha = (0.10 + 0.05 * math.sin(now * 9.0)) * dotFade
-                if enhancer.flashAlpha < voidAlpha then
+                dotBorderAlpha = (0.26 + 0.10 * math.sin(now * 7.0)) * dotFade
+            elseif dotElem == "SHADOW" or dotElem == "HOLY" or dotElem == "NATURE" or dotElem == "ARCANE" then
+                local auraAlpha = (0.07 + 0.04 * math.sin(now * 8.0)) * dotFade
+                if enhancer.flashAlpha < auraAlpha then
                     enhancer.flashR, enhancer.flashG, enhancer.flashB = dotProf.flash[1], dotProf.flash[2], dotProf.flash[3]
                     if enhancer.hitFlash then
                         enhancer.hitFlash:SetBlendMode("ADD")
                     end
-                    enhancer.flashAlpha = voidAlpha
+                    enhancer.flashAlpha = auraAlpha
                 end
-                dotBorderAlpha = (0.34 + 0.20 * math.sin(now * 10.0)) * dotFade
+                dotBorderAlpha = (0.24 + 0.12 * math.sin(now * 9.0)) * dotFade
             else
-                dotBorderAlpha = (0.30 + 0.14 * math.sin(now * 10.0)) * dotFade
+                dotBorderAlpha = (0.24 + 0.10 * math.sin(now * 9.0)) * dotFade
             end
 
-            if dotProf.border and dotBorderAlpha > bestBorderAlpha then
+            if not vanillaMode and dotProf.border and dotBorderAlpha > bestBorderAlpha then
                 bestBorderAlpha = dotBorderAlpha
                 bestBorderProf = dotProf
                 bestBorderElem = dotElem
@@ -1108,23 +1129,11 @@ function UnitBars:StepEnhancer(enhancer, dt, now, smoothSpeed, trailSpeed)
                 local spR = (dotProf.spark and dotProf.spark[1]) or 1.0
                 local spG = (dotProf.spark and dotProf.spark[2]) or 0.5
                 local spB = (dotProf.spark and dotProf.spark[3]) or 0.1
-                if dotElem == "FIRE" then
-                    enhancer.dotEmitTimer = 0.16
-                    ns.CombatFX:SpawnBarSparks(fillAnchor, nil, 2, spR, spG, spB, false, "FIRE", 0.44 * dotFade)
-                elseif dotElem == "LIGHTNING" then
-                    enhancer.dotEmitTimer = 0.30
-                    ns.CombatFX:SpawnBarLightning(fillAnchor, 1, 0.13, 0.28 * dotFade)
-                    ns.CombatFX:SpawnBarSparks(fillAnchor, nil, 1, spR, spG, spB, false, "LIGHTNING", 0.32 * dotFade)
-                elseif dotElem == "SHADOW" then
-                    enhancer.dotEmitTimer = 0.22
-                    ns.CombatFX:SpawnBarSparks(fillAnchor, nil, 2, spR, spG, spB, false, "SHADOW", 0.40 * dotFade)
-                elseif dotElem == "FROST" then
-                    enhancer.dotEmitTimer = 0.26
-                    ns.CombatFX:SpawnBarSparks(fillAnchor, nil, 1, spR, spG, spB, false, "FROST", 0.38 * dotFade)
-                else
-                    enhancer.dotEmitTimer = 0.28
-                    ns.CombatFX:SpawnBarSparks(fillAnchor, nil, 1, spR, spG, spB, false, dotElem, 0.36 * dotFade)
+                enhancer.dotEmitTimer = vanillaMode and 0.36 or 0.28
+                if dotElem == "LIGHTNING" and not vanillaMode then
+                    ns.CombatFX:SpawnBarLightning(fillAnchor, 1, 0.11, 0.22 * dotFade)
                 end
+                ns.CombatFX:SpawnBarSparks(fillAnchor, nil, 1, spR, spG, spB, false, dotElem, (vanillaMode and 0.22 or 0.30) * dotFade)
             end
         end
     else
@@ -1132,12 +1141,12 @@ function UnitBars:StepEnhancer(enhancer, dt, now, smoothSpeed, trailSpeed)
     end
 
     if enhancer.elemBorder then
-        if borderShown and bestBorderProf and bestBorderProf.border and bestBorderAlpha > 0.02 then
+        if not vanillaMode and borderShown and bestBorderProf and bestBorderProf.border and bestBorderAlpha > 0.02 then
             enhancer.elemBorder:SetBorderColor(
                 bestBorderProf.border[1],
                 bestBorderProf.border[2],
                 bestBorderProf.border[3],
-                math.min(1.0, bestBorderAlpha),
+                math.min(0.75, bestBorderAlpha),
                 (bestBorderElem == "EARTH") and "BLEND" or "ADD"
             )
             enhancer.elemBorder:Show()
@@ -1148,7 +1157,7 @@ function UnitBars:StepEnhancer(enhancer, dt, now, smoothSpeed, trailSpeed)
 
     if enhancer.isExecute then
         stillActive = true
-        local pulse = 0.45 + 0.50 * (0.5 + 0.5 * math.sin(now * 8.5))
+        local pulse = 0.40 + 0.45 * (0.5 + 0.5 * math.sin(now * 7.5))
         enhancer.executeBorder:SetBorderColor(1.0, 0.15, 0.15, pulse)
     end
 
@@ -1161,6 +1170,9 @@ function UnitBars:RenderEnhancer(enhancer, dx, dy)
     if not bar then
         return
     end
+
+    local ubCfg = ns.Config:Get("unitBars")
+    local vanillaMode = ubCfg and ubCfg.vanillaBarMode and true or false
 
     -- Never call bar:GetHeight() on Restricted Regions; use enhancer.baseHeight!
     local defaultH = enhancer.isNameplate and 12 or 14
@@ -1191,45 +1203,55 @@ function UnitBars:RenderEnhancer(enhancer, dx, dy)
         end
     end
 
-    -- Render Fading/Damaged Health Chunk as disintegrating elemental embers/sparks/rubble/shards!
+    -- Clean Vanilla+ delayed damage trail bar with subtle elemental tinting
     local holdC = enhancer.trailHoldColor or { 1.00, 0.90, 0.55 }
     local fadeC = enhancer.trailFadeColor or { 1.00, 0.32, 0.08 }
     local dissolveTimer = enhancer.trailDissolveTimer or 0
     if dissolveTimer > 0.01 then
-        local rem = math.max(0, math.min(1.0, dissolveTimer / math.max(0.1, enhancer.trailDissolveDuration or 0.55)))
+        local rem = math.max(0, math.min(1.0, dissolveTimer / math.max(0.1, enhancer.trailDissolveDuration or 0.45)))
         local t = 1.0 - rem
         local r = fadeC[1] + (holdC[1] - fadeC[1]) * rem
         local g = fadeC[2] + (holdC[2] - fadeC[2]) * rem
         local b = fadeC[3] + (holdC[3] - fadeC[3]) * rem
-        -- Rapidly dissolve the solid bar background so the chunk turns into fragments & particles!
-        local barAlpha = math.pow(rem, 1.85) * 0.62
+        local barAlpha = math.pow(rem, 1.25) * 0.88
         enhancer.trailBar:SetStatusBarColor(r, g, b, barAlpha)
 
         if enhancer.trailFragments and enhancer.trailChunkOverlay then
-            local elem = enhancer.activeElement or "PHYSICAL"
-            local prof = ns.Elements and ns.Elements:GetProfile(elem)
-            local spC = (prof and prof.spark) or holdC
-            local altC = (prof and prof.sparkAlt) or holdC
-            local chunkW = enhancer.trailChunkOverlay.fuiWidth or 18
-            local blend = (elem == "EARTH") and "BLEND" or "ADD"
+            local elemInt = enhancer.elemIntensity or 0.5
+            if not vanillaMode and elemInt >= 0.48 then
+                local elem = enhancer.activeElement or "PHYSICAL"
+                local prof = ns.Elements and ns.Elements:GetProfile(elem)
+                local spC = (prof and prof.spark) or holdC
+                local altC = (prof and prof.sparkAlt) or holdC
+                local chunkW = enhancer.trailChunkOverlay.fuiWidth or 18
+                local blend = (elem == "EARTH") and "BLEND" or "ADD"
 
-            for i = 1, #enhancer.trailFragments do
-                local f = enhancer.trailFragments[i]
-                local tex = f.tex
-                tex:SetBlendMode(blend)
-                local ox = f.u * chunkW + f.vx * t
-                local oy = f.v * targetH + f.vy * t
-                if elem == "EARTH" or elem == "FROST" then
-                    oy = f.v * targetH + f.vy * (t * t * 1.35)
+                for i = 1, #enhancer.trailFragments do
+                    local f = enhancer.trailFragments[i]
+                    local tex = f.tex
+                    if i % 2 == 1 then
+                        tex:SetBlendMode(blend)
+                        local ox = f.u * chunkW + f.vx * t
+                        local oy = f.v * targetH + f.vy * t
+                        if elem == "EARTH" or elem == "FROST" then
+                            oy = f.v * targetH + f.vy * (t * t * 1.25)
+                        end
+                        local scale = math.max(0.25, 1.0 - t * 0.72)
+                        tex:ClearAllPoints()
+                        tex:SetPoint("CENTER", enhancer.trailChunkOverlay, "CENTER", ox, oy)
+                        tex:SetSize(f.sizeW * scale, f.sizeH * scale)
+                        local col = f.isAlt and altC or spC
+                        local fAlpha = math.min(0.65, rem * 0.70)
+                        tex:SetVertexColor(col[1], col[2], col[3], fAlpha)
+                        tex:Show()
+                    else
+                        tex:Hide()
+                    end
                 end
-                local scale = math.max(0.25, 1.0 - t * 0.72)
-                tex:ClearAllPoints()
-                tex:SetPoint("CENTER", enhancer.trailChunkOverlay, "CENTER", ox, oy)
-                tex:SetSize(f.sizeW * scale, f.sizeH * scale)
-                local col = f.isAlt and altC or spC
-                local fAlpha = math.min(1.0, rem * 1.15)
-                tex:SetVertexColor(col[1], col[2], col[3], fAlpha)
-                tex:Show()
+            else
+                for i = 1, #enhancer.trailFragments do
+                    enhancer.trailFragments[i].tex:Hide()
+                end
             end
         end
     else

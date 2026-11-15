@@ -8,12 +8,13 @@ It enhances unit health bars, overhead enemy nameplates, and floating combat num
 
 ## Features
 
-- **Violent Health Bar Trauma & Delayed Damage Trail (`UnitBars`)**
-  - Smooth primary health interpolation paired with a high-contrast delayed white/amber damage trail bar (`trailHoldNormal` / `trailHoldCrit`).
-  - Directional horizontal/vertical trauma recoil, scale punch, and impact flash on every hit.
+- **Vanilla+ Health Bar Trauma & Delayed Damage Trail (`UnitBars`)**
+  - Classic Blizzard `UI-StatusBar` texture framed in weathered stone-bronze & iron borders (matching `Castbars`).
+  - Smooth primary health interpolation paired with a high-contrast delayed amber damage trail bar (`trailHoldNormal` / `trailHoldCrit`).
+  - Controlled horizontal/vertical trauma recoil, subtle scale punch, and impact flash on every hit.
   - Execute-range pulsing glow when targets drop below 20% health.
-- **Bare Cracked Death Bars & Shatter Shards (`Nameplates` & `CombatFX`)**
-  - On a killing blow, enemy overhead nameplates strip away clutter (hiding name/level text), tilt into a bare cracked gray corpse bar with fracture seams, and erupt with directional shatter shards.
+- **Cracked & Tilted Death Bars (`Nameplates` & `CombatFX`)**
+  - On a killing blow, enemy overhead nameplates strip away clutter (hiding name/level text), draw clean `CreateLine` fracture cracks across a single `UI-StatusBar` corpse bar, gently tilt (`-8.5°` by default), settle slightly with minimal sparks, and fade out cleanly.
 - **High-Fountain Dynamic Combat Text (`CombatText`)**
   - Pure numeric floating combat text rendered on the `TOOLTIP` strata above enemy nameplates.
   - Multi-lane alternating fountain arcs prevent overlapping numbers during rapid hits.
@@ -30,11 +31,11 @@ It enhances unit health bars, overhead enemy nameplates, and floating combat num
   - Sleek dark HUD settings window with tab navigation, real-time sliders, and live elemental preview buttons.
   - Circular draggable minimap button with tooltips for quick settings access and showcase triggers.
   - Curated **Art Presets**:
-    - **High-Impact (Signature)**: Heavy trauma recoil, violent punch scale, delayed amber trails, and -11.5° death bar tilt.
+    - **Vanilla+ (Signature)**: Classic `UI-StatusBar` & stone-bronze framing, controlled trauma recoil (0.70x), subtle scale punch, delayed amber trails, and a crisp -8.5° cracked death bar.
     - **Brutal (Heavy Metal)**: Exaggerated combat violence, massive punch scale (up to 1.90x), amplified trauma (1.6x), and -16.0° tilt.
     - **Minimal (Clean Esports)**: Snappy rapid trails, zero tilt (0°), subdued 0.25x recoil, compact fonts for competitive clarity.
     - **Arcade (Bouncy Pop)**: Exaggerated bounce, rapid flurry escalation, bouncy scale pops, and bright responsive numbers.
-    - **Cinematic (Immersive)**: Lingering damage trails, gentle trauma recoil, slow death fade, and deep out-of-combat HUD fade.
+    - **Cinematic (Vanilla Bars)**: Authentic Vanilla bar feel with rigid non-stretching bars, soft cut-seam glints, WoW spell-school colors (including Holy/Arcane/Nature), gentle -4.5° death bar, and deep out-of-combat HUD fade.
   - Built to cleanly integrate future art presets, textures, and community styles.
 
 ---
@@ -42,7 +43,7 @@ It enhances unit health bars, overhead enemy nameplates, and floating combat num
 ## Installation
 
 ### Option 1: Install from Release `.zip`
-1. Download `ForeverUI-v1.0.0.zip` from Releases (or build it locally with `.\Package-ForeverUI.ps1`).
+1. Download `ForeverUI-v1.1.0.zip` from Releases (or build it locally with `.\Package-ForeverUI.ps1`).
 2. Extract the archive into your World of Warcraft `Interface\AddOns` directory so the structure is:
    ```text
    <WoW Directory>\_forever_\Interface\AddOns\ForeverUI\ForeverUI.toc
@@ -67,7 +68,7 @@ Use `/fui` or `/foreverui` in-game:
 | :--- | :--- |
 | `/fui` or `/fui config` | Open the Settings & Art Presets configuration panel |
 | `/fui test` or `/fui showcase` | Run the full 6-element combat combo preview (Lightning -> Fire -> Earth -> Frost -> Shadow -> Physical -> Kill) |
-| `/fui kill` | Preview the Killing Blow bare cracked/tilted gray death bar and shatter shards |
+| `/fui kill` | Preview the Killing Blow cracked & tilted death bar |
 | `/fui cast [heal\|bolt]` | Preview Shaman Dynamic Castbar with school-adaptive Lead Spark, Latency Safe-Zone, and Pushback Recoil |
 | `/fui status` | Show how many active enemy nameplates are currently hooked |
 | `/fui state <STATE>` | Override the state engine (`COMBAT`, `EXPLORING`, `TRAVELLING`, `RESTING`, `HARVESTING`, or empty to clear) |

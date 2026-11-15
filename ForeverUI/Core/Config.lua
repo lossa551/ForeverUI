@@ -37,13 +37,13 @@ ns.Elements = {
             trailHoldNormal = 0.24,
             trailHoldCrit = 0.38,
             glowDuration = 0.16,
-            deathFill = { 0.32, 0.33, 0.38 },
-            deathTrim = { 0.78, 0.74, 0.66 },
-            deathCrack = { 1.00, 0.94, 0.78 },
-            deathDark = { 0.03, 0.03, 0.04 },
-            deathFlash = { 1.00, 0.95, 0.82 },
-            deathShard = { 0.88, 0.84, 0.76 },
-            deathStyle = "Clean Cleave & Buckle Snap",
+            deathFill = { 0.28, 0.28, 0.30 },
+            deathTrim = { 0.62, 0.58, 0.50 },
+            deathCrack = { 0.92, 0.88, 0.76 },
+            deathDark = { 0.04, 0.04, 0.05 },
+            deathFlash = { 0.92, 0.88, 0.76 },
+            deathShard = { 0.68, 0.64, 0.56 },
+            deathStyle = "Weathered Iron Crack",
         },
         LIGHTNING = {
             key = "LIGHTNING",
@@ -64,13 +64,13 @@ ns.Elements = {
             trailHoldNormal = 0.22,
             trailHoldCrit = 0.36,
             glowDuration = 0.34,
-            deathFill = { 0.12, 0.24, 0.42 },
-            deathTrim = { 0.36, 0.86, 1.00 },
-            deathCrack = { 0.78, 0.98, 1.00 },
-            deathDark = { 0.02, 0.06, 0.16 },
-            deathFlash = { 0.62, 0.96, 1.00 },
-            deathShard = { 0.38, 0.90, 1.00 },
-            deathStyle = "High-Voltage Overload & Magnetic Rip",
+            deathFill = { 0.22, 0.28, 0.36 },
+            deathTrim = { 0.48, 0.68, 0.78 },
+            deathCrack = { 0.78, 0.92, 0.98 },
+            deathDark = { 0.04, 0.06, 0.10 },
+            deathFlash = { 0.68, 0.88, 0.96 },
+            deathShard = { 0.50, 0.72, 0.82 },
+            deathStyle = "Storm-Slate Crack",
         },
         FIRE = {
             key = "FIRE",
@@ -91,13 +91,13 @@ ns.Elements = {
             trailHoldNormal = 0.34,
             trailHoldCrit = 0.50,
             glowDuration = 0.82,
-            deathFill = { 0.24, 0.06, 0.02 },
-            deathTrim = { 1.00, 0.38, 0.04 },
-            deathCrack = { 1.00, 0.82, 0.18 },
-            deathDark = { 0.06, 0.01, 0.00 },
-            deathFlash = { 1.00, 0.48, 0.06 },
-            deathShard = { 1.00, 0.38, 0.04 },
-            deathStyle = "Molten Detonation & Ash Burn-Away",
+            deathFill = { 0.26, 0.18, 0.14 },
+            deathTrim = { 0.72, 0.44, 0.26 },
+            deathCrack = { 0.95, 0.72, 0.36 },
+            deathDark = { 0.06, 0.03, 0.02 },
+            deathFlash = { 0.94, 0.58, 0.26 },
+            deathShard = { 0.74, 0.44, 0.24 },
+            deathStyle = "Charred Ash Crack",
         },
         EARTH = {
             key = "EARTH",
@@ -118,13 +118,13 @@ ns.Elements = {
             trailHoldNormal = 0.28,
             trailHoldCrit = 0.42,
             glowDuration = 0.44,
-            deathFill = { 0.30, 0.21, 0.12 },
-            deathTrim = { 0.68, 0.52, 0.30 },
-            deathCrack = { 0.95, 0.80, 0.52 },
-            deathDark = { 0.06, 0.04, 0.02 },
-            deathFlash = { 0.85, 0.68, 0.42 },
-            deathShard = { 0.56, 0.40, 0.22 },
-            deathStyle = "Tectonic Crush & Avalanche Collapse",
+            deathFill = { 0.28, 0.23, 0.17 },
+            deathTrim = { 0.60, 0.50, 0.36 },
+            deathCrack = { 0.86, 0.76, 0.56 },
+            deathDark = { 0.05, 0.04, 0.03 },
+            deathFlash = { 0.80, 0.68, 0.48 },
+            deathShard = { 0.56, 0.46, 0.32 },
+            deathStyle = "Tectonic Slate Crack",
         },
         FROST = {
             key = "FROST",
@@ -145,13 +145,13 @@ ns.Elements = {
             trailHoldNormal = 0.48,
             trailHoldCrit = 0.66,
             glowDuration = 0.68,
-            deathFill = { 0.18, 0.38, 0.56 },
-            deathTrim = { 0.64, 0.94, 1.00 },
-            deathCrack = { 0.92, 0.99, 1.00 },
-            deathDark = { 0.03, 0.10, 0.18 },
-            deathFlash = { 0.78, 0.97, 1.00 },
-            deathShard = { 0.68, 0.95, 1.00 },
-            deathStyle = "Flash-Freeze & Crystalline Glass Shatter",
+            deathFill = { 0.22, 0.30, 0.38 },
+            deathTrim = { 0.56, 0.74, 0.84 },
+            deathCrack = { 0.88, 0.95, 0.98 },
+            deathDark = { 0.04, 0.07, 0.10 },
+            deathFlash = { 0.76, 0.90, 0.96 },
+            deathShard = { 0.62, 0.78, 0.86 },
+            deathStyle = "Frosted Slate Crack",
         },
         SHADOW = {
             key = "SHADOW",
@@ -172,13 +172,259 @@ ns.Elements = {
             trailHoldNormal = 0.32,
             trailHoldCrit = 0.48,
             glowDuration = 0.58,
-            deathFill = { 0.18, 0.07, 0.28 },
-            deathTrim = { 0.74, 0.30, 1.00 },
-            deathCrack = { 0.94, 0.58, 1.00 },
-            deathDark = { 0.04, 0.01, 0.08 },
-            deathFlash = { 0.82, 0.36, 1.00 },
-            deathShard = { 0.74, 0.30, 0.98 },
-            deathStyle = "Void Rift Pop & Singularity Implosion",
+            deathFill = { 0.24, 0.18, 0.28 },
+            deathTrim = { 0.58, 0.44, 0.70 },
+            deathCrack = { 0.84, 0.70, 0.94 },
+            deathDark = { 0.05, 0.03, 0.07 },
+            deathFlash = { 0.76, 0.56, 0.88 },
+            deathShard = { 0.60, 0.46, 0.72 },
+            deathStyle = "Dusk-Slate Crack",
+        },
+    },
+    -- Authentic WoW Spell-School Palettes (enabled when combatFX.wowSpellColors is true, e.g. Cinematic)
+    WOW_PROFILES = {
+        PHYSICAL = {
+            key = "PHYSICAL",
+            label = "PHYSICAL",
+            demoSpell = "MORTAL STRIKE",
+            flash = { 1.00, 0.90, 0.62 },
+            cut = { 1.00, 0.92, 0.70 },
+            trailHold = { 1.00, 0.84, 0.42 },
+            trailFade = { 0.80, 0.18, 0.14 },
+            border = { 0.88, 0.74, 0.40 },
+            spark = { 0.92, 0.88, 0.78 },
+            sparkAlt = { 0.98, 0.96, 0.90 },
+            text = { 1.00, 1.00, 1.00 },
+            critText = { 1.00, 0.82, 0.00 },
+            punchNormal = 1.00,
+            punchCrit = 1.03,
+            punchMega = 1.06,
+            trailHoldNormal = 0.35,
+            trailHoldCrit = 0.55,
+            glowDuration = 0.18,
+            deathFill = { 0.26, 0.26, 0.28 },
+            deathTrim = { 0.58, 0.54, 0.46 },
+            deathCrack = { 0.88, 0.84, 0.72 },
+            deathDark = { 0.04, 0.04, 0.05 },
+            deathFlash = { 0.90, 0.85, 0.72 },
+            deathShard = { 0.66, 0.62, 0.54 },
+            deathStyle = "Weathered Iron Crack",
+        },
+        LIGHTNING = {
+            key = "LIGHTNING",
+            label = "LIGHTNING",
+            demoSpell = "LIGHTNING BOLT",
+            flash = { 0.82, 0.93, 1.00 },
+            cut = { 0.92, 0.98, 1.00 },
+            trailHold = { 0.68, 0.88, 1.00 },
+            trailFade = { 0.24, 0.54, 0.92 },
+            border = { 0.40, 0.74, 1.00 },
+            spark = { 0.56, 0.84, 1.00 },
+            sparkAlt = { 0.94, 0.98, 1.00 },
+            text = { 0.55, 0.85, 1.00 },
+            critText = { 0.78, 0.94, 1.00 },
+            punchNormal = 1.00,
+            punchCrit = 1.03,
+            punchMega = 1.06,
+            trailHoldNormal = 0.35,
+            trailHoldCrit = 0.55,
+            glowDuration = 0.28,
+            deathFill = { 0.22, 0.27, 0.34 },
+            deathTrim = { 0.46, 0.64, 0.76 },
+            deathCrack = { 0.82, 0.92, 0.98 },
+            deathDark = { 0.04, 0.06, 0.10 },
+            deathFlash = { 0.74, 0.88, 0.98 },
+            deathShard = { 0.52, 0.70, 0.82 },
+            deathStyle = "Storm-Slate Crack",
+        },
+        FIRE = {
+            key = "FIRE",
+            label = "FIRE",
+            demoSpell = "FLAME SHOCK",
+            flash = { 1.00, 0.72, 0.24 },
+            cut = { 1.00, 0.86, 0.42 },
+            trailHold = { 1.00, 0.62, 0.14 },
+            trailFade = { 0.84, 0.24, 0.06 },
+            border = { 0.96, 0.48, 0.10 },
+            spark = { 1.00, 0.54, 0.10 },
+            sparkAlt = { 1.00, 0.86, 0.40 },
+            text = { 1.00, 0.50, 0.00 },
+            critText = { 1.00, 0.66, 0.18 },
+            punchNormal = 1.00,
+            punchCrit = 1.03,
+            punchMega = 1.06,
+            trailHoldNormal = 0.35,
+            trailHoldCrit = 0.55,
+            glowDuration = 0.55,
+            deathFill = { 0.26, 0.19, 0.14 },
+            deathTrim = { 0.68, 0.44, 0.26 },
+            deathCrack = { 0.94, 0.72, 0.36 },
+            deathDark = { 0.06, 0.03, 0.02 },
+            deathFlash = { 0.96, 0.64, 0.26 },
+            deathShard = { 0.74, 0.46, 0.24 },
+            deathStyle = "Charred Ash Crack",
+        },
+        EARTH = {
+            key = "EARTH",
+            label = "EARTH",
+            demoSpell = "EARTH SHOCK",
+            flash = { 0.76, 0.62, 0.38 },
+            cut = { 0.88, 0.76, 0.50 },
+            trailHold = { 0.76, 0.62, 0.38 },
+            trailFade = { 0.44, 0.32, 0.18 },
+            border = { 0.62, 0.48, 0.28 },
+            spark = { 0.56, 0.42, 0.24 },
+            sparkAlt = { 0.80, 0.68, 0.46 },
+            text = { 0.86, 0.72, 0.44 },
+            critText = { 0.96, 0.82, 0.54 },
+            punchNormal = 1.00,
+            punchCrit = 1.03,
+            punchMega = 1.06,
+            trailHoldNormal = 0.35,
+            trailHoldCrit = 0.55,
+            glowDuration = 0.38,
+            deathFill = { 0.27, 0.23, 0.18 },
+            deathTrim = { 0.58, 0.48, 0.36 },
+            deathCrack = { 0.86, 0.76, 0.56 },
+            deathDark = { 0.05, 0.04, 0.03 },
+            deathFlash = { 0.80, 0.68, 0.48 },
+            deathShard = { 0.56, 0.46, 0.32 },
+            deathStyle = "Tectonic Slate Crack",
+        },
+        FROST = {
+            key = "FROST",
+            label = "FROST",
+            demoSpell = "FROST SHOCK",
+            flash = { 0.74, 0.90, 1.00 },
+            cut = { 0.90, 0.96, 1.00 },
+            trailHold = { 0.62, 0.86, 1.00 },
+            trailFade = { 0.26, 0.54, 0.90 },
+            border = { 0.50, 0.80, 1.00 },
+            spark = { 0.56, 0.84, 1.00 },
+            sparkAlt = { 0.90, 0.96, 1.00 },
+            text = { 0.50, 0.80, 1.00 },
+            critText = { 0.72, 0.90, 1.00 },
+            punchNormal = 1.00,
+            punchCrit = 1.03,
+            punchMega = 1.06,
+            trailHoldNormal = 0.35,
+            trailHoldCrit = 0.55,
+            glowDuration = 0.52,
+            deathFill = { 0.22, 0.29, 0.37 },
+            deathTrim = { 0.52, 0.70, 0.82 },
+            deathCrack = { 0.88, 0.94, 0.98 },
+            deathDark = { 0.04, 0.07, 0.10 },
+            deathFlash = { 0.76, 0.90, 0.98 },
+            deathShard = { 0.60, 0.76, 0.86 },
+            deathStyle = "Frosted Slate Crack",
+        },
+        SHADOW = {
+            key = "SHADOW",
+            label = "SHADOW",
+            demoSpell = "SHADOW BOLT",
+            flash = { 0.64, 0.48, 0.94 },
+            cut = { 0.82, 0.70, 0.98 },
+            trailHold = { 0.56, 0.38, 0.88 },
+            trailFade = { 0.28, 0.14, 0.54 },
+            border = { 0.54, 0.36, 0.86 },
+            spark = { 0.58, 0.38, 0.92 },
+            sparkAlt = { 0.84, 0.72, 0.98 },
+            text = { 0.64, 0.46, 0.96 },
+            critText = { 0.80, 0.64, 1.00 },
+            punchNormal = 1.00,
+            punchCrit = 1.03,
+            punchMega = 1.06,
+            trailHoldNormal = 0.35,
+            trailHoldCrit = 0.55,
+            glowDuration = 0.48,
+            deathFill = { 0.23, 0.19, 0.28 },
+            deathTrim = { 0.54, 0.42, 0.68 },
+            deathCrack = { 0.82, 0.72, 0.94 },
+            deathDark = { 0.05, 0.03, 0.07 },
+            deathFlash = { 0.72, 0.56, 0.88 },
+            deathShard = { 0.58, 0.46, 0.72 },
+            deathStyle = "Dusk-Slate Crack",
+        },
+        NATURE = {
+            key = "NATURE",
+            label = "NATURE",
+            demoSpell = "WRATH",
+            flash = { 0.56, 0.94, 0.52 },
+            cut = { 0.84, 1.00, 0.78 },
+            trailHold = { 0.42, 0.88, 0.42 },
+            trailFade = { 0.18, 0.56, 0.22 },
+            border = { 0.36, 0.84, 0.36 },
+            spark = { 0.38, 0.88, 0.38 },
+            sparkAlt = { 0.82, 0.98, 0.74 },
+            text = { 0.30, 1.00, 0.30 },
+            critText = { 0.58, 1.00, 0.58 },
+            punchNormal = 1.00,
+            punchCrit = 1.03,
+            punchMega = 1.06,
+            trailHoldNormal = 0.35,
+            trailHoldCrit = 0.55,
+            glowDuration = 0.42,
+            deathFill = { 0.20, 0.27, 0.21 },
+            deathTrim = { 0.44, 0.64, 0.42 },
+            deathCrack = { 0.78, 0.92, 0.74 },
+            deathDark = { 0.04, 0.06, 0.04 },
+            deathFlash = { 0.68, 0.90, 0.64 },
+            deathShard = { 0.48, 0.70, 0.46 },
+            deathStyle = "Verdant Slate Crack",
+        },
+        HOLY = {
+            key = "HOLY",
+            label = "HOLY",
+            demoSpell = "SMITE",
+            flash = { 1.00, 0.94, 0.68 },
+            cut = { 1.00, 0.98, 0.84 },
+            trailHold = { 1.00, 0.90, 0.52 },
+            trailFade = { 0.88, 0.68, 0.22 },
+            border = { 0.98, 0.86, 0.46 },
+            spark = { 1.00, 0.90, 0.54 },
+            sparkAlt = { 1.00, 0.98, 0.86 },
+            text = { 1.00, 0.90, 0.50 },
+            critText = { 1.00, 0.96, 0.72 },
+            punchNormal = 1.00,
+            punchCrit = 1.03,
+            punchMega = 1.06,
+            trailHoldNormal = 0.35,
+            trailHoldCrit = 0.55,
+            glowDuration = 0.42,
+            deathFill = { 0.29, 0.26, 0.20 },
+            deathTrim = { 0.70, 0.62, 0.40 },
+            deathCrack = { 0.98, 0.92, 0.66 },
+            deathDark = { 0.05, 0.04, 0.03 },
+            deathFlash = { 0.98, 0.90, 0.60 },
+            deathShard = { 0.74, 0.66, 0.44 },
+            deathStyle = "Gilded Stone Crack",
+        },
+        ARCANE = {
+            key = "ARCANE",
+            label = "ARCANE",
+            demoSpell = "ARCANE MISSILES",
+            flash = { 0.96, 0.74, 1.00 },
+            cut = { 0.98, 0.88, 1.00 },
+            trailHold = { 0.94, 0.64, 0.98 },
+            trailFade = { 0.62, 0.36, 0.86 },
+            border = { 0.90, 0.58, 0.98 },
+            spark = { 0.92, 0.60, 0.98 },
+            sparkAlt = { 0.96, 0.86, 1.00 },
+            text = { 1.00, 0.55, 1.00 },
+            critText = { 1.00, 0.76, 1.00 },
+            punchNormal = 1.00,
+            punchCrit = 1.03,
+            punchMega = 1.06,
+            trailHoldNormal = 0.35,
+            trailHoldCrit = 0.55,
+            glowDuration = 0.42,
+            deathFill = { 0.26, 0.21, 0.30 },
+            deathTrim = { 0.64, 0.48, 0.72 },
+            deathCrack = { 0.94, 0.78, 0.98 },
+            deathDark = { 0.05, 0.03, 0.06 },
+            deathFlash = { 0.90, 0.68, 0.96 },
+            deathShard = { 0.68, 0.52, 0.76 },
+            deathStyle = "Arcane Slate Crack",
         },
     },
     lastPlayerElement = nil,
@@ -241,8 +487,8 @@ local DOT_SPELL_PATTERNS = {
     { pattern = "combustion", elem = "FIRE", dur = 10.0 },
     { pattern = "flamestrike", elem = "FIRE", dur = 8.0 },
     { pattern = "conflagrate", elem = "FIRE", dur = 6.0 },
-    { pattern = "holy fire", elem = "FIRE", dur = 10.0 },
-    { pattern = "sunfire", elem = "FIRE", dur = 12.0 },
+    { pattern = "holy fire", elem = "FIRE", wowElem = "HOLY", dur = 10.0 },
+    { pattern = "sunfire", elem = "FIRE", wowElem = "NATURE", dur = 12.0 },
     -- SHADOW DoTs
     { pattern = "corruption", elem = "SHADOW", dur = 18.0 },
     { pattern = "shadow word: pain", elem = "SHADOW", dur = 18.0 },
@@ -261,18 +507,18 @@ local DOT_SPELL_PATTERNS = {
     { pattern = "chains of ice", elem = "FROST", dur = 8.0 },
     { pattern = "cone of cold", elem = "FROST", dur = 8.0 },
     -- LIGHTNING / ARCANE DoTs
-    { pattern = "moonfire", elem = "LIGHTNING", dur = 12.0 },
+    { pattern = "moonfire", elem = "LIGHTNING", wowElem = "ARCANE", dur = 12.0 },
     { pattern = "stormstrike", elem = "LIGHTNING", dur = 12.0 },
     { pattern = "thunder clap", elem = "LIGHTNING", dur = 10.0 },
     { pattern = "thunderclap", elem = "LIGHTNING", dur = 10.0 },
     { pattern = "electrocute", elem = "LIGHTNING", dur = 8.0 },
     { pattern = "static", elem = "LIGHTNING", dur = 8.0 },
     -- EARTH / NATURE DoTs
-    { pattern = "serpent sting", elem = "EARTH", dur = 15.0 },
-    { pattern = "insect swarm", elem = "EARTH", dur = 12.0 },
+    { pattern = "serpent sting", elem = "EARTH", wowElem = "NATURE", dur = 15.0 },
+    { pattern = "insect swarm", elem = "EARTH", wowElem = "NATURE", dur = 12.0 },
     { pattern = "earthbind", elem = "EARTH", dur = 6.0 },
     { pattern = "earthquake", elem = "EARTH", dur = 8.0 },
-    { pattern = "deadly poison", elem = "EARTH", dur = 12.0 },
+    { pattern = "deadly poison", elem = "EARTH", wowElem = "NATURE", dur = 12.0 },
     -- PHYSICAL Bleeds
     { pattern = "rend", elem = "PHYSICAL", dur = 15.0 },
     { pattern = "deep wounds", elem = "PHYSICAL", dur = 12.0 },
@@ -283,15 +529,21 @@ local DOT_SPELL_PATTERNS = {
     { pattern = "lacerate", elem = "PHYSICAL", dur = 15.0 },
 }
 
+local function UseWowSpellColors()
+    local fxCfg = ns.Config and ns.Config:Get("combatFX")
+    return fxCfg and fxCfg.wowSpellColors and true or false
+end
+
 function ns.Elements:ClassifyDotSpell(spellName)
     if not spellName or ns.IsSecret(spellName) or type(spellName) ~= "string" then
         return nil, nil
     end
     local lower = string.lower(spellName)
+    local useWow = UseWowSpellColors()
     for i = 1, #DOT_SPELL_PATTERNS do
         local entry = DOT_SPELL_PATTERNS[i]
         if string.find(lower, entry.pattern, 1, true) then
-            return entry.elem, entry.dur
+            return (useWow and entry.wowElem) or entry.elem, entry.dur
         end
     end
     return nil, nil
@@ -312,13 +564,33 @@ local FROST_KEYWORDS = {
 local SHADOW_KEYWORDS = {
     "shadow", "void", "dark", "corruption", "agony", "pain", "mind ", "vampiric", "death coil", "drain", "haunt", "plague", "curse", "doom", "unholy", "necrotic",
 }
+local HOLY_KEYWORDS = {
+    "holy", "smite", "judgment", "judgement", "consecrat", "exorcism", "crusader", "penance", "flash of light", "sacred", "divine", "avenger",
+}
+local ARCANE_KEYWORDS = {
+    "arcane", "moonfire", "starfire", "starsurge", "polymorph", "counterspell", "missiles", "supernova",
+}
+local NATURE_KEYWORDS = {
+    "wrath", "insect swarm", "poison", "serpent sting", "wyvern sting", "healing wave", "chain heal", "rejuvenation", "regrowth", "riptide", "windfury", "entangling", "nature",
+}
 
 function ns.Elements:GetProfile(elementKey)
+    local useWow = UseWowSpellColors()
+    local upper = "PHYSICAL"
     if elementKey and not ns.IsSecret(elementKey) then
-        local upper = string.upper(tostring(elementKey))
-        if self.PROFILES[upper] then
-            return self.PROFILES[upper]
+        upper = string.upper(tostring(elementKey))
+    end
+    if useWow then
+        if self.WOW_PROFILES and self.WOW_PROFILES[upper] then
+            return self.WOW_PROFILES[upper]
         end
+        return (self.WOW_PROFILES and self.WOW_PROFILES.PHYSICAL) or self.PROFILES.PHYSICAL
+    end
+    if self.PROFILES[upper] then
+        return self.PROFILES[upper]
+    end
+    if self.WOW_PROFILES and self.WOW_PROFILES[upper] then
+        return self.WOW_PROFILES[upper]
     end
     return self.PROFILES.PHYSICAL
 end
@@ -328,6 +600,21 @@ function ns.Elements:ClassifyBySpellName(spellName)
         return nil
     end
     local lower = string.lower(spellName)
+    local useWow = UseWowSpellColors()
+
+    if useWow then
+        for i = 1, #HOLY_KEYWORDS do
+            if string.find(lower, HOLY_KEYWORDS[i], 1, true) then
+                return "HOLY"
+            end
+        end
+        for i = 1, #ARCANE_KEYWORDS do
+            if string.find(lower, ARCANE_KEYWORDS[i], 1, true) then
+                return "ARCANE"
+            end
+        end
+    end
+
     -- Check specific elemental shocks first before generic "shock"
     for i = 1, #FIRE_KEYWORDS do
         if string.find(lower, FIRE_KEYWORDS[i], 1, true) then
@@ -347,6 +634,13 @@ function ns.Elements:ClassifyBySpellName(spellName)
     for i = 1, #SHADOW_KEYWORDS do
         if string.find(lower, SHADOW_KEYWORDS[i], 1, true) then
             return "SHADOW"
+        end
+    end
+    if useWow then
+        for i = 1, #NATURE_KEYWORDS do
+            if string.find(lower, NATURE_KEYWORDS[i], 1, true) then
+                return "NATURE"
+            end
         end
     end
     for i = 1, #LIGHTNING_KEYWORDS do
@@ -419,6 +713,7 @@ function ns.Elements:ResolveElement(schoolMask, spellName, isAutoAttack)
         return byName
     end
 
+    local useWow = UseWowSpellColors()
     local now = GetTime and GetTime() or 0
     local recentCast = (self.lastPlayerElement and (now - (self.lastPlayerElementTime or 0)) <= 2.4)
         and self.lastPlayerElement or nil
@@ -433,14 +728,14 @@ function ns.Elements:ResolveElement(schoolMask, spellName, isAutoAttack)
                 return "SHADOW"
             elseif bit.band(schoolMask, 8) ~= 0 then
                 -- Nature school (8): distinguish Earth Shock vs Lightning Bolt via recent cast!
-                if recentCast == "EARTH" or recentCast == "LIGHTNING" then
+                if recentCast == "EARTH" or recentCast == "LIGHTNING" or (useWow and recentCast == "NATURE") then
                     return recentCast
                 end
-                return "LIGHTNING"
+                return useWow and "NATURE" or "LIGHTNING"
             elseif bit.band(schoolMask, 64) ~= 0 then
-                return "LIGHTNING"
+                return useWow and "ARCANE" or "LIGHTNING"
             elseif bit.band(schoolMask, 2) ~= 0 then
-                return "FIRE"
+                return useWow and "HOLY" or "FIRE"
             end
         else
             if schoolMask == 4 then
@@ -449,11 +744,15 @@ function ns.Elements:ResolveElement(schoolMask, spellName, isAutoAttack)
                 return "FROST"
             elseif schoolMask == 32 then
                 return "SHADOW"
-            elseif schoolMask == 8 or schoolMask == 64 then
-                if recentCast == "EARTH" or recentCast == "LIGHTNING" then
+            elseif schoolMask == 8 then
+                if recentCast == "EARTH" or recentCast == "LIGHTNING" or (useWow and recentCast == "NATURE") then
                     return recentCast
                 end
-                return "LIGHTNING"
+                return useWow and "NATURE" or "LIGHTNING"
+            elseif schoolMask == 64 then
+                return useWow and "ARCANE" or "LIGHTNING"
+            elseif schoolMask == 2 then
+                return useWow and "HOLY" or "FIRE"
             end
         end
     end
@@ -465,18 +764,19 @@ function ns.Elements:ResolveElement(schoolMask, spellName, isAutoAttack)
 end
 
 local DEFAULTS = {
-    version = "1.0.0",
+    version = "1.1.0",
     unitBars = {
         enabled = true,
-        smoothSpeed = 18.0,
-        trailSpeed = 5.5,
-        trailHoldNormal = 0.24,
-        trailHoldCrit = 0.38,
-        traumaScale = 1.0,
-        critTraumaMultiplier = 1.75,
-        barPunchNormal = 1.18,
-        barPunchCrit = 1.48,
-        barPunchMega = 1.65,
+        vanillaBarMode = false,
+        smoothSpeed = 20.0,
+        trailSpeed = 6.5,
+        trailHoldNormal = 0.20,
+        trailHoldCrit = 0.32,
+        traumaScale = 0.70,
+        critTraumaMultiplier = 1.45,
+        barPunchNormal = 1.08,
+        barPunchCrit = 1.22,
+        barPunchMega = 1.32,
         executeThreshold = 0.20,
     },
     nameplates = {
@@ -486,15 +786,16 @@ local DEFAULTS = {
         interruptShatter = true,
         deathShatterEnabled = true,
         hideNameAndLevelOnDeath = true,
-        deathTiltDegrees = -11.5,
-        deathHoldTime = 0.85,
-        deathFadeTime = 0.45,
+        deathTiltDegrees = -8.5,
+        deathHoldTime = 0.65,
+        deathFadeTime = 0.40,
     },
     combatFX = {
         enabled = true,
         sparksEnabled = true,
+        wowSpellColors = false,
         lowHpVignette = true,
-        lowHpThreshold = 0.30,
+        lowHpThreshold = 0.25,
     },
     combatText = {
         enabled = true,
@@ -505,11 +806,11 @@ local DEFAULTS = {
         killFinisher = true,
         baseOffsetY = 24,
         critOffsetY = 34,
-        dotFontSize = 16,
-        normalFontSize = 21,
-        critFontSize = 30,
-        megaFontSize = 35,
-        killFontSize = 38,
+        dotFontSize = 15,
+        normalFontSize = 19,
+        critFontSize = 27,
+        megaFontSize = 31,
+        killFontSize = 34,
         durationDot = 0.88,
         durationNormal = 1.20,
         durationCrit = 1.55,
@@ -561,25 +862,26 @@ local DEFAULTS = {
 
 ns.Config.PRESETS = {
     DEFAULT = {
-        name = "High-Impact (Signature)",
-        desc = "Visceral kinetic feedback: heavy bar trauma recoil, violent punch scale, delayed amber trail bars, -11.5 deg death bar tilt, and dynamic fountain arcs.",
+        name = "Vanilla+ (Signature)",
+        desc = "Grounded Blizzard aesthetic: UI-StatusBar textures, weathered stone-bronze frames, controlled trauma recoil (0.70x), subtle punch, delayed amber trails, and a crisp -8.5 deg cracked death bar.",
         values = {
             unitBars = {
-                smoothSpeed = 18.0,
-                trailSpeed = 5.5,
-                trailHoldNormal = 0.24,
-                trailHoldCrit = 0.38,
-                traumaScale = 1.0,
-                critTraumaMultiplier = 1.75,
-                barPunchNormal = 1.18,
-                barPunchCrit = 1.48,
-                barPunchMega = 1.65,
+                vanillaBarMode = false,
+                smoothSpeed = 20.0,
+                trailSpeed = 6.5,
+                trailHoldNormal = 0.20,
+                trailHoldCrit = 0.32,
+                traumaScale = 0.70,
+                critTraumaMultiplier = 1.45,
+                barPunchNormal = 1.08,
+                barPunchCrit = 1.22,
+                barPunchMega = 1.32,
                 executeThreshold = 0.20,
             },
             nameplates = {
-                deathTiltDegrees = -11.5,
-                deathHoldTime = 0.85,
-                deathFadeTime = 0.45,
+                deathTiltDegrees = -8.5,
+                deathHoldTime = 0.65,
+                deathFadeTime = 0.40,
                 deathShatterEnabled = true,
                 hideNameAndLevelOnDeath = true,
                 deflectCallouts = true,
@@ -587,18 +889,19 @@ ns.Config.PRESETS = {
             },
             combatFX = {
                 sparksEnabled = true,
+                wowSpellColors = false,
                 lowHpVignette = true,
-                lowHpThreshold = 0.30,
+                lowHpThreshold = 0.25,
             },
             combatText = {
                 fountainLanes = true,
                 critShockwave = true,
                 flurryEscalation = true,
                 flurryWindow = 1.45,
-                normalFontSize = 21,
-                critFontSize = 30,
-                megaFontSize = 35,
-                killFontSize = 38,
+                normalFontSize = 19,
+                critFontSize = 27,
+                megaFontSize = 31,
+                killFontSize = 34,
             },
             stateEngine = {
                 alphaCombat = 1.0,
@@ -614,6 +917,7 @@ ns.Config.PRESETS = {
         desc = "Exaggerated combat violence: massive scale punches (up to 1.90x), amplified trauma recoil (1.6x), steep death tilt (-16 deg), longer lingering trails, and large numbers.",
         values = {
             unitBars = {
+                vanillaBarMode = false,
                 smoothSpeed = 16.0,
                 trailSpeed = 4.0,
                 trailHoldNormal = 0.35,
@@ -636,6 +940,7 @@ ns.Config.PRESETS = {
             },
             combatFX = {
                 sparksEnabled = true,
+                wowSpellColors = false,
                 lowHpVignette = true,
                 lowHpThreshold = 0.35,
             },
@@ -663,6 +968,7 @@ ns.Config.PRESETS = {
         desc = "Tournament clarity: zero tilt (0 deg), snappy rapid trails, subdued bar recoil (0.25x), compact font sizes, and minimal clutter for competitive gameplay.",
         values = {
             unitBars = {
+                vanillaBarMode = false,
                 smoothSpeed = 24.0,
                 trailSpeed = 9.0,
                 trailHoldNormal = 0.12,
@@ -685,6 +991,7 @@ ns.Config.PRESETS = {
             },
             combatFX = {
                 sparksEnabled = false,
+                wowSpellColors = false,
                 lowHpVignette = false,
                 lowHpThreshold = 0.25,
             },
@@ -712,6 +1019,7 @@ ns.Config.PRESETS = {
         desc = "Snappy arcade feel: bouncy scale pops, wider flurry escalation window, exaggerated fountain arcs, bright crits, and lively responsive numbers.",
         values = {
             unitBars = {
+                vanillaBarMode = false,
                 smoothSpeed = 20.0,
                 trailSpeed = 7.0,
                 trailHoldNormal = 0.18,
@@ -734,6 +1042,7 @@ ns.Config.PRESETS = {
             },
             combatFX = {
                 sparksEnabled = true,
+                wowSpellColors = false,
                 lowHpVignette = true,
                 lowHpThreshold = 0.30,
             },
@@ -757,25 +1066,26 @@ ns.Config.PRESETS = {
         },
     },
     CINEMATIC = {
-        name = "Cinematic (Immersive)",
-        desc = "Atmospheric RPG immersion: lingering damage trails, smooth gentle trauma recoil, slow death fade, deep out-of-combat HUD fade, and dramatic killing blow pauses.",
+        name = "Cinematic (Vanilla Bars)",
+        desc = "Authentic Vanilla bar feel: rigid non-stretching healthbars, soft cut-seam glint, weighty slow trails, WoW spell-school colors (incl. Holy/Arcane/Nature), gentle -4.5 deg death bar, and deep HUD fade.",
         values = {
             unitBars = {
-                smoothSpeed = 14.0,
+                vanillaBarMode = true,
+                smoothSpeed = 16.0,
                 trailSpeed = 3.5,
-                trailHoldNormal = 0.40,
-                trailHoldCrit = 0.65,
-                traumaScale = 0.60,
-                critTraumaMultiplier = 1.40,
-                barPunchNormal = 1.12,
-                barPunchCrit = 1.35,
-                barPunchMega = 1.50,
+                trailHoldNormal = 0.35,
+                trailHoldCrit = 0.55,
+                traumaScale = 0.28,
+                critTraumaMultiplier = 1.25,
+                barPunchNormal = 1.00,
+                barPunchCrit = 1.03,
+                barPunchMega = 1.06,
                 executeThreshold = 0.20,
             },
             nameplates = {
-                deathTiltDegrees = -6.5,
-                deathHoldTime = 1.40,
-                deathFadeTime = 0.80,
+                deathTiltDegrees = -4.5,
+                deathHoldTime = 1.15,
+                deathFadeTime = 0.65,
                 deathShatterEnabled = true,
                 hideNameAndLevelOnDeath = true,
                 deflectCallouts = true,
@@ -783,6 +1093,7 @@ ns.Config.PRESETS = {
             },
             combatFX = {
                 sparksEnabled = true,
+                wowSpellColors = true,
                 lowHpVignette = true,
                 lowHpThreshold = 0.25,
             },
@@ -791,10 +1102,10 @@ ns.Config.PRESETS = {
                 critShockwave = true,
                 flurryEscalation = true,
                 flurryWindow = 1.50,
-                normalFontSize = 19,
-                critFontSize = 28,
-                megaFontSize = 32,
-                killFontSize = 36,
+                normalFontSize = 18,
+                critFontSize = 26,
+                megaFontSize = 30,
+                killFontSize = 34,
             },
             stateEngine = {
                 alphaCombat = 1.0,
@@ -852,7 +1163,7 @@ function ns.Config:Initialize()
             ForeverUIDB.questTracker.closeDistanceYards = 180
             ForeverUIDB.questTracker.nearbyDistanceYards = 600
         end
-        if type(ForeverUIDB.combatText) == "table" and (ForeverUIDB.combatText.normalFontSize or 0) < 21 then
+        if type(ForeverUIDB.combatText) == "table" and (ForeverUIDB.combatText.normalFontSize or 0) < 18 then
             ForeverUIDB.combatText.dotFontSize = DEFAULTS.combatText.dotFontSize
             ForeverUIDB.combatText.normalFontSize = DEFAULTS.combatText.normalFontSize
             ForeverUIDB.combatText.critFontSize = DEFAULTS.combatText.critFontSize
