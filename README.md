@@ -31,11 +31,11 @@ It enhances unit health bars, overhead enemy nameplates, and floating combat num
   - Sleek dark HUD settings window with tab navigation, real-time sliders, and live elemental preview buttons.
   - Circular draggable minimap button with tooltips for quick settings access and showcase triggers.
   - Curated **Art Presets**:
-    - **Vanilla+ (Signature)**: Classic `UI-StatusBar` & stone-bronze framing, controlled trauma recoil (0.70x), subtle scale punch, delayed amber trails, and a crisp -8.5° cracked death bar.
-    - **Brutal (Heavy Metal)**: Exaggerated combat violence, massive punch scale (up to 1.90x), amplified trauma (1.6x), and -16.0° tilt.
-    - **Minimal (Clean Esports)**: Snappy rapid trails, zero tilt (0°), subdued 0.25x recoil, compact fonts for competitive clarity.
-    - **Arcade (Bouncy Pop)**: Exaggerated bounce, rapid flurry escalation, bouncy scale pops, and bright responsive numbers.
-    - **Cinematic (Vanilla Bars)**: Authentic Vanilla bar feel with rigid non-stretching bars, soft cut-seam glints, WoW spell-school colors (including Holy/Arcane/Nature), gentle -4.5° death bar, and deep out-of-combat HUD fade.
+    - **Vanilla+ (Signature)**: Classic `UI-StatusBar` & stone-bronze framing, dynamic WoW spell particles & colors, controlled trauma recoil (0.70x), subtle scale punch (1.08x–1.32x), delayed amber trails, and a crisp -8.5° cracked death bar.
+    - **Brutal (Heavy Metal)**: Exaggerated combat violence, massive punch scale (up to 1.90x), heavy trauma recoil (1.6x), slow bleeding trails (3.8), -16.0° death tilt, and giant lingering numbers.
+    - **Minimal (Clean Esports)**: Ultra-fast bar snap (28) & rapid trails (11.0), zero death tilt (0°), minimal recoil (0.20x), no screen clutter or cast shake, and compact fast-clearing numbers.
+    - **Arcade (Bouncy Pop)**: Fast bar snap (26) & rapid trails (9.5), vertical bounce pops (1.18x–1.58x) with light sideways shake (0.45x), wide 2.2s flurry combos, and brisk poppy numbers.
+    - **Cinematic (Vanilla Bars)**: Immersive RPG & authentic Vanilla bars with rigid non-stretching bars, soft cut-seam glints, weighty slow trails (3.2), WoW spell-school colors, gentle -4.5° death bar, subtle numbers, and deep out-of-combat HUD fade.
   - Built to cleanly integrate future art presets, textures, and community styles.
 
 ---
@@ -43,7 +43,7 @@ It enhances unit health bars, overhead enemy nameplates, and floating combat num
 ## Installation
 
 ### Option 1: Install from Release `.zip`
-1. Download `ForeverUI-v1.1.0.zip` from Releases (or build it locally with `.\Package-ForeverUI.ps1`).
+1. Download `ForeverUI-v1.2.0.zip` from Releases (or build it locally with `.\Package-ForeverUI.ps1`).
 2. Extract the archive into your World of Warcraft `Interface\AddOns` directory so the structure is:
    ```text
    <WoW Directory>\_forever_\Interface\AddOns\ForeverUI\ForeverUI.toc
