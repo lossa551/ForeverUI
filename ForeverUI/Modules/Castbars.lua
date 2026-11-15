@@ -137,7 +137,7 @@ function Castbars:CreateCastbar(unit, name, customWidth, customHeight)
 
     -- Latency Safe-Zone Slivers (positioned at the tail end of the bar)
     local latencySliver = bar:CreateTexture(nil, "ARTWORK", nil, 2)
-    latencySliver:SetTexture("Interface\\Buttons\\WHITE8X8")
+    latencySliver:SetTexture("Interface\\TargetingFrame\\UI-StatusBar")
     latencySliver:SetVertexColor(0.95, 0.25, 0.15, 0.55)
     latencySliver:SetPoint("TOPRIGHT", bar, "TOPRIGHT", 0, 0)
     latencySliver:SetPoint("BOTTOMRIGHT", bar, "BOTTOMRIGHT", 0, 0)
@@ -146,7 +146,7 @@ function Castbars:CreateCastbar(unit, name, customWidth, customHeight)
 
     -- Shaman Pushback Recoil Flash Bar (shows delayed portion on pushback)
     local recoilSliver = bar:CreateTexture(nil, "ARTWORK", nil, 3)
-    recoilSliver:SetTexture("Interface\\Buttons\\WHITE8X8")
+    recoilSliver:SetTexture("Interface\\TargetingFrame\\UI-StatusBar")
     recoilSliver:SetVertexColor(1.00, 0.22, 0.10, 0.75)
     recoilSliver:SetPoint("TOPLEFT", bar, "TOPLEFT", 0, 0)
     recoilSliver:SetPoint("BOTTOMLEFT", bar, "BOTTOMLEFT", 0, 0)
@@ -157,10 +157,19 @@ function Castbars:CreateCastbar(unit, name, customWidth, customHeight)
     local spark = bar:CreateTexture(nil, "OVERLAY", nil, 4)
     spark:SetTexture("Interface\\CastingBar\\UI-CastingBar-Spark")
     spark:SetBlendMode("ADD")
-    spark:SetSize(20, h * 2.1)
+    spark:SetSize(22, h * 2.2)
     spark:SetVertexColor(1.00, 0.90, 0.65, 0.95)
     spark:SetPoint("CENTER", bar:GetStatusBarTexture(), "RIGHT", 0, 0)
     spark:Hide()
+
+    -- Dynamic 4-point star flare riding the lead spark
+    local sparkFlare = bar:CreateTexture(nil, "OVERLAY", nil, 5)
+    sparkFlare:SetTexture("Interface\\Cooldown\\star4")
+    sparkFlare:SetBlendMode("ADD")
+    sparkFlare:SetSize(18, 18)
+    sparkFlare:SetVertexColor(1.00, 0.94, 0.72, 0.85)
+    sparkFlare:SetPoint("CENTER", spark, "CENTER", 0, 0)
+    sparkFlare:Hide()
 
     -- Spell Icon Frame
     local iconFrame = CreateFrame("Frame", nil, container)
@@ -181,9 +190,9 @@ function Castbars:CreateCastbar(unit, name, customWidth, customHeight)
     CreateBorder(container, w, h)
 
     -- Full-bar completion flash overlay
-    local flashOverlay = bar:CreateTexture(nil, "OVERLAY", nil, 5)
+    local flashOverlay = bar:CreateTexture(nil, "OVERLAY", nil, 6)
     flashOverlay:SetAllPoints(bar)
-    flashOverlay:SetTexture("Interface\\Buttons\\WHITE8X8")
+    flashOverlay:SetTexture("Interface\\TargetingFrame\\UI-StatusBar")
     flashOverlay:SetBlendMode("ADD")
     flashOverlay:SetVertexColor(1.0, 1.0, 1.0, 0.0)
 
@@ -208,6 +217,7 @@ function Castbars:CreateCastbar(unit, name, customWidth, customHeight)
         icon = icon,
         iconFrame = iconFrame,
         spark = spark,
+        sparkFlare = sparkFlare,
         latencySliver = latencySliver,
         recoilSliver = recoilSliver,
         flashOverlay = flashOverlay,
@@ -274,6 +284,9 @@ function Castbars:StartCast(unit, spellName, texture, startTimeMS, endTimeMS, is
     local elemKey, barColor, sparkColor = ResolveSpellSchool(spellName)
     cb.bar:SetStatusBarColor(barColor[1], barColor[2], barColor[3], 1.0)
     cb.spark:SetVertexColor(sparkColor[1], sparkColor[2], sparkColor[3], 0.95)
+    if cb.sparkFlare then
+        cb.sparkFlare:SetVertexColor(sparkColor[1], sparkColor[2], sparkColor[3], 0.85)
+    end
 
     if cb.icon and texture then
         cb.icon:SetTexture(texture)
@@ -291,6 +304,9 @@ function Castbars:StartCast(unit, spellName, texture, startTimeMS, endTimeMS, is
     cb.bar:SetMinMaxValues(0, dur)
     cb.bar:SetValue(0)
     cb.spark:Show()
+    if cb.sparkFlare then
+        cb.sparkFlare:Show()
+    end
     cb.recoilSliver:Hide()
     cb.flashOverlay:SetAlpha(0)
 
@@ -365,6 +381,9 @@ function Castbars:StopCast(unit, interrupted)
 
     cb.casting = false
     cb.spark:Hide()
+    if cb.sparkFlare then
+        cb.sparkFlare:Hide()
+    end
     cb.recoilSliver:Hide()
     cb.latencySliver:Hide()
 
@@ -394,6 +413,13 @@ function Castbars:OnUpdate(dt, now)
                 local progress = curTime - cb.startTime
                 local rem = math.max(0, cb.endTime - curTime)
                 cb.bar:SetValue(progress)
+                if cb.sparkFlare then
+                    if cb.sparkFlare.SetRotation then
+                        cb.sparkFlare:SetRotation(curTime * 4.2)
+                    end
+                    local flScale = 16 + 4 * math.sin(curTime * 18.0)
+                    cb.sparkFlare:SetSize(flScale, flScale)
+                end
 
                 local secStr = string.format("%.1fs", rem)
                 cb.timeText:SetText(secStr)

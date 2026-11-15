@@ -18,6 +18,9 @@ local ELEMENT_HEX = {
     EARTH     = "|cfff09933",
     FROST     = "|cff70e0ff",
     SHADOW    = "|cffbf66ff",
+    NATURE    = "|cff4dff6a",
+    ARCANE    = "|cffe080ff",
+    HOLY      = "|cffffea80",
     PHYSICAL  = "|cffffe6b3",
 }
 
@@ -437,6 +440,12 @@ local function HandleSlashCommand(msg)
         ns:RunElementSingleDemo("FROST")
     elseif cmd == "shadow" then
         ns:RunElementSingleDemo("SHADOW")
+    elseif cmd == "nature" then
+        ns:RunElementSingleDemo("NATURE")
+    elseif cmd == "arcane" then
+        ns:RunElementSingleDemo("ARCANE")
+    elseif cmd == "holy" then
+        ns:RunElementSingleDemo("HOLY")
     elseif cmd == "physical" then
         ns:RunElementSingleDemo("PHYSICAL")
     elseif cmd == "dot" then
@@ -504,12 +513,15 @@ local function HandleSlashCommand(msg)
     else
         PrintMsg("Commands:")
         PrintMsg("  /fui           - Open Settings & Art Presets configuration panel")
-        PrintMsg("  /fui showcase  - Run full 6-Element Showcase (Lightning -> Fire -> Earth -> Frost -> Shadow -> Physical -> Kill)")
+        PrintMsg("  /fui showcase  - Run full Elemental Showcase (Lightning -> Fire -> Earth -> Frost -> Shadow -> Kill)")
         PrintMsg("  /fui lightning - Preview Lightning Bolt crackle arcs + electric blue bar jolt")
         PrintMsg("  /fui fire      - Preview Fire burning glow + heat shimmer + rising embers")
         PrintMsg("  /fui earth     - Preview Earth high-punch brown/orange slam + falling rock debris")
         PrintMsg("  /fui frost     - Preview Frost frozen trail + ice rim + shattering ice shards")
         PrintMsg("  /fui shadow    - Preview Shadow void purple dread wave + hovering shadow motes")
+        PrintMsg("  /fui nature    - Preview Nature emerald wrath + swirling bio-spores")
+        PrintMsg("  /fui arcane    - Preview Arcane astral magenta-violet pulse + starlight motes")
+        PrintMsg("  /fui holy      - Preview Holy golden-ivory radiance + divine star flares")
         PrintMsg("  /fui dot [el]  - Preview continuous 6s DoT burning/crackling (e.g. /fui dot fire, /fui dot lightning)")
         PrintMsg("  /fui kill [el] - Preview Elemental Killing Blow (e.g. /fui kill fire, /fui kill lightning)")
         PrintMsg("  /fui interrupt - Preview Electric Cyan Interrupt Shatter")
@@ -553,5 +565,5 @@ ns.Events:Register("PLAYER_LOGIN", function()
     if ns.Options and ns.Options.OnEnable then
         ns.Options:OnEnable()
     end
-    PrintMsg("Loaded (v1.1.0). Type |cffffd100/fui|r to open settings & art presets, or click the minimap icon.")
+    PrintMsg("Loaded (v1.2.0). Type |cffffd100/fui|r to open settings & art presets, or click the minimap icon.")
 end, ns)

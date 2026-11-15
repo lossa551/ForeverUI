@@ -335,6 +335,11 @@ local function BuildUnitBarsTab(panel)
         function(v) ns.Config:Set("unitBars", "enabled", v) end
     )
 
+    CreateCheckbox(panel, 250, -42, "WoW Spell School Colors & Particles", "Align all sparks, embers, trails, and flashes with authentic WoW spell school palettes and particle textures.",
+        function() return ns.Config:Get("combatFX", "wowSpellColors") end,
+        function(v) ns.Config:Set("combatFX", "wowSpellColors", v) end
+    )
+
     -- Column 1
     CreateSlider(panel, 16, -88, "Bar Trauma Recoil Scale", "Multiplier for horizontal/vertical bar shudder recoil on taking damage.",
         0.0, 2.0, 0.05,
@@ -628,7 +633,7 @@ local function BuildTestBenchTab(panel)
     desc:SetText("Trigger live simulated combat effects directly without needing an active enemy target or slash commands. If an enemy target exists, the preview plays on their nameplate; otherwise a simulated test target bar appears.")
     desc:SetJustifyH("LEFT")
 
-    CreateStyledButton(panel, 16, -88, 220, 28, "|cffffd100Run 6-Element Showcase|r", function()
+    CreateStyledButton(panel, 16, -88, 220, 28, "|cffffd100Run Elemental Showcase|r", function()
         if ns.RunInGameDemo then
             ns:RunInGameDemo("showcase")
         end
@@ -647,7 +652,10 @@ local function BuildTestBenchTab(panel)
         { key = "FIRE",      label = "Fire (Embers)",      col = "ff751a" },
         { key = "EARTH",     label = "Earth (Rock Slam)",  col = "f09933" },
         { key = "FROST",     label = "Frost (Ice Rim)",    col = "70e0ff" },
-        { key = "SHADOW",    label = "Shadow (Dread)",     col = "bf66ff" },
+        { key = "SHADOW",    label = "Shadow (Void)",      col = "bf66ff" },
+        { key = "NATURE",    label = "Nature (Spores)",    col = "4dff6a" },
+        { key = "ARCANE",    label = "Arcane (Astral)",    col = "e080ff" },
+        { key = "HOLY",      label = "Holy (Radiance)",    col = "ffea80" },
         { key = "PHYSICAL",  label = "Physical (Cleave)",  col = "ffe6b3" },
     }
 
@@ -661,21 +669,21 @@ local function BuildTestBenchTab(panel)
         end)
         if i % 3 == 0 then
             colX = 16
-            rowY = rowY - 32
+            rowY = rowY - 30
         else
             colX = colX + 148
         end
     end
 
-    CreateSectionHeader(panel, 16, -244, "Combat Callouts")
+    CreateSectionHeader(panel, 16, -270, "Combat Callouts")
 
-    CreateStyledButton(panel, 16, -274, 180, 24, "Interrupt Cyan Shatter", function()
+    CreateStyledButton(panel, 16, -298, 180, 24, "Interrupt Cyan Shatter", function()
         if ns.RunInGameDemo then
             ns:RunInGameDemo("interrupt")
         end
     end)
 
-    CreateStyledButton(panel, 206, -274, 180, 24, "Parry / Deflect Ricochet", function()
+    CreateStyledButton(panel, 206, -298, 180, 24, "Parry / Deflect Ricochet", function()
         if ns.RunInGameDemo then
             ns:RunInGameDemo("parry")
         end
@@ -824,7 +832,7 @@ local function CreateOptionsFrame()
 
     local verLabel = optionsFrame:CreateFontString(nil, "ARTWORK", "GameFontDisableSmall")
     verLabel:SetPoint("RIGHT", bottomCloseBtn, "LEFT", -16, 0)
-    verLabel:SetText("v1.1.0")
+    verLabel:SetText("v1.2.0")
 
     SelectTab(1)
     return optionsFrame
