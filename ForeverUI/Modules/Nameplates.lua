@@ -699,38 +699,6 @@ function Nameplates:SyncUnitDots(unitToken)
     end
 end
 
-function Nameplates:OnCombatLogImpact(destGUID, amount, isCrit, isKill, elementKey, isPeriodic)
-    if not destGUID or ns.IsSecret(destGUID) then
-        return
-    end
-    local _, enhancer = self:GetBarForGUID(destGUID)
-    if not enhancer then
-        return
-    end
-    local pctLost = isCrit and 0.28 or (isPeriodic and 0.04 or 0.08)
-    local numAmt = (amount and not ns.IsSecret(amount) and type(amount) == "number") and amount or nil
-    if numAmt and not enhancer.isSecretHealth and not ns.IsSecret(enhancer.maxHp) and (enhancer.maxHp or 0) > 0 then
-        pctLost = numAmt / math.max(1, enhancer.maxHp)
-    end
-    local baseWeight = isPeriodic and 0.12 or ((elementKey and elementKey ~= "PHYSICAL") and 0.72 or 0.28)
-    local hitWeight = (ns.CombatText and ns.CombatText.ComputeHitWeight)
-        and ns.CombatText:ComputeHitWeight(numAmt, isCrit, baseWeight, isPeriodic)
-        or baseWeight
-    if not isPeriodic then
-        pctLost = math.max(pctLost, 0.04 + hitWeight * (isCrit and 0.26 or 0.16))
-    end
-    local isMega = isKill or (isCrit and (pctLost >= 0.24 or hitWeight >= 0.78))
-    if isPeriodic and elementKey then
-        local rem = math.max(enhancer.dotTimer or 0, 4.0)
-        ns.UnitBars:SetDotState(enhancer, elementKey, rem)
-    end
-    ns.UnitBars:TriggerDamageImpact(enhancer, pctLost, isCrit, isMega, elementKey, hitWeight, isPeriodic)
-
-    if isKill then
-        self:TriggerDeathForEnhancer(enhancer, elementKey)
-    end
-end
-
 function Nameplates:ScanExistingNameplates()
     if not C_NamePlate or not C_NamePlate.GetNamePlates then
         return 0

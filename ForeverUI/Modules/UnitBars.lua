@@ -6,19 +6,27 @@ UnitBars.enhancers = {}
 local activeAnimEnhancers = {}
 
 local function GetUnitBarColor(unit)
-    if unit and UnitExists(unit) and UnitReaction then
-        local reaction = UnitReaction(unit, "player")
-        if reaction and not ns.IsSecret(reaction) then
-            if reaction <= 3 then
-                return 0.92, 0.12, 0.12 -- Hostile Red
-            elseif reaction == 4 then
-                return 0.95, 0.80, 0.10 -- Neutral Yellow
-            else
-                return 0.12, 0.85, 0.15 -- Friendly Green
+    if unit and UnitExists(unit) then
+        if UnitIsTapDenied then
+            local tapped = UnitIsTapDenied(unit)
+            if tapped and not ns.IsSecret(tapped) then
+                return 0.48, 0.48, 0.52 -- Tap-denied weathered slate grey
+            end
+        end
+        if UnitReaction then
+            local reaction = UnitReaction(unit, "player")
+            if reaction and not ns.IsSecret(reaction) then
+                if reaction <= 3 then
+                    return 0.86, 0.13, 0.12 -- Rich Crimson Hostile
+                elseif reaction == 4 then
+                    return 0.94, 0.74, 0.14 -- Warm Amber-Gold Neutral
+                else
+                    return 0.16, 0.82, 0.24 -- Lush Emerald Friendly
+                end
             end
         end
     end
-    return 0.92, 0.12, 0.12
+    return 0.86, 0.13, 0.12
 end
 
 local function CreateBorderFrame(parent, r, g, b, thickness)
@@ -65,57 +73,128 @@ local function CreateBorderFrame(parent, r, g, b, thickness)
     return border
 end
 
--- Crisp Golden L-Shaped Corner Lock-On Brackets for the Active Target
+-- Crisp Golden L-Shaped Corner Lock-On Brackets with Dark Iron Backing for the Active Target
 local function CreateTargetBrackets(parent)
     local frame = CreateFrame("Frame", nil, parent)
     frame:SetAllPoints(parent)
     frame:SetFrameLevel((parent:GetFrameLevel() or 1) + 6)
 
-    local armW = 7
-    local armH = 4
+    local armW = 7.5
+    local armH = 4.5
     local thick = 1.5
-    local padX = 2.5
-    local padY = 2.5
+    local segments = {}
 
-    local function MakeSegment(point, relPoint, ox, oy, w, h)
+    local function MakeSegment(point, relPoint, sx, sy, w, h)
+        local bg = frame:CreateTexture(nil, "OVERLAY", nil, 6)
+        bg:SetTexture("Interface\\Buttons\\WHITE8X8")
+        bg:SetBlendMode("BLEND")
+        bg:SetVertexColor(0.05, 0.04, 0.03, 0.92)
+        bg:SetSize(w + 1.2, h + 1.2)
+
         local tex = frame:CreateTexture(nil, "OVERLAY", nil, 7)
         tex:SetTexture("Interface\\Buttons\\WHITE8X8")
         tex:SetBlendMode("BLEND")
-        tex:SetVertexColor(1.0, 0.84, 0.28, 0.94)
-        tex:SetPoint(point, frame, relPoint, ox, oy)
+        tex:SetVertexColor(1.0, 0.86, 0.30, 0.96)
         tex:SetSize(w, h)
-        return tex
+
+        segments[#segments + 1] = {
+            bg = bg,
+            tex = tex,
+            point = point,
+            relPoint = relPoint,
+            sx = sx,
+            sy = sy,
+        }
     end
 
     -- Top-Left L bracket
-    MakeSegment("TOPLEFT", "TOPLEFT", -padX, padY, armW, thick)
-    MakeSegment("TOPLEFT", "TOPLEFT", -padX, padY, thick, armH)
+    MakeSegment("TOPLEFT", "TOPLEFT", -1, 1, armW, thick)
+    MakeSegment("TOPLEFT", "TOPLEFT", -1, 1, thick, armH)
     -- Top-Right L bracket
-    MakeSegment("TOPRIGHT", "TOPRIGHT", padX, padY, armW, thick)
-    MakeSegment("TOPRIGHT", "TOPRIGHT", padX, padY, thick, armH)
+    MakeSegment("TOPRIGHT", "TOPRIGHT", 1, 1, armW, thick)
+    MakeSegment("TOPRIGHT", "TOPRIGHT", 1, 1, thick, armH)
     -- Bottom-Left L bracket
-    MakeSegment("BOTTOMLEFT", "BOTTOMLEFT", -padX, -padY, armW, thick)
-    MakeSegment("BOTTOMLEFT", "BOTTOMLEFT", -padX, -padY, thick, armH)
+    MakeSegment("BOTTOMLEFT", "BOTTOMLEFT", -1, -1, armW, thick)
+    MakeSegment("BOTTOMLEFT", "BOTTOMLEFT", -1, -1, thick, armH)
     -- Bottom-Right L bracket
-    MakeSegment("BOTTOMRIGHT", "BOTTOMRIGHT", padX, -padY, armW, thick)
-    MakeSegment("BOTTOMRIGHT", "BOTTOMRIGHT", padX, -padY, thick, armH)
+    MakeSegment("BOTTOMRIGHT", "BOTTOMRIGHT", 1, -1, armW, thick)
+    MakeSegment("BOTTOMRIGHT", "BOTTOMRIGHT", 1, -1, thick, armH)
 
+    function frame:SetBracketOffset(pad)
+        local p = pad or 2.5
+        for i = 1, #segments do
+            local s = segments[i]
+            local ox = s.sx * p
+            local oy = s.sy * p
+            s.bg:ClearAllPoints()
+            s.bg:SetPoint(s.point, self, s.relPoint, ox + s.sx * 0.5, oy + s.sy * 0.5)
+            s.tex:ClearAllPoints()
+            s.tex:SetPoint(s.point, self, s.relPoint, ox, oy)
+        end
+    end
+
+    frame:SetBracketOffset(2.5)
     frame:Hide()
     return frame
 end
 
+local function ApplyVerticalGradient(tex, r1, g1, b1, a1, r2, g2, b2, a2)
+    if tex.SetGradient and CreateColor then
+        local ok = pcall(tex.SetGradient, tex, "VERTICAL", CreateColor(r1, g1, b1, a1), CreateColor(r2, g2, b2, a2))
+        if ok then
+            return true
+        end
+    end
+    return false
+end
+
 local function AddClassicBarBevel(statusBar)
+    local fillTex = statusBar:GetStatusBarTexture() or statusBar
+
+    local topRim = statusBar:CreateTexture(nil, "OVERLAY", nil, 2)
+    topRim:SetTexture("Interface\\Buttons\\WHITE8X8")
+    topRim:SetBlendMode("ADD")
+    topRim:SetVertexColor(1.0, 1.0, 1.0, 0.16)
+    topRim:SetPoint("TOPLEFT", fillTex, "TOPLEFT", 0, 0)
+    topRim:SetPoint("TOPRIGHT", fillTex, "TOPRIGHT", 0, 0)
+    topRim:SetHeight(1)
+
     local sheen = statusBar:CreateTexture(nil, "OVERLAY", nil, 1)
     sheen:SetTexture("Interface\\Buttons\\WHITE8X8")
-    sheen:SetVertexColor(1.0, 1.0, 1.0, 0.10)
-    sheen:SetPoint("TOPLEFT", statusBar, "TOPLEFT", 0, 0)
-    sheen:SetPoint("BOTTOMRIGHT", statusBar, "RIGHT", 0, 0)
+    sheen:SetPoint("TOPLEFT", fillTex, "TOPLEFT", 0, 0)
+    sheen:SetPoint("BOTTOMRIGHT", fillTex, "RIGHT", 0, 0)
+    if not ApplyVerticalGradient(sheen, 1.0, 1.0, 1.0, 0.02, 1.0, 1.0, 1.0, 0.15) then
+        sheen:SetVertexColor(1.0, 1.0, 1.0, 0.11)
+    end
 
     local shadow = statusBar:CreateTexture(nil, "OVERLAY", nil, 1)
     shadow:SetTexture("Interface\\Buttons\\WHITE8X8")
-    shadow:SetVertexColor(0.0, 0.0, 0.0, 0.16)
-    shadow:SetPoint("TOPLEFT", statusBar, "LEFT", 0, 0)
-    shadow:SetPoint("BOTTOMRIGHT", statusBar, "BOTTOMRIGHT", 0, 0)
+    shadow:SetPoint("TOPLEFT", fillTex, "LEFT", 0, 0)
+    shadow:SetPoint("BOTTOMRIGHT", fillTex, "BOTTOMRIGHT", 0, 0)
+    if not ApplyVerticalGradient(shadow, 0.0, 0.0, 0.0, 0.24, 0.0, 0.0, 0.0, 0.02) then
+        shadow:SetVertexColor(0.0, 0.0, 0.0, 0.17)
+    end
+end
+
+local function HideEnhancerTransientFX(enhancer)
+    if enhancer.elemBorder then
+        enhancer.elemBorder:Hide()
+    end
+    if enhancer.hitFlash then
+        enhancer.hitFlash:Hide()
+    end
+    if enhancer.cutGlow then
+        enhancer.cutGlow:Hide()
+    end
+    if enhancer.cutLine then
+        enhancer.cutLine:Hide()
+    end
+    if enhancer.cutFlare then
+        enhancer.cutFlare:Hide()
+    end
+    if enhancer.cutSubFlare then
+        enhancer.cutSubFlare:Hide()
+    end
 end
 
 local function EnsureEnhancerTicker()
@@ -131,37 +210,16 @@ local function EnsureEnhancerTicker()
                 enhancer.flashAlpha = 0
                 enhancer.cutAlpha = 0
                 enhancer.elemGlowTimer = 0
+                enhancer.bracketAnimTimer = 0
                 enhancer.barPunchY = 1.0
-                if enhancer.elemBorder then
-                    enhancer.elemBorder:Hide()
-                end
-                if enhancer.hitFlash then
-                    enhancer.hitFlash:Hide()
-                end
-                if enhancer.cutLine then
-                    enhancer.cutLine:Hide()
-                end
-                if enhancer.cutFlare then
-                    enhancer.cutFlare:Hide()
-                end
+                HideEnhancerTransientFX(enhancer)
                 activeAnimEnhancers[enhancer] = nil
             else
                 local stillAnimating = UnitBars:StepEnhancer(enhancer, dt, now, smoothSpeed, trailSpeed)
                 if stillAnimating then
                     anyActive = true
                 else
-                    if enhancer.elemBorder then
-                        enhancer.elemBorder:Hide()
-                    end
-                    if enhancer.hitFlash then
-                        enhancer.hitFlash:Hide()
-                    end
-                    if enhancer.cutLine then
-                        enhancer.cutLine:Hide()
-                    end
-                    if enhancer.cutFlare then
-                        enhancer.cutFlare:Hide()
-                    end
+                    HideEnhancerTransientFX(enhancer)
                     activeAnimEnhancers[enhancer] = nil
                 end
             end
@@ -204,10 +262,18 @@ function UnitBars:CreateBarEnhancer(statusBar, unitToken, isNameplate)
     container.fuiWidth = defaultW
     container.fuiHeight = defaultH
 
+    -- Recessed UI-StatusBar trough with dark inner top shadow so lost health feels carved out
     local bgTex = container:CreateTexture(nil, "BACKGROUND", nil, 0)
     bgTex:SetAllPoints(container)
-    bgTex:SetTexture("Interface\\Buttons\\WHITE8X8")
-    bgTex:SetVertexColor(0.06, 0.06, 0.07, 0.94)
+    bgTex:SetTexture("Interface\\TargetingFrame\\UI-StatusBar")
+    bgTex:SetVertexColor(0.07, 0.06, 0.08, 0.95)
+
+    local troughShadow = container:CreateTexture(nil, "BACKGROUND", nil, 1)
+    troughShadow:SetTexture("Interface\\Buttons\\WHITE8X8")
+    troughShadow:SetVertexColor(0.0, 0.0, 0.0, 0.42)
+    troughShadow:SetPoint("TOPLEFT", container, "TOPLEFT", 0, 0)
+    troughShadow:SetPoint("TOPRIGHT", container, "TOPRIGHT", 0, 0)
+    troughShadow:SetHeight(2)
 
     local trailBar = CreateFrame("StatusBar", nil, container)
     trailBar:SetAllPoints(container)
@@ -216,12 +282,13 @@ function UnitBars:CreateBarEnhancer(statusBar, unitToken, isNameplate)
     trailBar:SetStatusBarColor(1.0, 0.72, 0.24, 0.94)
     trailBar:SetMinMaxValues(0, 1000)
     trailBar:SetValue(1000)
+    AddClassicBarBevel(trailBar)
 
     local mainBar = CreateFrame("StatusBar", nil, container)
     mainBar:SetAllPoints(container)
     mainBar:SetFrameLevel(baseLevel + 2)
     mainBar:SetStatusBarTexture("Interface\\TargetingFrame\\UI-StatusBar")
-    mainBar:SetStatusBarColor(0.92, 0.12, 0.12, 1.0)
+    mainBar:SetStatusBarColor(0.86, 0.13, 0.12, 1.0)
     mainBar:SetMinMaxValues(0, 1000)
     mainBar:SetValue(1000)
     AddClassicBarBevel(mainBar)
@@ -274,28 +341,28 @@ function UnitBars:CreateBarEnhancer(statusBar, unitToken, isNameplate)
     -- Inner weathered stone-bronze bevel rim (1px, matching Castbars)
     local rTop = fxOverlay:CreateTexture(nil, "BORDER", nil, 1)
     rTop:SetTexture("Interface\\Buttons\\WHITE8X8")
-    rTop:SetVertexColor(0.40, 0.36, 0.28, 0.78)
+    rTop:SetVertexColor(0.42, 0.37, 0.28, 0.80)
     rTop:SetPoint("TOPLEFT", container, "TOPLEFT", -1, 1)
     rTop:SetPoint("TOPRIGHT", container, "TOPRIGHT", 1, 1)
     rTop:SetHeight(1)
 
     local rBot = fxOverlay:CreateTexture(nil, "BORDER", nil, 1)
     rBot:SetTexture("Interface\\Buttons\\WHITE8X8")
-    rBot:SetVertexColor(0.20, 0.18, 0.15, 0.82)
+    rBot:SetVertexColor(0.20, 0.18, 0.15, 0.84)
     rBot:SetPoint("BOTTOMLEFT", container, "BOTTOMLEFT", -1, -1)
     rBot:SetPoint("BOTTOMRIGHT", container, "BOTTOMRIGHT", 1, -1)
     rBot:SetHeight(1)
 
     local rLeft = fxOverlay:CreateTexture(nil, "BORDER", nil, 1)
     rLeft:SetTexture("Interface\\Buttons\\WHITE8X8")
-    rLeft:SetVertexColor(0.34, 0.30, 0.24, 0.78)
+    rLeft:SetVertexColor(0.35, 0.31, 0.24, 0.80)
     rLeft:SetPoint("TOPLEFT", container, "TOPLEFT", -1, 1)
     rLeft:SetPoint("BOTTOMLEFT", container, "BOTTOMLEFT", -1, -1)
     rLeft:SetWidth(1)
 
     local rRight = fxOverlay:CreateTexture(nil, "BORDER", nil, 1)
     rRight:SetTexture("Interface\\Buttons\\WHITE8X8")
-    rRight:SetVertexColor(0.22, 0.20, 0.16, 0.82)
+    rRight:SetVertexColor(0.22, 0.20, 0.16, 0.84)
     rRight:SetPoint("TOPRIGHT", container, "TOPRIGHT", 1, 1)
     rRight:SetPoint("BOTTOMRIGHT", container, "BOTTOMRIGHT", 1, -1)
     rRight:SetWidth(1)
@@ -328,6 +395,7 @@ function UnitBars:CreateBarEnhancer(statusBar, unitToken, isNameplate)
     trailChunkOverlay.fuiWidth = 18
     trailChunkOverlay.fuiHeight = defaultH
 
+    -- Dual-layer in-bar dissolving elemental fragments (soft atmospheric halo + crisp core sprite)
     local trailFragments = {}
     local defaultFragTextures = {
         "Interface\\Cooldown\\star4",
@@ -335,27 +403,36 @@ function UnitBars:CreateBarEnhancer(statusBar, unitToken, isNameplate)
         "Interface\\Minimap\\UI-Minimap-ZoomButton-Highlight",
         "Interface\\Cooldown\\starburst",
     }
-    for i = 1, 8 do
+    for i = 1, 10 do
+        local glowTex = trailChunkOverlay:CreateTexture(nil, "OVERLAY", nil, 3)
+        glowTex:SetTexture("Interface\\Minimap\\UI-Minimap-ZoomButton-Highlight")
+        glowTex:SetBlendMode("ADD")
+        glowTex:SetSize(13, 13)
+        glowTex:Hide()
+
         local frag = trailChunkOverlay:CreateTexture(nil, "OVERLAY", nil, 4)
         frag:SetTexture(defaultFragTextures[((i - 1) % 4) + 1])
         frag:SetBlendMode("ADD")
         frag:SetSize(7, 7)
         frag:Hide()
+
         trailFragments[i] = {
+            glowTex = glowTex,
             tex = frag,
-            u = (i - 0.5) / 8 - 0.5,
+            u = (i - 0.5) / 10 - 0.5,
             v = ((i % 2 == 0) and 0.22 or -0.22),
             vx = 0,
             vy = 0,
             sizeW = 7,
             sizeH = 7,
-            rot = (i * 0.78),
+            rot = (i * 0.62),
             vRot = ((i % 2 == 0) and 3.5 or -3.5),
             wavePhase = i * 1.15,
             waveFreq = 10.0,
             flickerSpeed = 18.0 + i * 2.5,
             palIdx = ((i - 1) % 4) + 1,
             isAlt = (i % 3 == 0),
+            shapeRoll = i % 3,
         }
     end
 
@@ -366,16 +443,28 @@ function UnitBars:CreateBarEnhancer(statusBar, unitToken, isNameplate)
     hitFlash:SetAllPoints(fillOverlay)
     hitFlash:Hide()
 
+    -- Multi-Layer Wound Seam: wide elemental plasma bleed + sharp core spark + dual counter-rotating starbursts
+    local cutGlow = fxOverlay:CreateTexture(nil, "OVERLAY", nil, 5)
+    cutGlow:SetTexture("Interface\\CastingBar\\UI-CastingBar-Spark")
+    cutGlow:SetBlendMode("ADD")
+    cutGlow:SetVertexColor(1.0, 0.65, 0.20, 0.0)
+    cutGlow:SetWidth(20.0)
+    if mainFillTexture then
+        cutGlow:SetPoint("TOP", mainFillTexture, "TOPRIGHT", 0, 6)
+        cutGlow:SetPoint("BOTTOM", mainFillTexture, "BOTTOMRIGHT", 0, -6)
+    end
+    cutGlow:Hide()
+
     local cutLine = fxOverlay:CreateTexture(nil, "OVERLAY", nil, 6)
     cutLine:SetTexture("Interface\\CastingBar\\UI-CastingBar-Spark")
     cutLine:SetBlendMode("ADD")
     cutLine:SetVertexColor(1.0, 0.95, 0.80, 0.0)
-    cutLine:SetWidth(12.0)
+    cutLine:SetWidth(8.5)
     cutLine.fuiWidth = 12
     cutLine.fuiHeight = defaultH
     if mainFillTexture then
-        cutLine:SetPoint("TOP", mainFillTexture, "TOPRIGHT", 0, 5)
-        cutLine:SetPoint("BOTTOM", mainFillTexture, "BOTTOMRIGHT", 0, -5)
+        cutLine:SetPoint("TOP", mainFillTexture, "TOPRIGHT", 0, 4)
+        cutLine:SetPoint("BOTTOM", mainFillTexture, "BOTTOMRIGHT", 0, -4)
     end
     cutLine:Hide()
 
@@ -386,6 +475,14 @@ function UnitBars:CreateBarEnhancer(statusBar, unitToken, isNameplate)
     cutFlare:SetSize(15, 15)
     cutFlare:SetPoint("CENTER", cutLine, "CENTER", 0, 0)
     cutFlare:Hide()
+
+    local cutSubFlare = fxOverlay:CreateTexture(nil, "OVERLAY", nil, 7)
+    cutSubFlare:SetTexture("Interface\\Cooldown\\starburst")
+    cutSubFlare:SetBlendMode("ADD")
+    cutSubFlare:SetVertexColor(1.0, 0.82, 0.45, 0.0)
+    cutSubFlare:SetSize(12, 12)
+    cutSubFlare:SetPoint("CENTER", cutLine, "CENTER", 0, 0)
+    cutSubFlare:Hide()
 
     local executeBorder = CreateBorderFrame(fxOverlay, 1.0, 0.15, 0.15, 1.5)
     local elemBorder = CreateBorderFrame(fillOverlay, 1.0, 0.50, 0.10, 1.5)
@@ -409,8 +506,10 @@ function UnitBars:CreateBarEnhancer(statusBar, unitToken, isNameplate)
         trailChunkOverlay = trailChunkOverlay,
         trailFragments = trailFragments,
         hitFlash = hitFlash,
+        cutGlow = cutGlow,
         cutLine = cutLine,
         cutFlare = cutFlare,
+        cutSubFlare = cutSubFlare,
         executeBorder = executeBorder,
         elemBorder = elemBorder,
         targetBrackets = targetBrackets,
@@ -438,12 +537,14 @@ function UnitBars:CreateBarEnhancer(statusBar, unitToken, isNameplate)
         cutAlpha = 0,
         trauma = 0,
         barPunchY = 1.0,
+        bracketAnimTimer = 0,
         activeElement = "PHYSICAL",
         lastElement = "PHYSICAL",
         elemGlowTimer = 0,
         elemGlowDuration = 0.25,
+        trailHotColor = { 1.00, 0.98, 0.90 },
         trailHoldColor = { 1.00, 0.90, 0.55 },
-        trailFadeColor = { 1.00, 0.32, 0.08 },
+        trailFadeColor = { 0.85, 0.16, 0.12 },
         isExecute = false,
         lastImpactTime = 0,
         lastDamagedTime = 0,
@@ -476,13 +577,18 @@ function UnitBars:SetTargetState(enhancer, isTarget, hasAnyTarget, playPop)
                 if not isVanilla then
                     enhancer.barPunchY = math.max(enhancer.barPunchY, 1.12)
                 end
+                enhancer.bracketAnimTimer = 0.14
+                enhancer.targetBrackets:SetBracketOffset(5.5)
                 enhancer.flashR, enhancer.flashG, enhancer.flashB = 1.0, 0.95, 0.78
                 enhancer.flashAlpha = math.max(enhancer.flashAlpha, isVanilla and 0.18 or 0.28)
                 activeAnimEnhancers[enhancer] = true
                 EnsureEnhancerTicker()
+            else
+                enhancer.targetBrackets:SetBracketOffset(2.5)
             end
         else
             enhancer.baseHeight = 11
+            enhancer.bracketAnimTimer = 0
             enhancer.targetBrackets:Hide()
             -- Subtly dim untargeted mobs (86%) when a target is selected so your target pops out!
             enhancer.container:SetAlpha(hasAnyTarget and 0.86 or 1.0)
@@ -536,9 +642,7 @@ function UnitBars:SyncUnitState(enhancer, forceReset)
             enhancer.flashAlpha = 0
             enhancer.cutAlpha = 0
             enhancer.elemGlowTimer = 0
-            if enhancer.elemBorder then
-                enhancer.elemBorder:Hide()
-            end
+            HideEnhancerTransientFX(enhancer)
             if enhancer.fillOverlay then
                 enhancer.fillOverlay.fuiWidth = enhancer.baseWidth or 118
                 enhancer.fillOverlay.fuiHeight = enhancer.baseHeight or 12
@@ -600,9 +704,7 @@ function UnitBars:SyncUnitState(enhancer, forceReset)
         enhancer.flashAlpha = 0
         enhancer.cutAlpha = 0
         enhancer.elemGlowTimer = 0
-        if enhancer.elemBorder then
-            enhancer.elemBorder:Hide()
-        end
+        HideEnhancerTransientFX(enhancer)
         enhancer.mainBar:SetValue(math.floor(newFrac * 1000))
         enhancer.trailBar:SetValue(math.floor(newFrac * 1000))
         if enhancer.steadyWoundBar then
@@ -662,10 +764,6 @@ function UnitBars:TriggerDamageImpact(enhancer, pctLost, isCrit, isMega, element
     elseif isCrit then
         intensity = math.min(1.00, 0.82 + 0.18 * weight)
     else
-        -- Continuous normal-hit scaling:
-        -- Light hit (11 dmg, weight ~0.22) -> ~0.30 intensity (~2.0px shake)
-        -- Medium hit (18 dmg, weight ~0.55) -> ~0.55 intensity (~4.9px shake)
-        -- Heavy hit (25+ dmg, weight ~0.95) -> ~0.85 intensity (~8.9px shake)
         intensity = math.max(0.20, math.min(0.88, 0.14 + 0.74 * weight))
     end
 
@@ -698,22 +796,34 @@ function UnitBars:TriggerDamageImpact(enhancer, pctLost, isCrit, isMega, element
 
     if prof then
         enhancer.flashR, enhancer.flashG, enhancer.flashB = prof.flash[1], prof.flash[2], prof.flash[3]
+        enhancer.trailHotColor = prof.trailHot or prof.flash or prof.trailHold
         enhancer.trailHoldColor = prof.trailHold
         enhancer.trailFadeColor = prof.trailFade
+        if enhancer.cutGlow then
+            local glowC = prof.trailHold or prof.cut
+            enhancer.cutGlow:SetVertexColor(glowC[1], glowC[2], glowC[3], 1.0)
+        end
         if enhancer.cutLine then
             enhancer.cutLine:SetVertexColor(prof.cut[1], prof.cut[2], prof.cut[3], 1.0)
         end
         if enhancer.cutFlare then
             local flCol = prof.spark or prof.cut
             enhancer.cutFlare:SetVertexColor(flCol[1], flCol[2], flCol[3], 1.0)
+            local fSize = 11 + 8 * enhancer.elemIntensity
+            enhancer.cutFlare:SetSize(fSize, fSize)
+        end
+        if enhancer.cutSubFlare then
+            local subCol = prof.sparkAlt or prof.trailHold or prof.cut
+            enhancer.cutSubFlare:SetVertexColor(subCol[1], subCol[2], subCol[3], 1.0)
+            local sSize = 9 + 6 * enhancer.elemIntensity
+            enhancer.cutSubFlare:SetSize(sSize, sSize)
         end
         if enhancer.elemBorder then
             if vanillaMode then
                 enhancer.elemBorder:Hide()
             elseif prof.border then
                 enhancer.elemBorder:SetBorderColor(prof.border[1], prof.border[2], prof.border[3], 0.65 * enhancer.elemIntensity, elemBlend)
-                -- Show subtle elemental border rim on medium-to-heavy hits (intensity >= 0.50)
-                if resolvedKey ~= "PHYSICAL" and enhancer.elemIntensity >= 0.50 then
+                if resolvedKey ~= "PHYSICAL" and enhancer.elemIntensity >= 0.45 then
                     enhancer.elemBorder:Show()
                 elseif not recentImpact then
                     enhancer.elemBorder:Hide()
@@ -729,7 +839,7 @@ function UnitBars:TriggerDamageImpact(enhancer, pctLost, isCrit, isMega, element
         and (isCrit and 0.16 or (0.04 + 0.08 * intensity))
         or (isCrit and 0.26 or (0.07 + 0.14 * intensity))
     enhancer.flashAlpha = math.max(enhancer.flashAlpha or 0, newFlash)
-    local newCut = vanillaMode and (0.22 + 0.30 * intensity) or (0.35 + 0.45 * intensity)
+    local newCut = vanillaMode and (0.24 + 0.32 * intensity) or (0.40 + 0.50 * intensity)
     enhancer.cutAlpha = math.max(enhancer.cutAlpha or 0, newCut)
 
     local traumaScale = cfg.traumaScale or 0.70
@@ -746,9 +856,11 @@ function UnitBars:TriggerDamageImpact(enhancer, pctLost, isCrit, isMega, element
     end
     if not isDot then
         if resolvedKey == "EARTH" then
-            rawTrauma = rawTrauma * 1.10
+            rawTrauma = rawTrauma * 1.12
         elseif resolvedKey == "LIGHTNING" then
-            rawTrauma = rawTrauma * 1.06
+            rawTrauma = rawTrauma * 1.08
+        elseif resolvedKey == "FROST" then
+            rawTrauma = rawTrauma * 1.05
         end
     end
     enhancer.trauma = math.min(1.45, math.max(enhancer.trauma or 0, rawTrauma))
@@ -812,7 +924,7 @@ function UnitBars:TriggerDamageImpact(enhancer, pctLost, isCrit, isMega, element
         enhancer.trailChunkOverlay.fuiHeight = baseH
     end
 
-    -- Seed dynamic WoW spell particles inside trailChunkOverlay (curling embers, star flares, frost crystals, void motes)
+    -- Seed dynamic 9-element WoW spell particles inside trailChunkOverlay
     if enhancer.trailFragments then
         local n = #enhancer.trailFragments
         for i = 1, n do
@@ -826,102 +938,172 @@ function UnitBars:TriggerDamageImpact(enhancer, pctLost, isCrit, isMega, element
             f.waveFreq = 8.0 + math.random() * 8.0
             f.flickerSpeed = 16.0 + math.random() * 18.0
             f.palIdx = ((i - 1) % 4) + 1
+            f.isAlt = (i % 3 == 0)
             local shapeRoll = i % 3
+            f.shapeRoll = shapeRoll
 
             if resolvedKey == "FIRE" then
-                f.vy = 14 + math.random() * 18
+                f.vy = 15 + math.random() * 19
                 if shapeRoll == 0 then
                     f.tex:SetTexture("Interface\\CastingBar\\UI-CastingBar-Spark")
-                    f.sizeW = 4.5 + math.random() * 2.5
-                    f.sizeH = 11.0 + math.random() * 5.0
+                    f.sizeW = 4.6 + math.random() * 2.4
+                    f.sizeH = 11.5 + math.random() * 5.0
                 elseif shapeRoll == 1 then
                     f.tex:SetTexture("Interface\\Cooldown\\star4")
-                    f.sizeW = 7.5 + math.random() * 4.5
+                    f.sizeW = 7.8 + math.random() * 4.2
                     f.sizeH = f.sizeW
                 else
                     f.tex:SetTexture("Interface\\Minimap\\UI-Minimap-ZoomButton-Highlight")
-                    f.sizeW = 6.5 + math.random() * 3.5
+                    f.sizeW = 6.8 + math.random() * 3.5
                     f.sizeH = f.sizeW
                 end
             elseif resolvedKey == "LIGHTNING" then
-                f.vy = (math.random() - 0.5) * 22
-                f.vx = (math.random() - 0.5) * 24
+                f.vy = (math.random() - 0.5) * 26
+                f.vx = (math.random() - 0.5) * 28
+                f.flickerSpeed = 42.0 + math.random() * 25.0
                 if shapeRoll == 0 then
                     f.tex:SetTexture("Interface\\CastingBar\\UI-CastingBar-Spark")
                     f.sizeW = 3.8 + math.random() * 2.0
-                    f.sizeH = 12.0 + math.random() * 6.0
+                    f.sizeH = 12.5 + math.random() * 6.5
                 elseif shapeRoll == 1 then
                     f.tex:SetTexture("Interface\\Cooldown\\star4")
-                    f.sizeW = 8.0 + math.random() * 4.5
+                    f.sizeW = 8.5 + math.random() * 4.5
                     f.sizeH = f.sizeW
                 else
                     f.tex:SetTexture("Interface\\Cooldown\\starburst")
-                    f.sizeW = 7.0 + math.random() * 4.0
+                    f.sizeW = 7.5 + math.random() * 4.0
                     f.sizeH = f.sizeW
                 end
             elseif resolvedKey == "EARTH" then
-                f.vy = -(14 + math.random() * 18)
+                f.vy = -(15 + math.random() * 19)
+                f.vx = (math.random() - 0.5) * 16
                 if shapeRoll == 0 then
                     f.tex:SetTexture("Interface\\Cooldown\\star4")
-                    f.sizeW = 6.5 + math.random() * 3.0
+                    f.sizeW = 6.8 + math.random() * 3.2
                     f.sizeH = f.sizeW
                 else
                     f.tex:SetTexture("Interface\\TargetingFrame\\UI-StatusBar")
-                    f.sizeW = 4.2 + math.random() * 2.8
-                    f.sizeH = 3.0 + math.random() * 2.2
+                    f.sizeW = 4.6 + math.random() * 3.0
+                    f.sizeH = 3.2 + math.random() * 2.4
                 end
             elseif resolvedKey == "FROST" then
-                f.vy = -(11 + math.random() * 15)
+                f.vy = (math.random() - 0.35) * 14
+                f.vx = (math.random() - 0.5) * 16
+                f.flickerSpeed = 28.0 + math.random() * 20.0
                 if shapeRoll == 0 then
                     f.tex:SetTexture("Interface\\Cooldown\\starburst")
+                    f.sizeW = 8.5 + math.random() * 4.5
+                    f.sizeH = f.sizeW
+                elseif shapeRoll == 1 then
+                    f.tex:SetTexture("Interface\\Cooldown\\star4")
+                    f.sizeW = 7.8 + math.random() * 4.0
+                    f.sizeH = f.sizeW
+                else
+                    f.tex:SetTexture("Interface\\CastingBar\\UI-CastingBar-Spark")
+                    f.sizeW = 4.0 + math.random() * 2.0
+                    f.sizeH = 11.0 + math.random() * 4.5
+                end
+            elseif resolvedKey == "SHADOW" then
+                -- Void implosion: particles spawn outward and swirl inward toward the wound core
+                f.u = ((i - 0.5) / n - 0.5) * 1.15
+                f.v = ((i % 2 == 0) and 1 or -1) * (0.45 + math.random() * 0.45)
+                f.vx = -f.u * (14 + math.random() * 10)
+                f.vy = -f.v * (10 + math.random() * 8)
+                if shapeRoll == 0 then
+                    f.tex:SetTexture("Interface\\Minimap\\UI-Minimap-ZoomButton-Highlight")
                     f.sizeW = 8.0 + math.random() * 4.5
                     f.sizeH = f.sizeW
+                elseif shapeRoll == 1 then
+                    f.tex:SetTexture("Interface\\Cooldown\\ping4")
+                    f.sizeW = 7.5 + math.random() * 4.0
+                    f.sizeH = f.sizeW
+                else
+                    f.tex:SetTexture("Interface\\Cooldown\\star4")
+                    f.sizeW = 8.0 + math.random() * 4.0
+                    f.sizeH = f.sizeW
+                end
+            elseif resolvedKey == "ARCANE" then
+                f.vx = (math.random() - 0.5) * 12
+                f.vy = (math.random() - 0.5) * 12
+                f.vRot = ((i % 2 == 0) and 1 or -1) * (6.5 + math.random() * 4.5)
+                if shapeRoll == 0 then
+                    f.tex:SetTexture("Interface\\Cooldown\\ping4")
+                    f.sizeW = 7.5 + math.random() * 4.5
+                    f.sizeH = f.sizeW
+                elseif shapeRoll == 1 then
+                    f.tex:SetTexture("Interface\\Cooldown\\starburst")
+                    f.sizeW = 8.5 + math.random() * 4.5
+                    f.sizeH = f.sizeW
+                else
+                    f.tex:SetTexture("Interface\\Cooldown\\star4")
+                    f.sizeW = 7.8 + math.random() * 4.0
+                    f.sizeH = f.sizeW
+                end
+            elseif resolvedKey == "NATURE" then
+                f.vy = 8 + math.random() * 12
+                f.vx = (math.random() - 0.5) * 16
+                f.waveFreq = 6.5 + math.random() * 5.0
+                if shapeRoll == 0 then
+                    f.tex:SetTexture("Interface\\Minimap\\UI-Minimap-ZoomButton-Highlight")
+                    f.sizeW = 7.5 + math.random() * 4.0
+                    f.sizeH = f.sizeW
+                elseif shapeRoll == 1 then
+                    f.tex:SetTexture("Interface\\CastingBar\\UI-CastingBar-Spark")
+                    f.sizeW = 4.2 + math.random() * 2.0
+                    f.sizeH = 9.5 + math.random() * 4.0
+                else
+                    f.tex:SetTexture("Interface\\Cooldown\\star4")
+                    f.sizeW = 7.5 + math.random() * 3.8
+                    f.sizeH = f.sizeW
+                end
+            elseif resolvedKey == "HOLY" then
+                f.vy = 13 + math.random() * 15
+                f.vx = (math.random() - 0.5) * 7
+                f.rot = 0
+                f.vRot = (shapeRoll == 1) and ((i % 2 == 0 and 1 or -1) * 1.8) or 0
+                if shapeRoll == 0 then
+                    f.tex:SetTexture("Interface\\Cooldown\\star4")
+                    f.sizeW = 8.5 + math.random() * 4.5
+                    f.sizeH = f.sizeW
+                elseif shapeRoll == 1 then
+                    f.tex:SetTexture("Interface\\Cooldown\\starburst")
+                    f.sizeW = 8.0 + math.random() * 4.0
+                    f.sizeH = f.sizeW
+                else
+                    f.tex:SetTexture("Interface\\CastingBar\\UI-CastingBar-Spark")
+                    f.sizeW = 4.2 + math.random() * 1.8
+                    f.sizeH = 12.0 + math.random() * 5.0
+                end
+            else
+                -- PHYSICAL: diagonal cleave slash streaks + steel sparks & crimson droplets
+                f.vy = 10 + math.random() * 14
+                f.vx = (math.random() - 0.35) * 20
+                if shapeRoll == 0 then
+                    f.tex:SetTexture("Interface\\CastingBar\\UI-CastingBar-Spark")
+                    f.sizeW = 3.8 + math.random() * 2.0
+                    f.sizeH = 12.0 + math.random() * 5.0
+                    f.rot = ((i % 2 == 0) and 0.66 or -0.66)
+                    f.vRot = 0
                 elseif shapeRoll == 1 then
                     f.tex:SetTexture("Interface\\Cooldown\\star4")
                     f.sizeW = 7.5 + math.random() * 4.0
                     f.sizeH = f.sizeW
                 else
-                    f.tex:SetTexture("Interface\\CastingBar\\UI-CastingBar-Spark")
-                    f.sizeW = 4.0 + math.random() * 2.0
-                    f.sizeH = 10.5 + math.random() * 4.5
-                end
-            elseif resolvedKey == "SHADOW" or resolvedKey == "ARCANE" or resolvedKey == "NATURE" or resolvedKey == "HOLY" then
-                f.vy = 8 + math.random() * 14
-                if shapeRoll == 0 then
                     f.tex:SetTexture("Interface\\Minimap\\UI-Minimap-ZoomButton-Highlight")
-                    f.sizeW = 7.5 + math.random() * 4.5
-                    f.sizeH = f.sizeW
-                elseif shapeRoll == 1 then
-                    f.tex:SetTexture("Interface\\Cooldown\\star4")
-                    f.sizeW = 8.0 + math.random() * 4.5
-                    f.sizeH = f.sizeW
-                else
-                    f.tex:SetTexture("Interface\\Cooldown\\ping4")
-                    f.sizeW = 7.0 + math.random() * 4.0
-                    f.sizeH = f.sizeW
-                end
-            else
-                f.vy = (math.random() - 0.5) * 16
-                if shapeRoll == 0 then
-                    f.tex:SetTexture("Interface\\CastingBar\\UI-CastingBar-Spark")
-                    f.sizeW = 3.8 + math.random() * 2.0
-                    f.sizeH = 10.5 + math.random() * 4.5
-                else
-                    f.tex:SetTexture("Interface\\Cooldown\\star4")
-                    f.sizeW = 7.0 + math.random() * 3.5
+                    f.sizeW = 6.2 + math.random() * 3.0
                     f.sizeH = f.sizeW
                 end
             end
         end
     end
 
-    if ns.CombatFX and trailAnchor and not isDot and intensity >= 0.35 then
+    if ns.CombatFX and trailAnchor and not isDot and intensity >= 0.32 then
         local spR = (prof and prof.spark and prof.spark[1]) or 1.0
         local spG = (prof and prof.spark and prof.spark[2]) or 0.72
         local spB = (prof and prof.spark and prof.spark[3]) or 0.18
         local rawCount = math.max(2, math.floor(1 + intensity * (isMega and 7 or (isCrit and 5 or 3)) + 0.5))
         local baseCount = vanillaMode and math.max(1, math.floor(rawCount * 0.55 + 0.5)) or rawCount
-        local spInt = vanillaMode and (intensity * 0.58) or (intensity * 0.75)
+        local spInt = vanillaMode and (intensity * 0.58) or (intensity * 0.78)
 
         if resolvedKey == "LIGHTNING" then
             local boltCount = ((isMega or isCrit) and not vanillaMode) and 1 or 0
@@ -1029,6 +1211,16 @@ end
 function UnitBars:StepEnhancer(enhancer, dt, now, smoothSpeed, trailSpeed)
     local stillActive = false
 
+    -- Target lock-on bracket snap-in animation
+    if (enhancer.bracketAnimTimer or 0) > 0.001 then
+        enhancer.bracketAnimTimer = math.max(0, enhancer.bracketAnimTimer - dt)
+        stillActive = true
+        if enhancer.targetBrackets and enhancer.targetBrackets.SetBracketOffset then
+            local bFrac = enhancer.bracketAnimTimer / 0.14
+            enhancer.targetBrackets:SetBracketOffset(2.5 + 3.0 * bFrac * bFrac)
+        end
+    end
+
     if enhancer.isSecretHealth then
         if enhancer.trailHoldTimer > 0 then
             enhancer.trailHoldTimer = enhancer.trailHoldTimer - dt
@@ -1075,7 +1267,7 @@ function UnitBars:StepEnhancer(enhancer, dt, now, smoothSpeed, trailSpeed)
         stillActive = true
         enhancer.trailEmitTimer = (enhancer.trailEmitTimer or 0) - dt
         local elemInt = enhancer.elemIntensity or 0.6
-        if elemInt >= 0.55 and enhancer.trailEmitTimer <= 0 and enhancer.trailDissolveTimer > 0.14 then
+        if elemInt >= 0.52 and enhancer.trailEmitTimer <= 0 and enhancer.trailDissolveTimer > 0.14 then
             local trailAnchor = enhancer.trailChunkOverlay or enhancer.cutLine
             local prof = ns.Elements and ns.Elements:GetProfile(elem)
             local remFrac = enhancer.trailDissolveTimer / math.max(0.1, enhancer.trailDissolveDuration or 0.45)
@@ -1127,9 +1319,21 @@ function UnitBars:StepEnhancer(enhancer, dt, now, smoothSpeed, trailSpeed)
         elseif elem == "EARTH" then
             dx = (math.sin(now * 58.0) * (maxOffset * 0.70) + (math.random() - 0.5) * 2.5) * p
             dy = (math.cos(now * 52.0) * (maxOffset * 1.35) + (math.random() - 0.5) * 3.5) * p
+        elseif elem == "FROST" then
+            dx = (math.sin(now * 125.0) * (maxOffset * 1.02) + (math.random() - 0.5) * 2.8) * p
+            dy = (math.cos(now * 112.0) * (maxOffset * 0.52)) * p
         elseif elem == "SHADOW" then
             dx = math.sin(now * 62.0) * (maxOffset * 0.90) * p
             dy = math.cos(now * 48.0) * (maxOffset * 0.70) * p
+        elseif elem == "ARCANE" then
+            dx = math.sin(now * 118.0) * (maxOffset * 0.88) * p
+            dy = math.sin(now * 236.0) * (maxOffset * 0.48) * p
+        elseif elem == "NATURE" then
+            dx = math.sin(now * 68.0) * (maxOffset * 0.82) * p
+            dy = math.cos(now * 54.0) * (maxOffset * 0.75) * p
+        elseif elem == "HOLY" then
+            dx = math.sin(now * 78.0) * (maxOffset * 0.65) * p
+            dy = math.abs(math.cos(now * 84.0)) * (maxOffset * 0.85) * p
         else
             dx = (math.sin(now * 88.0) * maxOffset + (math.random() - 0.5) * 3.5) * p
             dy = (math.cos(now * 96.0) * (maxOffset * 0.60) + (math.random() - 0.5) * 2.5) * p
@@ -1140,7 +1344,7 @@ function UnitBars:StepEnhancer(enhancer, dt, now, smoothSpeed, trailSpeed)
         enhancer.trauma = 0
     end
 
-    -- Subtle Elemental Border Glow (scaled by hit intensity!)
+    -- Subtle Elemental Border Glow (scaled by hit intensity across all 9 elements)
     local borderShown = false
     local bestBorderAlpha = 0
     local bestBorderProf = nil
@@ -1152,19 +1356,27 @@ function UnitBars:StepEnhancer(enhancer, dt, now, smoothSpeed, trailSpeed)
         local glowFrac = enhancer.elemGlowTimer / math.max(0.1, enhancer.elemGlowDuration or 0.35)
         local elemInt = enhancer.elemIntensity or 0.5
         local prof = ns.Elements and ns.Elements:GetProfile(elem)
-        if elem == "FIRE" then
+        if elem == "FIRE" or elem == "HOLY" then
             enhancer.flashAlpha = math.max(enhancer.flashAlpha, glowFrac * (vanillaMode and 0.14 or 0.24) * elemInt)
         end
-        if not vanillaMode and prof and prof.border and elem ~= "PHYSICAL" and elemInt >= 0.50 then
+        if not vanillaMode and prof and prof.border and elem ~= "PHYSICAL" and elemInt >= 0.45 then
             local flicker = 1.0
             if elem == "FIRE" then
                 flicker = 0.72 + 0.28 * math.sin(now * 24.0)
             elseif elem == "LIGHTNING" then
-                flicker = (math.sin(now * 80.0) > 0) and 1.0 or 0.50
+                flicker = (math.sin(now * 80.0) > 0) and 1.0 or 0.48
+            elseif elem == "FROST" then
+                flicker = 0.82 + 0.18 * math.cos(now * 36.0)
             elseif elem == "SHADOW" then
-                flicker = 0.70 + 0.30 * math.sin(now * 16.0)
+                flicker = 0.68 + 0.32 * math.sin(now * 16.0)
+            elseif elem == "ARCANE" then
+                flicker = 0.75 + 0.25 * math.sin(now * 30.0)
+            elseif elem == "NATURE" then
+                flicker = 0.78 + 0.22 * math.sin(now * 14.0)
+            elseif elem == "HOLY" then
+                flicker = 0.85 + 0.15 * math.sin(now * 20.0)
             end
-            bestBorderAlpha = math.min(0.75, glowFrac * flicker * elemInt * 0.70)
+            bestBorderAlpha = math.min(0.78, glowFrac * flicker * elemInt * 0.72)
             bestBorderProf = prof
             bestBorderElem = elem
             borderShown = true
@@ -1215,7 +1427,7 @@ function UnitBars:StepEnhancer(enhancer, dt, now, smoothSpeed, trailSpeed)
                     end
                     enhancer.flashAlpha = auraAlpha
                 end
-                dotBorderAlpha = (0.24 + 0.12 * math.sin(now * 9.0)) * dotFade
+                dotBorderAlpha = (0.25 + 0.12 * math.sin(now * 9.0)) * dotFade
             else
                 dotBorderAlpha = (0.24 + 0.10 * math.sin(now * 9.0)) * dotFade
             end
@@ -1249,7 +1461,7 @@ function UnitBars:StepEnhancer(enhancer, dt, now, smoothSpeed, trailSpeed)
                 bestBorderProf.border[1],
                 bestBorderProf.border[2],
                 bestBorderProf.border[3],
-                math.min(0.75, bestBorderAlpha),
+                math.min(0.78, bestBorderAlpha),
                 (bestBorderElem == "EARTH") and "BLEND" or "ADD"
             )
             enhancer.elemBorder:Show()
@@ -1258,10 +1470,15 @@ function UnitBars:StepEnhancer(enhancer, dt, now, smoothSpeed, trailSpeed)
         end
     end
 
+    -- Realistic double-beat cardiac curve ("lub-dub") for Execute border
     if enhancer.isExecute then
         stillActive = true
-        local pulse = 0.40 + 0.45 * (0.5 + 0.5 * math.sin(now * 7.5))
-        enhancer.executeBorder:SetBorderColor(1.0, 0.15, 0.15, pulse)
+        local beatCycle = (now * 1.35) % 1.0
+        local b1 = math.exp(-math.pow((beatCycle - 0.14) / 0.065, 2))
+        local b2 = 0.72 * math.exp(-math.pow((beatCycle - 0.31) / 0.080, 2))
+        local heartBeat = math.min(1.0, b1 + b2)
+        local pulse = 0.28 + 0.64 * heartBeat
+        enhancer.executeBorder:SetBorderColor(1.0, 0.14 + 0.16 * heartBeat, 0.12, pulse)
     end
 
     self:RenderEnhancer(enhancer, dx, dy)
@@ -1306,17 +1523,29 @@ function UnitBars:RenderEnhancer(enhancer, dx, dy)
         end
     end
 
-    -- Clean Vanilla+ delayed damage trail bar with subtle elemental tinting
+    -- 3-Stage Delayed Damage Trail Ramp (trailHot -> trailHold -> trailFade)
+    local hotC = enhancer.trailHotColor or { 1.00, 0.98, 0.90 }
     local holdC = enhancer.trailHoldColor or { 1.00, 0.90, 0.55 }
-    local fadeC = enhancer.trailFadeColor or { 1.00, 0.32, 0.08 }
+    local fadeC = enhancer.trailFadeColor or { 0.85, 0.16, 0.12 }
     local dissolveTimer = enhancer.trailDissolveTimer or 0
     if dissolveTimer > 0.01 then
         local rem = math.max(0, math.min(1.0, dissolveTimer / math.max(0.1, enhancer.trailDissolveDuration or 0.45)))
         local t = 1.0 - rem
-        local r = fadeC[1] + (holdC[1] - fadeC[1]) * rem
-        local g = fadeC[2] + (holdC[2] - fadeC[2]) * rem
-        local b = fadeC[3] + (holdC[3] - fadeC[3]) * rem
-        local barAlpha = math.pow(rem, 1.25) * 0.88
+        local r, g, b
+        if t < 0.18 then
+            local k = t / 0.18
+            r = hotC[1] + (holdC[1] - hotC[1]) * k
+            g = hotC[2] + (holdC[2] - hotC[2]) * k
+            b = hotC[3] + (holdC[3] - hotC[3]) * k
+        elseif t < 0.65 then
+            local k = (t - 0.18) / 0.47
+            r = holdC[1] + (fadeC[1] - holdC[1]) * k
+            g = holdC[2] + (fadeC[2] - holdC[2]) * k
+            b = holdC[3] + (fadeC[3] - holdC[3]) * k
+        else
+            r, g, b = fadeC[1], fadeC[2], fadeC[3]
+        end
+        local barAlpha = math.pow(rem, 1.18) * 0.92
         enhancer.trailBar:SetStatusBarColor(r, g, b, barAlpha)
 
         if enhancer.trailFragments and enhancer.trailChunkOverlay then
@@ -1328,40 +1557,127 @@ function UnitBars:RenderEnhancer(enhancer, dx, dy)
                 local altC = (prof and prof.sparkAlt) or holdC
                 local pal = prof and prof.sparkPalette
                 local chunkW = enhancer.trailChunkOverlay.fuiWidth or 18
-                local blend = (elem == "EARTH") and "BLEND" or "ADD"
-                local activeCount = (elemInt >= 0.48) and #enhancer.trailFragments or 5
+                local activeCount = (elemInt >= 0.48) and #enhancer.trailFragments or 6
 
                 for i = 1, #enhancer.trailFragments do
                     local f = enhancer.trailFragments[i]
                     local tex = f.tex
+                    local glowTex = f.glowTex
                     if i <= activeCount then
-                        tex:SetBlendMode(blend)
-                        local wave = math.sin(t * (f.waveFreq or 10.0) + (f.wavePhase or 0)) * 2.2
-                        local ox = f.u * chunkW + f.vx * t + wave
-                        local oy = f.v * targetH + f.vy * t
-                        if elem == "EARTH" or elem == "FROST" then
-                            oy = f.v * targetH + f.vy * (t * t * 1.25)
+                        local ox, oy
+                        local popIn = math.min(1.0, t / 0.12)
+                        local scale = (0.68 + 0.46 * popIn) * math.max(0.24, 1.0 - t * 0.65)
+                        local curRot = (f.rot or 0) + (f.vRot or 0) * t
+                        local col = (pal and pal[f.palIdx or 1]) or (f.isAlt and altC or spC)
+                        local flicker = 0.78 + 0.22 * math.sin(t * (f.flickerSpeed or 20.0) + (f.wavePhase or 0))
+                        local blend = "ADD"
+                        local glowBlend = "ADD"
+                        local glowCol = col
+
+                        if elem == "FIRE" then
+                            -- Thermal buoyancy rise + S-wave curl + temperature color cooling
+                            local wave = math.sin(t * (f.waveFreq or 10.0) + (f.wavePhase or 0)) * 2.8
+                            ox = f.u * chunkW + f.vx * t * 0.65 + wave
+                            oy = f.v * targetH + f.vy * math.pow(t, 1.55)
+                            if pal then
+                                local stageIdx = math.min(4, math.max(1, math.floor(t * 3.6) + 1))
+                                col = pal[stageIdx] or col
+                            end
+                        elseif elem == "LIGHTNING" then
+                            -- Quantized discrete snap-teleports + high-frequency square-wave strobe
+                            local qT = math.floor(t * 14.0) / 14.0
+                            local jitterX = math.sin(qT * 95.0 + (f.wavePhase or 0)) * 3.2
+                            local jitterY = math.cos(qT * 110.0 + (f.wavePhase or 0)) * 2.4
+                            ox = f.u * chunkW + f.vx * qT + jitterX
+                            oy = f.v * targetH + f.vy * qT + jitterY
+                            flicker = (math.sin(t * (f.flickerSpeed or 50.0) + (f.wavePhase or 0)) > -0.15) and 1.0 or 0.28
+                        elseif elem == "FROST" then
+                            -- 3-phase freeze lock & shatter drop
+                            if t < 0.20 then
+                                local k = t / 0.20
+                                ox = f.u * chunkW + f.vx * k * 0.25
+                                oy = f.v * targetH + f.vy * k * 0.25
+                            elseif t < 0.65 then
+                                ox = f.u * chunkW + f.vx * 0.25 + math.sin(t * 45.0 + (f.wavePhase or 0)) * 0.6
+                                oy = f.v * targetH + f.vy * 0.25
+                                curRot = (f.rot or 0) + (f.vRot or 0) * 0.20
+                                flicker = 0.85 + 0.15 * math.sin(t * 60.0 + i)
+                            else
+                                local dropT = (t - 0.65) / 0.35
+                                ox = f.u * chunkW + f.vx * (0.25 + dropT * 0.45)
+                                oy = f.v * targetH + f.vy * 0.25 - (dropT * dropT * 24.0)
+                            end
+                        elseif elem == "EARTH" then
+                            -- Heavy gravity stone drop + quartz glints
+                            ox = f.u * chunkW + f.vx * t
+                            oy = f.v * targetH + f.vy * (t * t * 1.35)
+                            blend = f.isAlt and "ADD" or "BLEND"
+                            glowBlend = "BLEND"
+                            glowCol = { 0.14, 0.10, 0.06 }
+                        elseif elem == "SHADOW" then
+                            -- Inward void implosion vortex toward wound center + dark obsidian backing halo
+                            local implode = math.max(0.12, 1.0 - t * 0.78)
+                            local swirlX = math.cos(t * 9.0 + (f.wavePhase or 0)) * 2.5 * implode
+                            local swirlY = math.sin(t * 9.0 + (f.wavePhase or 0)) * 2.0 * implode
+                            ox = (f.u * chunkW) * implode + swirlX
+                            oy = (f.v * targetH) * implode + swirlY
+                            glowBlend = "BLEND"
+                            glowCol = { 0.07, 0.01, 0.14 }
+                        elseif elem == "ARCANE" then
+                            -- Expanding mana rings & harmonic counter-rotating runes
+                            ox = f.u * chunkW + f.vx * t * 0.55
+                            oy = f.v * targetH + f.vy * t * 0.55
+                            if f.shapeRoll == 0 then
+                                scale = (0.55 + t * 1.05)
+                            end
+                        elseif elem == "NATURE" then
+                            -- Swirling figure-8 bio-spores & leaf streaks
+                            local figX = math.sin(t * (f.waveFreq or 8.0) + (f.wavePhase or 0)) * 3.4
+                            local figY = math.sin(t * (f.waveFreq or 8.0) * 2.0 + (f.wavePhase or 0)) * 2.2
+                            ox = f.u * chunkW + f.vx * t * 0.60 + figX
+                            oy = f.v * targetH + f.vy * t * 0.75 + figY
+                        elseif elem == "HOLY" then
+                            -- Ascending golden crosses & light motes
+                            ox = f.u * chunkW + math.sin(t * 6.0 + (f.wavePhase or 0)) * 1.4
+                            oy = f.v * targetH + f.vy * t
+                        else
+                            -- PHYSICAL: diagonal cleave slash streaks + ballistic steel sparks
+                            ox = f.u * chunkW + f.vx * t
+                            oy = f.v * targetH + f.vy * t - (t * t * 16.0)
                         end
-                        local popIn = math.min(1.0, t / 0.14)
-                        local scale = (0.65 + 0.45 * popIn) * math.max(0.25, 1.0 - t * 0.68)
+
+                        local fAlpha = math.min(0.94, rem * 0.90 * flicker)
+                        if glowTex then
+                            glowTex:SetBlendMode(glowBlend)
+                            glowTex:ClearAllPoints()
+                            glowTex:SetPoint("CENTER", enhancer.trailChunkOverlay, "CENTER", ox, oy)
+                            glowTex:SetSize(f.sizeW * scale * 1.75, f.sizeH * scale * 1.75)
+                            local gAlpha = (glowBlend == "BLEND") and (fAlpha * 0.65) or (fAlpha * 0.42)
+                            glowTex:SetVertexColor(glowCol[1], glowCol[2], glowCol[3], gAlpha)
+                            glowTex:Show()
+                        end
+
+                        tex:SetBlendMode(blend)
                         tex:ClearAllPoints()
                         tex:SetPoint("CENTER", enhancer.trailChunkOverlay, "CENTER", ox, oy)
                         tex:SetSize(f.sizeW * scale, f.sizeH * scale)
                         if tex.SetRotation then
-                            local curRot = (f.rot or 0) + (f.vRot or 0) * t
                             tex:SetRotation(curRot)
                         end
-                        local col = (pal and pal[f.palIdx or 1]) or (f.isAlt and altC or spC)
-                        local flicker = 0.78 + 0.22 * math.sin(t * (f.flickerSpeed or 20.0) + (f.wavePhase or 0))
-                        local fAlpha = math.min(0.88, rem * 0.85 * flicker)
                         tex:SetVertexColor(col[1], col[2], col[3], fAlpha)
                         tex:Show()
                     else
+                        if glowTex then
+                            glowTex:Hide()
+                        end
                         tex:Hide()
                     end
                 end
             else
                 for i = 1, #enhancer.trailFragments do
+                    if enhancer.trailFragments[i].glowTex then
+                        enhancer.trailFragments[i].glowTex:Hide()
+                    end
                     enhancer.trailFragments[i].tex:Hide()
                 end
             end
@@ -1370,6 +1686,9 @@ function UnitBars:RenderEnhancer(enhancer, dx, dy)
         enhancer.trailBar:SetStatusBarColor(fadeC[1], fadeC[2], fadeC[3], 0.0)
         if enhancer.trailFragments then
             for i = 1, #enhancer.trailFragments do
+                if enhancer.trailFragments[i].glowTex then
+                    enhancer.trailFragments[i].glowTex:Hide()
+                end
                 enhancer.trailFragments[i].tex:Hide()
             end
         end
@@ -1380,19 +1699,37 @@ function UnitBars:RenderEnhancer(enhancer, dx, dy)
         showCut = showCut and (enhancer.displayFrac > 0.01 and enhancer.displayFrac < 0.99)
     end
     if showCut then
+        if enhancer.cutGlow then
+            enhancer.cutGlow:SetAlpha(math.min(0.85, enhancer.cutAlpha * 0.62))
+            enhancer.cutGlow:Show()
+        end
         enhancer.cutLine:SetAlpha(enhancer.cutAlpha)
         enhancer.cutLine:Show()
+        local rotProgress = (1.0 - enhancer.cutAlpha) * 2.8
         if enhancer.cutFlare then
             enhancer.cutFlare:SetAlpha(math.min(1.0, enhancer.cutAlpha * 1.15))
             if enhancer.cutFlare.SetRotation then
-                enhancer.cutFlare:SetRotation((1.0 - enhancer.cutAlpha) * 2.4)
+                enhancer.cutFlare:SetRotation(rotProgress)
             end
             enhancer.cutFlare:Show()
         end
+        if enhancer.cutSubFlare then
+            enhancer.cutSubFlare:SetAlpha(math.min(0.92, enhancer.cutAlpha * 0.95))
+            if enhancer.cutSubFlare.SetRotation then
+                enhancer.cutSubFlare:SetRotation(-rotProgress * 1.35)
+            end
+            enhancer.cutSubFlare:Show()
+        end
     else
+        if enhancer.cutGlow then
+            enhancer.cutGlow:Hide()
+        end
         enhancer.cutLine:Hide()
         if enhancer.cutFlare then
             enhancer.cutFlare:Hide()
+        end
+        if enhancer.cutSubFlare then
+            enhancer.cutSubFlare:Hide()
         end
     end
 

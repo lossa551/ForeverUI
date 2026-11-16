@@ -147,9 +147,32 @@ def verify_feature_requirements():
     assert "BuildPresetsTab" in opt_code, "Options.lua must provide the Art Presets tab"
     print("[PASS] Options.lua verified: OptionsFrame, MinimapButton, and Art Presets tab implemented.")
 
+    # 6. Verify v1.3.0 9-Element Art Overhaul, Cracked Death Bar Options & Redundant Code Removal
+    cfg_path = os.path.join(ADDON_DIR, "Core", "Config.lua")
+    with open(cfg_path, "r", encoding="utf-8") as f:
+        cfg_raw = f.read()
+        cfg_code = strip_lua_comments_and_strings(cfg_raw)
+    assert "WOW_PROFILES" not in cfg_code, "Redundant WOW_PROFILES table must be removed from Config.lua"
+    for elem in ["LIGHTNING", "FIRE", "EARTH", "FROST", "SHADOW", "NATURE", "ARCANE", "HOLY", "PHYSICAL"]:
+        assert elem in cfg_raw, f"Config.lua must define element profile {elem}"
+    for field in ["trailHot", "trailHold", "trailFade", "deathCrackHot", "sparkPalette"]:
+        assert field in cfg_code, f"Config.lua element profiles must define {field}"
+    for death_opt in ["deathElementalCracks", "deathRandomTilt", "deathPunchScale", "deathBounce", "deathDropSpeed", "deathDebrisScale"]:
+        assert death_opt in cfg_code, f"Config.lua must define death bar option {death_opt}"
+        assert death_opt in opt_raw, f"Options.lua must expose control for {death_opt}"
+        assert death_opt in fx_code, f"CombatFX.lua must apply death bar option {death_opt}"
+    assert "cutGlow" in ub_code and "cutSubFlare" in ub_code and "glowTex" in ub_code, (
+        "UnitBars.lua must implement multi-layer wound seam (cutGlow/cutSubFlare) and dual-layer trailFragments (glowTex)"
+    )
+    assert "OnCombatLogImpact" not in np_code and "OnCombatLogEvent" not in ct_code and "SCHOOL_COLORS" not in ct_code, (
+        "Dead combat log and SCHOOL_COLORS stubs must be removed from Nameplates.lua and CombatText.lua"
+    )
+    print("[PASS] v1.3.0 9-element art overhaul, Cracked Death Bar options, and dead-code cleanup verified.")
+
 
 if __name__ == "__main__":
     paths = verify_toc()
     verify_lua_blocks_and_safety(paths)
     verify_feature_requirements()
-    print("\nALL FOREVERUI PHASE 1 VERIFICATION CHECKS PASSED!")
+    print("\nALL FOREVERUI PHASE 1 & v1.3.0 VERIFICATION CHECKS PASSED!")
+

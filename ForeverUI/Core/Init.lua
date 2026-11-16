@@ -231,6 +231,10 @@ function ns:RunElementSingleDemo(elemKey)
     PrintMsg("Previewing " .. hex .. prof.label .. "|r escalation + DoT burn/crackle! Try |cffffd100/fui dot " .. string.lower(prof.key) .. "|r or |cffffd100/fui kill " .. string.lower(prof.key) .. "|r.")
 end
 
+function ns:RunDeathSingleDemo(elemKey)
+    self:RunInGameDemo("kill", elemKey)
+end
+
 function ns:RunInGameDemo(mode, arg)
     demoGeneration = demoGeneration + 1
     local myGen = demoGeneration
@@ -325,80 +329,46 @@ function ns:RunInGameDemo(mode, arg)
         return
     end
 
-    -- Full 6-Element Showcase (Each element shows a subtle Light Hit followed by a Heavy Crit, ending with an Elemental Kill!)
+    -- Full 9-Element Showcase (Each element shows a subtle Light Hit followed by a Heavy Crit, ending with an Elemental Kill!)
     enhancer.displayFrac = 1.0
     enhancer.trailFrac = 1.0
     enhancer.targetFrac = 1.0
 
-    -- 1. LIGHTNING: Subtle light hit (0.00s) -> Heavy Crit (0.45s)
-    FireElementStage(bar, enhancer, usingDemoBar, "LIGHTNING", 0.95, "118", false)
+    local showcaseStages = {
+        { tLight = 0.00, fracLight = 0.97, dmgLight = "118", tCrit = 0.38, fracCrit = 0.89, dmgCrit = "LIGHTNING 540", elem = "LIGHTNING" },
+        { tLight = 0.95, fracLight = 0.86, dmgLight = "96",  tCrit = 1.33, fracCrit = 0.78, dmgCrit = "FIRE 615",      elem = "FIRE" },
+        { tLight = 1.90, fracLight = 0.75, dmgLight = "134", tCrit = 2.28, fracCrit = 0.66, dmgCrit = "EARTH 780",     elem = "EARTH" },
+        { tLight = 2.85, fracLight = 0.63, dmgLight = "105", tCrit = 3.23, fracCrit = 0.55, dmgCrit = "FROST 590",     elem = "FROST" },
+        { tLight = 3.80, fracLight = 0.52, dmgLight = "88",  tCrit = 4.18, fracCrit = 0.44, dmgCrit = "SHADOW 640",    elem = "SHADOW" },
+        { tLight = 4.75, fracLight = 0.41, dmgLight = "92",  tCrit = 5.13, fracCrit = 0.33, dmgCrit = "NATURE 575",    elem = "NATURE" },
+        { tLight = 5.70, fracLight = 0.30, dmgLight = "110", tCrit = 6.08, fracCrit = 0.22, dmgCrit = "ARCANE 710",    elem = "ARCANE" },
+        { tLight = 6.65, fracLight = 0.19, dmgLight = "124", tCrit = 7.03, fracCrit = 0.12, dmgCrit = "HOLY 690",      elem = "HOLY" },
+        { tLight = 7.60, fracLight = 0.09, dmgLight = "142", tCrit = 7.98, fracCrit = 0.03, dmgCrit = "CLEAVE 820",    elem = "PHYSICAL" },
+    }
+
+    FireElementStage(bar, enhancer, usingDemoBar, showcaseStages[1].elem, showcaseStages[1].fracLight, showcaseStages[1].dmgLight, false)
 
     if C_Timer and C_Timer.After then
-        C_Timer.After(0.45, function()
-            if demoGeneration ~= myGen then
-                return
+        for i = 1, #showcaseStages do
+            local st = showcaseStages[i]
+            if i > 1 then
+                C_Timer.After(st.tLight, function()
+                    if demoGeneration ~= myGen then
+                        return
+                    end
+                    FireElementStage(bar, enhancer, usingDemoBar, st.elem, st.fracLight, st.dmgLight, false)
+                end)
             end
-            FireElementStage(bar, enhancer, usingDemoBar, "LIGHTNING", 0.82, "LIGHTNING 540", true)
-        end)
+            C_Timer.After(st.tCrit, function()
+                if demoGeneration ~= myGen then
+                    return
+                end
+                FireElementStage(bar, enhancer, usingDemoBar, st.elem, st.fracCrit, st.dmgCrit, true)
+            end)
+        end
 
-        -- 2. FIRE: Subtle light hit (1.20s) -> Heavy Crit (1.65s)
-        C_Timer.After(1.20, function()
-            if demoGeneration ~= myGen then
-                return
-            end
-            FireElementStage(bar, enhancer, usingDemoBar, "FIRE", 0.77, "96", false)
-        end)
-        C_Timer.After(1.65, function()
-            if demoGeneration ~= myGen then
-                return
-            end
-            FireElementStage(bar, enhancer, usingDemoBar, "FIRE", 0.63, "FIRE 615", true)
-        end)
-
-        -- 3. EARTH: Subtle light hit (2.40s) -> Heavy Crit (2.85s)
-        C_Timer.After(2.40, function()
-            if demoGeneration ~= myGen then
-                return
-            end
-            FireElementStage(bar, enhancer, usingDemoBar, "EARTH", 0.58, "134", false)
-        end)
-        C_Timer.After(2.85, function()
-            if demoGeneration ~= myGen then
-                return
-            end
-            FireElementStage(bar, enhancer, usingDemoBar, "EARTH", 0.42, "EARTH 780", true)
-        end)
-
-        -- 4. FROST: Subtle light hit (3.60s) -> Heavy Crit (4.05s)
-        C_Timer.After(3.60, function()
-            if demoGeneration ~= myGen then
-                return
-            end
-            FireElementStage(bar, enhancer, usingDemoBar, "FROST", 0.37, "105", false)
-        end)
-        C_Timer.After(4.05, function()
-            if demoGeneration ~= myGen then
-                return
-            end
-            FireElementStage(bar, enhancer, usingDemoBar, "FROST", 0.24, "FROST 590", true)
-        end)
-
-        -- 5. SHADOW: Subtle light hit (4.80s) -> Heavy Crit (5.25s)
-        C_Timer.After(4.80, function()
-            if demoGeneration ~= myGen then
-                return
-            end
-            FireElementStage(bar, enhancer, usingDemoBar, "SHADOW", 0.19, "88", false)
-        end)
-        C_Timer.After(5.25, function()
-            if demoGeneration ~= myGen then
-                return
-            end
-            FireElementStage(bar, enhancer, usingDemoBar, "SHADOW", 0.08, "SHADOW 740", true)
-        end)
-
-        -- 6. ELEMENTAL KILLING BLOW (6.05s)
-        C_Timer.After(6.05, function()
+        -- ELEMENTAL KILLING BLOW (8.75s)
+        C_Timer.After(8.75, function()
             if demoGeneration ~= myGen then
                 return
             end
@@ -409,7 +379,7 @@ function ns:RunInGameDemo(mode, arg)
         end)
 
         -- Restore after showcase completes
-        C_Timer.After(7.70, function()
+        C_Timer.After(10.40, function()
             if demoGeneration ~= myGen then
                 return
             end
@@ -417,7 +387,7 @@ function ns:RunInGameDemo(mode, arg)
         end)
     end
 
-    PrintMsg("Running Elemental Showcase (Light Subtle Hit -> Heavy Crit per element): |cff48dcffLIGHTNING|r -> |cffff751aFIRE|r -> |cfff09933EARTH|r -> |cff70e0ffFROST|r -> |cffbf66ffSHADOW|r -> |cffffd100KILL|r!")
+    PrintMsg("Running 9-Element Showcase: |cff48dcffLIGHTNING|r -> |cffff751aFIRE|r -> |cfff09933EARTH|r -> |cff70e0ffFROST|r -> |cffbf66ffSHADOW|r -> |cff4dff6aNATURE|r -> |cffe080ffARCANE|r -> |cffffea80HOLY|r -> |cffffe6b3PHYSICAL|r -> |cffffd100KILL|r!")
 end
 
 local function HandleSlashCommand(msg)
@@ -513,7 +483,7 @@ local function HandleSlashCommand(msg)
     else
         PrintMsg("Commands:")
         PrintMsg("  /fui           - Open Settings & Art Presets configuration panel")
-        PrintMsg("  /fui showcase  - Run full Elemental Showcase (Lightning -> Fire -> Earth -> Frost -> Shadow -> Kill)")
+        PrintMsg("  /fui showcase  - Run full 9-Element Showcase (Lightning -> Fire -> Earth -> Frost -> Shadow -> Nature -> Arcane -> Holy -> Physical -> Kill)")
         PrintMsg("  /fui lightning - Preview Lightning Bolt crackle arcs + electric blue bar jolt")
         PrintMsg("  /fui fire      - Preview Fire burning glow + heat shimmer + rising embers")
         PrintMsg("  /fui earth     - Preview Earth high-punch brown/orange slam + falling rock debris")
@@ -522,6 +492,7 @@ local function HandleSlashCommand(msg)
         PrintMsg("  /fui nature    - Preview Nature emerald wrath + swirling bio-spores")
         PrintMsg("  /fui arcane    - Preview Arcane astral magenta-violet pulse + starlight motes")
         PrintMsg("  /fui holy      - Preview Holy golden-ivory radiance + divine star flares")
+        PrintMsg("  /fui physical  - Preview Physical steel cleave slash + crimson blood drops")
         PrintMsg("  /fui dot [el]  - Preview continuous 6s DoT burning/crackling (e.g. /fui dot fire, /fui dot lightning)")
         PrintMsg("  /fui kill [el] - Preview Elemental Killing Blow (e.g. /fui kill fire, /fui kill lightning)")
         PrintMsg("  /fui interrupt - Preview Electric Cyan Interrupt Shatter")
@@ -565,5 +536,5 @@ ns.Events:Register("PLAYER_LOGIN", function()
     if ns.Options and ns.Options.OnEnable then
         ns.Options:OnEnable()
     end
-    PrintMsg("Loaded (v1.2.0). Type |cffffd100/fui|r to open settings & art presets, or click the minimap icon.")
+    PrintMsg("Loaded (v1.3.0). Type |cffffd100/fui|r to open settings & art presets, or click the minimap icon.")
 end, ns)

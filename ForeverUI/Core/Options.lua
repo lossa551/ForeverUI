@@ -1,17 +1,6 @@
 local addonName, ns = ...
 ns.Options = {}
 
--- Guard secret value inspection for WoW 12.0+ / Forever (16001) engine rules
-local function IsSecret(val)
-    if ns.IsSecret then
-        return ns.IsSecret(val)
-    end
-    if issecretvalue then
-        return issecretvalue(val)
-    end
-    return false
-end
-
 local optionsFrame = nil
 local minimapButton = nil
 local currentTab = 1
@@ -416,49 +405,102 @@ end
 -- ============================================================================
 -- TAB 3: OVERHEAD NAMEPLATES & DEATH FX
 -- ============================================================================
-local function BuildNameplatesTab(panel)
-    CreateSectionHeader(panel, 16, -14, "Overhead Nameplates & Killing Blow FX")
+local deathPreviewIdx = 0
+local DEATH_PREVIEW_ELEMENTS = {
+    "FIRE", "LIGHTNING", "FROST", "EARTH", "SHADOW", "ARCANE", "NATURE", "HOLY", "PHYSICAL",
+}
 
-    CreateCheckbox(panel, 16, -42, "Enable Nameplate Enhancements", "Enable target brackets, elemental border glows, and killing blow death bars.",
+local function BuildNameplatesTab(panel)
+    CreateSectionHeader(panel, 16, -14, "Overhead Nameplates & Cracked Death Bar Feel")
+
+    CreateCheckbox(panel, 16, -40, "Enable Nameplate Enhancements", "Enable target brackets, elemental border glows, and killing blow death bars.",
         function() return ns.Config:Get("nameplates", "enabled") end,
         function(v) ns.Config:Set("nameplates", "enabled", v) end
     )
 
-    CreateCheckbox(panel, 16, -72, "Cracked & Tilted Death Bar", "On enemy death, morph nameplate into a bare weathered corpse bar with fracture cracks and gentle tilt.",
+    CreateCheckbox(panel, 250, -40, "Cracked & Tilted Death Bar", "On enemy death, morph nameplate into a bare weathered corpse bar with fracture cracks and spring tilt.",
         function() return ns.Config:Get("nameplates", "deathShatterEnabled") end,
         function(v) ns.Config:Set("nameplates", "deathShatterEnabled", v) end
     )
 
-    CreateCheckbox(panel, 16, -102, "Strip Clutter On Death (Hide Name & Level)", "Hide name and level text on death to leave a clean, understated cracked death bar.",
+    CreateCheckbox(panel, 16, -68, "Strip Clutter On Death", "Hide name and level text on death to leave a clean, understated cracked death bar.",
         function() return ns.Config:Get("nameplates", "hideNameAndLevelOnDeath") end,
         function(v) ns.Config:Set("nameplates", "hideNameAndLevelOnDeath", v) end
     )
 
-    CreateCheckbox(panel, 16, -132, "Deflect / Parry Ricochet Callouts", "Show metallic silver ricochets when enemies deflect, block, or parry attacks.",
+    CreateCheckbox(panel, 250, -68, "Glowing Elemental Fissures", "Fissures ignite with the killing element's hot plasma/frost/void glow before cooling into stone crevices.",
+        function() return ns.Config:Get("nameplates", "deathElementalCracks") end,
+        function(v) ns.Config:Set("nameplates", "deathElementalCracks", v) end
+    )
+
+    CreateCheckbox(panel, 16, -96, "Alternate Left / Right Hinge", "Alternate left and right hinge snaps on consecutive kills so multi-mob packs tilt in both directions.",
+        function() return ns.Config:Get("nameplates", "deathRandomTilt") end,
+        function(v) ns.Config:Set("nameplates", "deathRandomTilt", v) end
+    )
+
+    CreateCheckbox(panel, 250, -96, "Deflect / Parry Callouts", "Show metallic silver ricochets when enemies deflect, block, or parry attacks.",
         function() return ns.Config:Get("nameplates", "deflectCallouts") end,
         function(v) ns.Config:Set("nameplates", "deflectCallouts", v) end
     )
 
-    CreateCheckbox(panel, 16, -162, "Cyan Interrupt Shatter Callouts", "Show sharp electric cyan fracture arcs when the player successfully interrupts a spellcast.",
+    CreateCheckbox(panel, 16, -124, "Cyan Interrupt Shatter", "Show sharp electric cyan fracture arcs when the player successfully interrupts a spellcast.",
         function() return ns.Config:Get("nameplates", "interruptShatter") end,
         function(v) ns.Config:Set("nameplates", "interruptShatter", v) end
     )
 
-    CreateSlider(panel, 16, -214, "Death Bar Tilt Angle", "Degrees the cracked corpse bar tilts on killing blows (negative tilts left).",
+    CreateStyledButton(panel, 250, -124, 215, 24, "|cffffd100Preview Cracked Death Bar|r", function()
+        deathPreviewIdx = (deathPreviewIdx % #DEATH_PREVIEW_ELEMENTS) + 1
+        local elemKey = DEATH_PREVIEW_ELEMENTS[deathPreviewIdx]
+        if ns.RunDeathSingleDemo then
+            ns:RunDeathSingleDemo(elemKey)
+        elseif ns.RunInGameDemo then
+            ns:RunInGameDemo("kill")
+        end
+    end)
+
+    CreateSlider(panel, 16, -172, "Death Bar Tilt Angle", "Degrees the cracked corpse bar tilts on killing blows (negative tilts left).",
         -25.0, 25.0, 0.5,
         function() return ns.Config:Get("nameplates", "deathTiltDegrees") end,
         function(v) ns.Config:Set("nameplates", "deathTiltDegrees", v) end,
         function(v) return string.format("%.1f deg", v) end
     )
 
-    CreateSlider(panel, 250, -214, "Death Hold Duration", "Duration the cracked corpse bar stays frozen before fading out.",
+    CreateSlider(panel, 250, -172, "Death Impact Punch", "Initial vertical slam stretch when the killing blow cracks the health bar.",
+        1.00, 1.75, 0.02,
+        function() return ns.Config:Get("nameplates", "deathPunchScale") end,
+        function(v) ns.Config:Set("nameplates", "deathPunchScale", v) end,
+        function(v) return string.format("%.2fx", v) end
+    )
+
+    CreateSlider(panel, 16, -222, "Hinge Spring Bounce & Clank", "Controls spring overshoot bounciness and metallic hinge-clank micro-shudder when tilting.",
+        0.00, 1.00, 0.05,
+        function() return ns.Config:Get("nameplates", "deathBounce") end,
+        function(v) ns.Config:Set("nameplates", "deathBounce", v) end,
+        function(v) return string.format("%.0f%%", v * 100) end
+    )
+
+    CreateSlider(panel, 250, -222, "Gravity Sink Speed", "Downward settling speed after the cracked bar hangs from its hinge.",
+        0.0, 45.0, 1.0,
+        function() return ns.Config:Get("nameplates", "deathDropSpeed") end,
+        function(v) ns.Config:Set("nameplates", "deathDropSpeed", v) end,
+        function(v) return string.format("%.0f px/s", v) end
+    )
+
+    CreateSlider(panel, 16, -272, "Shatter Debris & Sparks", "Intensity and count of stone chips and elemental sparks erupting on a killing blow.",
+        0.00, 2.00, 0.05,
+        function() return ns.Config:Get("nameplates", "deathDebrisScale") end,
+        function(v) ns.Config:Set("nameplates", "deathDebrisScale", v) end,
+        function(v) return string.format("%.0f%%", v * 100) end
+    )
+
+    CreateSlider(panel, 250, -272, "Death Hold Duration", "Duration the cracked corpse bar stays visible before fading out.",
         0.20, 2.50, 0.05,
         function() return ns.Config:Get("nameplates", "deathHoldTime") end,
         function(v) ns.Config:Set("nameplates", "deathHoldTime", v) end,
         function(v) return string.format("%.2fs", v) end
     )
 
-    CreateSlider(panel, 16, -266, "Death Fadeout Duration", "Duration of the alpha fadeout transition as the death bar disappears.",
+    CreateSlider(panel, 16, -322, "Death Fadeout Duration", "Duration of the alpha fadeout transition as the death bar disappears.",
         0.10, 1.50, 0.05,
         function() return ns.Config:Get("nameplates", "deathFadeTime") end,
         function(v) ns.Config:Set("nameplates", "deathFadeTime", v) end,
@@ -633,7 +675,7 @@ local function BuildTestBenchTab(panel)
     desc:SetText("Trigger live simulated combat effects directly without needing an active enemy target or slash commands. If an enemy target exists, the preview plays on their nameplate; otherwise a simulated test target bar appears.")
     desc:SetJustifyH("LEFT")
 
-    CreateStyledButton(panel, 16, -88, 220, 28, "|cffffd100Run Elemental Showcase|r", function()
+    CreateStyledButton(panel, 16, -88, 220, 28, "|cffffd100Run 9-Element Showcase|r", function()
         if ns.RunInGameDemo then
             ns:RunInGameDemo("showcase")
         end
@@ -832,7 +874,7 @@ local function CreateOptionsFrame()
 
     local verLabel = optionsFrame:CreateFontString(nil, "ARTWORK", "GameFontDisableSmall")
     verLabel:SetPoint("RIGHT", bottomCloseBtn, "LEFT", -16, 0)
-    verLabel:SetText("v1.2.0")
+    verLabel:SetText("v1.3.0")
 
     SelectTab(1)
     return optionsFrame

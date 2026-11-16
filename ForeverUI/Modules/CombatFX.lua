@@ -351,40 +351,144 @@ function CombatFX:SpawnBarSparks(anchorFrame, cutFraction, count, r, g, b, isSha
                 sp.baseH = size * 2.20
                 sp.vRot = (math.random() - 0.5) * 14
             end
-        elseif (elem == "SHADOW" or elem == "NATURE" or elem == "HOLY" or elem == "ARCANE") and not isShards then
-            -- Hovering/drifting WoW spell-school motes, rings & astral stars
-            sp.vx = (math.random() - 0.5) * 36 * speedMult
-            sp.vy = (10 + math.random() * 28) * speedMult
-            sp.gravity = (elem == "HOLY") and (-48 * speedMult) or (-28 * speedMult)
-            sp.waveAmp = (18 + math.random() * 16) * speedMult
-            sp.waveFreq = 6 + math.random() * 6
-            sp.duration = (0.48 + math.random() * 0.32) * (0.70 + 0.30 * scale)
-            sp.flickerAmp = 0.32
+        elseif elem == "SHADOW" and not isShards then
+            -- Abyssal void implosion motes: dark obsidian BLEND halo behind violet/magenta ADD core
+            sp.vx = (math.random() - 0.5) * 32 * speedMult
+            sp.vy = (6 + math.random() * 22) * speedMult
+            sp.gravity = -36 * speedMult
+            sp.waveAmp = (20 + math.random() * 18) * speedMult
+            sp.waveFreq = 7 + math.random() * 6
+            sp.duration = (0.50 + math.random() * 0.34) * (0.72 + 0.28 * scale)
+            sp.flickerAmp = 0.34
             sp.flickerFreq = 14 + math.random() * 10
-            sp.scaleDecay = 0.42
+            sp.scaleDecay = 0.52
+            sp.tex:SetBlendMode("ADD")
+            sp.glowTex:SetBlendMode("BLEND")
+            sp.r, sp.g, sp.b = 0.07, 0.01, 0.14
+            sp.glowAlphaMult = 0.72
+            sp.glowScaleW = 2.15
+            sp.glowScaleH = 2.15
+
+            if variant == 1 then
+                sp.tex:SetTexture(TEX_RING)
+                sp.glowTex:SetTexture(TEX_ORB)
+                sp.baseW = size * 2.35
+                sp.baseH = size * 2.35
+                sp.vRot = (math.random() - 0.5) * 14
+            elseif variant == 2 then
+                sp.tex:SetTexture(TEX_ORB)
+                sp.glowTex:SetTexture(TEX_ORB)
+                sp.baseW = size * 2.15
+                sp.baseH = size * 2.15
+                sp.vRot = (math.random() - 0.5) * 8
+            else
+                sp.tex:SetTexture(TEX_STAR4)
+                sp.glowTex:SetTexture(TEX_ORB)
+                sp.baseW = size * 2.40
+                sp.baseH = size * 2.40
+                sp.vRot = (math.random() - 0.5) * 12
+            end
+        elseif elem == "ARCANE" and not isShards then
+            -- Astral mana rings, counter-rotating starburst runes & zero-G geometric flares
+            sp.vx = (math.random() - 0.5) * 44 * speedMult
+            sp.vy = (math.random() - 0.35) * 38 * speedMult
+            sp.gravity = -14 * speedMult
+            sp.waveAmp = (12 + math.random() * 12) * speedMult
+            sp.waveFreq = 10 + math.random() * 8
+            sp.duration = (0.46 + math.random() * 0.30) * (0.72 + 0.28 * scale)
+            sp.flickerAmp = 0.36
+            sp.flickerFreq = 24 + math.random() * 14
+            sp.scaleDecay = 0.28
             sp.tex:SetBlendMode("ADD")
             sp.glowTex:SetBlendMode("ADD")
 
             if variant == 1 then
-                sp.tex:SetTexture(TEX_STAR4)
+                sp.tex:SetTexture(TEX_RING)
                 sp.glowTex:SetTexture(TEX_ORB)
+                sp.baseW = size * 2.40
+                sp.baseH = size * 2.40
+                sp.vRot = (math.random() - 0.5) * 16
+            elseif variant == 2 then
+                sp.tex:SetTexture(TEX_STARBURST)
+                sp.glowTex:SetTexture(TEX_STAR4)
                 sp.baseW = size * 2.45
                 sp.baseH = size * 2.45
-                sp.vRot = (math.random() - 0.5) * 12
-            elseif variant == 2 then
-                -- Swirling void/arcane/nature ring mote
-                sp.tex:SetTexture((elem == "SHADOW" or elem == "ARCANE") and TEX_RING or TEX_ORB)
+                sp.vRot = ((math.random() > 0.5) and 1 or -1) * (14 + math.random() * 10)
+            else
+                sp.tex:SetTexture(TEX_STAR4)
+                sp.glowTex:SetTexture(TEX_ORB)
+                sp.baseW = size * 2.35
+                sp.baseH = size * 2.35
+                sp.vRot = (math.random() - 0.5) * 18
+            end
+        elseif elem == "NATURE" and not isShards then
+            -- Swirling emerald bio-spores, wind-borne leaf streaks & golden pollen motes
+            sp.vx = (math.random() - 0.5) * 42 * speedMult
+            sp.vy = (14 + math.random() * 32) * speedMult
+            sp.gravity = -32 * speedMult
+            sp.waveAmp = (24 + math.random() * 22) * speedMult
+            sp.waveFreq = 7 + math.random() * 6
+            sp.duration = (0.50 + math.random() * 0.34) * (0.72 + 0.28 * scale)
+            sp.flickerAmp = 0.28
+            sp.flickerFreq = 12 + math.random() * 8
+            sp.scaleDecay = 0.44
+            sp.tex:SetBlendMode("ADD")
+            sp.glowTex:SetBlendMode("ADD")
+
+            if variant == 1 then
+                sp.tex:SetTexture(TEX_ORB)
                 sp.glowTex:SetTexture(TEX_ORB)
                 sp.baseW = size * 2.15
                 sp.baseH = size * 2.15
-                sp.vRot = (math.random() - 0.5) * 9
-            else
-                -- Rising/drifting energy wisp
+                sp.vRot = (math.random() - 0.5) * 8
+            elseif variant == 2 then
                 sp.tex:SetTexture(TEX_SPARK)
                 sp.glowTex:SetTexture(TEX_ORB)
-                sp.baseW = size * 1.50
-                sp.baseH = size * 2.85
+                sp.baseW = size * 1.45
+                sp.baseH = size * 2.95
                 sp.alignToVelocity = true
+            else
+                sp.tex:SetTexture(TEX_STAR4)
+                sp.glowTex:SetTexture(TEX_ORB)
+                sp.baseW = size * 2.30
+                sp.baseH = size * 2.30
+                sp.vRot = (math.random() - 0.5) * 10
+            end
+        elseif elem == "HOLY" and not isShards then
+            -- Ascending sacred golden crosses, radiant sunbursts & rising light pillars
+            sp.vx = (math.random() - 0.5) * 18 * speedMult
+            sp.vy = (28 + math.random() * 44) * speedMult
+            sp.gravity = -88 * speedMult
+            sp.waveAmp = (8 + math.random() * 8) * speedMult
+            sp.waveFreq = 5 + math.random() * 4
+            sp.duration = (0.48 + math.random() * 0.32) * (0.72 + 0.28 * scale)
+            sp.flickerAmp = 0.22
+            sp.flickerFreq = 16 + math.random() * 8
+            sp.scaleDecay = 0.40
+            sp.tex:SetBlendMode("ADD")
+            sp.glowTex:SetBlendMode("ADD")
+
+            if variant == 1 then
+                -- Upright ascending sacred cross flare
+                sp.tex:SetTexture(TEX_STAR4)
+                sp.glowTex:SetTexture(TEX_ORB)
+                sp.baseW = size * 2.55
+                sp.baseH = size * 2.55
+                sp.rot = 0
+                sp.vRot = 0
+            elseif variant == 2 then
+                sp.tex:SetTexture(TEX_STARBURST)
+                sp.glowTex:SetTexture(TEX_ORB)
+                sp.baseW = size * 2.35
+                sp.baseH = size * 2.35
+                sp.vRot = (math.random() - 0.5) * 5
+            else
+                sp.tex:SetTexture(TEX_SPARK)
+                sp.glowTex:SetTexture(TEX_ORB)
+                sp.baseW = size * 1.40
+                sp.baseH = size * 3.20
+                sp.rot = 0
+                sp.vRot = 0
             end
         elseif elem == "EARTH" or isShards then
             -- Textured mineral/stone shards & quartz dust glints (uses shaded UI-StatusBar & star4, never flat WHITE8X8!)
@@ -791,6 +895,7 @@ local CRACK_SEGMENTS = {
 
 local deathBarPool = {}
 local activeDeathBars = {}
+local lastHingeSide = 1
 
 local function AcquireDeathBar()
     local db = table.remove(deathBarPool)
@@ -871,12 +976,13 @@ local function UpdateDeathBarGeometry(db, thetaRad)
     local h = db.height
     local cosT = math.cos(thetaRad)
     local sinT = math.sin(thetaRad)
+    local hingeSide = db.hingeSide or -1
 
-    -- Left-edge hinge (-w * 0.5, 0) relative to db.anchorFrame's CENTER
-    local hx = (-w * 0.5) + db.shakeDx
+    -- Left-edge (-1) or Right-edge (+1) hinge relative to db.anchorFrame's CENTER
+    local hx = (hingeSide * w * 0.5) + db.shakeDx
     local hy = -db.dropY + db.shakeDy
-    local cx = hx + (w * 0.5) * cosT
-    local cy = hy + (w * 0.5) * sinT
+    local cx = hx - (hingeSide * w * 0.5) * cosT
+    local cy = hy - (hingeSide * w * 0.5) * sinT
 
     db.holder:ClearAllPoints()
     db.holder:SetPoint("CENTER", db.anchorFrame or fxCanvas, "CENTER", cx, cy)
@@ -886,6 +992,7 @@ local function UpdateDeathBarGeometry(db, thetaRad)
     local fillC = db.fillC or { 0.30, 0.30, 0.34 }
     local trimC = db.trimC or { 0.36, 0.34, 0.30 }
     local crackC = db.crackC or { 0.80, 0.80, 0.84 }
+    local crackHotC = db.crackHotC or crackC
     local darkC = db.darkC or { 0.03, 0.03, 0.04 }
     local flashC = db.flashC or { 1.0, 0.96, 0.88 }
 
@@ -932,6 +1039,26 @@ local function UpdateDeathBarGeometry(db, thetaRad)
         db.flashTex:SetRotation(thetaRad)
     end
 
+    -- Two-phase glowing elemental fissures: hot elemental energy cools into weathered stone crevices
+    local hotFrac = 0
+    if db.elementalCracks and db.age < 0.38 then
+        hotFrac = math.max(0, 1.0 - (db.age / 0.38))
+        if db.elem == "LIGHTNING" then
+            hotFrac = hotFrac * ((math.sin(db.age * 95.0) > -0.2) and 1.0 or 0.42)
+        elseif db.elem == "FIRE" then
+            hotFrac = hotFrac * (0.82 + 0.18 * math.sin(db.age * 38.0))
+        elseif db.elem == "FROST" then
+            hotFrac = hotFrac * (0.86 + 0.14 * math.cos(db.age * 52.0))
+        elseif db.elem == "SHADOW" or db.elem == "ARCANE" then
+            hotFrac = hotFrac * (0.80 + 0.20 * math.sin(db.age * 28.0))
+        end
+    end
+
+    local curCrackR = crackC[1] + (crackHotC[1] - crackC[1]) * hotFrac
+    local curCrackG = crackC[2] + (crackHotC[2] - crackC[2]) * hotFrac
+    local curCrackB = crackC[3] + (crackHotC[3] - crackC[3]) * hotFrac
+    local curCrackAlpha = 0.78 + 0.20 * hotFrac
+
     local crackGrow = math.min(1.0, (db.age / 0.055))
     for i = 1, #db.cracks do
         local c = db.cracks[i]
@@ -949,7 +1076,11 @@ local function UpdateDeathBarGeometry(db, thetaRad)
         local rx2 = lx2 * cosT - ly2 * sinT
         local ry2 = lx2 * sinT + ly2 * cosT
 
-        c.highlight:SetVertexColor(crackC[1], crackC[2], crackC[3], 0.78)
+        if c.highlight.SetBlendMode then
+            c.highlight:SetBlendMode((hotFrac > 0.15 and db.elem ~= "EARTH") and "ADD" or "BLEND")
+        end
+        c.highlight:SetThickness(s.w + 0.7 + 1.15 * hotFrac)
+        c.highlight:SetVertexColor(curCrackR, curCrackG, curCrackB, curCrackAlpha)
         c.highlight:SetStartPoint("CENTER", db.holder, rx1 + 0.6, ry1)
         c.highlight:SetEndPoint("CENTER", db.holder, rx2 + 0.6, ry2)
 
@@ -985,16 +1116,30 @@ local function EnsureDeathBarTicker()
                     db.shakeDy = 0
                 end
 
-                local spring = (db.targetTiltDeg - db.tiltDeg) * 34.0
-                db.tiltVel = (db.tiltVel + spring * dt) * math.max(0, 1.0 - dt * 10.5)
+                local bounce = db.bounce or 0.45
+                local stiffness = 28.0 + bounce * 26.0
+                local damping = math.max(3.5, 14.5 - bounce * 9.5)
+                local prevDiff = db.targetTiltDeg - db.tiltDeg
+                local spring = prevDiff * stiffness
+                db.tiltVel = (db.tiltVel + spring * dt) * math.max(0, 1.0 - dt * damping)
                 db.tiltDeg = db.tiltDeg + db.tiltVel * dt
+                local newDiff = db.targetTiltDeg - db.tiltDeg
 
-                if db.age > 0.18 then
-                    db.dropY = db.dropY + (db.age - 0.18) * 18.0 * dt
+                -- Metallic hinge-clank micro-shudder when the bar first hits its target tilt angle
+                if not db.clanked and math.abs(db.targetTiltDeg) > 0.5 and (prevDiff * newDiff <= 0) then
+                    db.clanked = true
+                    if bounce > 0.15 then
+                        db.trauma = math.max(db.trauma, 0.22 * bounce)
+                    end
+                end
+
+                local dropSpeed = (db.dropSpeed ~= nil) and db.dropSpeed or 18.0
+                if db.age > 0.18 and dropSpeed > 0 then
+                    db.dropY = db.dropY + (db.age - 0.18) * dropSpeed * dt
                 end
 
                 if db.age > db.holdTime then
-                    local fadeT = (db.age - db.holdTime) / db.fadeTime
+                    local fadeT = (db.age - db.holdTime) / math.max(0.05, db.fadeTime)
                     db.holder:SetAlpha(math.max(0, 1.0 - fadeT))
                 end
 
@@ -1057,6 +1202,19 @@ function CombatFX:SpawnDeathShatterBar(barFrame, elementKey)
     local elem = elementKey or "PHYSICAL"
     local prof = (ns.Elements and ns.Elements:GetProfile(elem)) or nil
 
+    local hingeSide = -1
+    if npCfg.deathRandomTilt then
+        lastHingeSide = -lastHingeSide
+        hingeSide = lastHingeSide
+    end
+    local rawTilt = (npCfg.deathTiltDegrees ~= nil) and npCfg.deathTiltDegrees or -8.5
+    local targetTilt = (hingeSide == 1) and -rawTilt or rawTilt
+    local punchScale = (npCfg.deathPunchScale ~= nil) and npCfg.deathPunchScale or 1.24
+    local bounce = (npCfg.deathBounce ~= nil) and npCfg.deathBounce or 0.45
+    local dropSpeed = (npCfg.deathDropSpeed ~= nil) and npCfg.deathDropSpeed or 18.0
+    local debrisScale = (npCfg.deathDebrisScale ~= nil) and npCfg.deathDebrisScale or 1.00
+    local elementalCracks = (npCfg.deathElementalCracks == nil) or npCfg.deathElementalCracks
+
     local db = AcquireDeathBar()
     db.anchorFrame = barFrame
     db.elem = elem
@@ -1067,32 +1225,49 @@ function CombatFX:SpawnDeathShatterBar(barFrame, elementKey)
     db.age = 0
     db.holdTime = npCfg.deathHoldTime or 0.65
     db.fadeTime = npCfg.deathFadeTime or 0.40
-    db.targetTiltDeg = (npCfg.deathTiltDegrees ~= nil) and npCfg.deathTiltDegrees or -8.5
+    db.hingeSide = hingeSide
+    db.targetTiltDeg = targetTilt
     db.tiltDeg = 0
     db.tiltVel = 0
+    db.bounce = bounce
+    db.clanked = false
     db.dropY = 0
-    db.barPunchY = 1.15
-    db.trauma = 0.42
+    db.dropSpeed = dropSpeed
+    db.barPunchY = punchScale
+    db.trauma = 0.44 * math.max(0.5, math.min(1.5, (punchScale - 0.80)))
     db.shakeDx = 0
     db.shakeDy = 0
-    db.flashAlpha = 0.52
+    db.flashAlpha = 0.56
+    db.elementalCracks = elementalCracks
 
-    db.fillC  = (prof and prof.deathFill)  or { 0.30, 0.30, 0.34 }
-    db.trimC  = (prof and prof.deathTrim)  or { 0.38, 0.35, 0.30 }
-    db.crackC = (prof and prof.deathCrack) or { 0.80, 0.80, 0.84 }
-    db.darkC  = (prof and prof.deathDark)  or { 0.03, 0.03, 0.04 }
-    db.flashC = (prof and prof.deathFlash) or { 1.00, 0.96, 0.88 }
-    db.shardC = (prof and prof.deathShard) or { 0.62, 0.60, 0.58 }
+    db.fillC     = (prof and prof.deathFill)     or { 0.30, 0.30, 0.34 }
+    db.trimC     = (prof and prof.deathTrim)     or { 0.38, 0.35, 0.30 }
+    db.crackC    = (prof and prof.deathCrack)    or { 0.80, 0.80, 0.84 }
+    db.crackHotC = (prof and prof.deathCrackHot) or (prof and prof.spark) or db.crackC
+    db.darkC     = (prof and prof.deathDark)     or { 0.03, 0.03, 0.04 }
+    db.flashC    = (prof and prof.deathFlash)    or { 1.00, 0.96, 0.88 }
+    db.shardC    = (prof and prof.deathShard)    or { 0.62, 0.60, 0.58 }
 
     UpdateDeathBarGeometry(db, 0)
     table.insert(activeDeathBars, db)
 
-    -- Burst of textured stone shards + elemental spell particles on killing blow
-    self:SpawnBarSparks(barFrame, 0.5, 4, db.shardC[1], db.shardC[2], db.shardC[3], true, elem, 0.48)
-    local elemR = (prof and prof.spark and prof.spark[1]) or db.flashC[1]
-    local elemG = (prof and prof.spark and prof.spark[2]) or db.flashC[2]
-    local elemB = (prof and prof.spark and prof.spark[3]) or db.flashC[3]
-    self:SpawnBarSparks(barFrame, 0.5, 5, elemR, elemG, elemB, false, elem, 0.65)
+    -- Burst of textured stone shards + elemental spell particles on killing blow (scaled by deathDebrisScale)
+    if debrisScale > 0.05 then
+        local shardCount = math.max(1, math.floor(4 * debrisScale + 0.5))
+        local sparkCount = math.max(1, math.floor(5 * debrisScale + 0.5))
+        self:SpawnBarSparks(barFrame, 0.5, shardCount, db.shardC[1], db.shardC[2], db.shardC[3], true, elem, 0.50 * math.min(1.3, debrisScale))
+        local elemR = (prof and prof.spark and prof.spark[1]) or db.flashC[1]
+        local elemG = (prof and prof.spark and prof.spark[2]) or db.flashC[2]
+        local elemB = (prof and prof.spark and prof.spark[3]) or db.flashC[3]
+        self:SpawnBarSparks(barFrame, 0.5, sparkCount, elemR, elemG, elemB, false, elem, 0.68 * math.min(1.3, debrisScale))
+        if debrisScale >= 0.50 then
+            if elem == "LIGHTNING" then
+                self:SpawnBarLightning(barFrame, 1, 0.18, 0.75)
+            elseif elem == "EARTH" then
+                self:SpawnBarEarthCracks(barFrame, 1, 0.28, 0.75)
+            end
+        end
+    end
     EnsureDeathBarTicker()
 end
 

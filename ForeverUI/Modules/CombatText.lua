@@ -29,17 +29,6 @@ local flurryCount = 0
 local lastHitTime = 0
 CombatText.rollingAvgHit = nil
 
--- Authentic WoW Spell School Colors
-local SCHOOL_COLORS = {
-    [1]  = { 1.00, 0.82, 0.00 }, -- Physical ability (Classic Yellow/Gold)
-    [2]  = { 1.00, 0.90, 0.50 }, -- Holy
-    [4]  = { 1.00, 0.50, 0.00 }, -- Fire
-    [8]  = { 0.30, 1.00, 0.30 }, -- Nature
-    [16] = { 0.40, 0.80, 1.00 }, -- Frost
-    [32] = { 0.72, 0.45, 1.00 }, -- Shadow
-    [64] = { 1.00, 0.55, 1.00 }, -- Arcane
-}
-
 local function SetFontStringTextSafe(fs, textVal)
     if ns.IsSecret(textVal) then
         fs:SetText(textVal)
@@ -687,9 +676,36 @@ function CombatText:SpawnNumber(opts)
         entry.vx = laneDir * (14 + math.random() * 8)
         entry.vy = (52 + math.random() * 10) * speedMult
         entry.gravity = -8
-        entry.waveAmp = 20 * speedMult
+        entry.waveAmp = 18 * speedMult
         entry.waveFreq = 5.4
         entry.wavePhase = laneCursor * 1.57
+    elseif entry.useElementPhysics and elementKey == "ARCANE" then
+        -- A6. ARCANE: Harmonic zero-gravity mana oscillation
+        entry.offsetX = lane.x * 0.45
+        entry.offsetY = baseOffsetY
+        entry.vx = laneDir * (16 + math.random() * 8)
+        entry.vy = (64 + math.random() * 12) * speedMult
+        entry.gravity = 6
+        entry.waveAmp = 14 * speedMult
+        entry.waveFreq = 9.5
+        entry.wavePhase = laneCursor * 1.57
+    elseif entry.useElementPhysics and elementKey == "NATURE" then
+        -- A7. NATURE: Wind-borne emerald S-curve breeze
+        entry.offsetX = lane.x * 0.50
+        entry.offsetY = baseOffsetY - 2
+        entry.vx = laneDir * (18 + math.random() * 10)
+        entry.vy = (58 + math.random() * 14) * speedMult
+        entry.gravity = -18 * speedMult
+        entry.waveAmp = 22 * speedMult
+        entry.waveFreq = 6.8
+        entry.wavePhase = laneCursor * 1.57
+    elseif entry.useElementPhysics and elementKey == "HOLY" then
+        -- A8. HOLY: Pure vertical radiant ascension
+        entry.offsetX = lane.x * 0.30
+        entry.offsetY = baseOffsetY
+        entry.vx = laneDir * (6 + math.random() * 4)
+        entry.vy = (72 + math.random() * 14) * speedMult
+        entry.gravity = -24 * speedMult
     elseif isCrit then
         critSideToggle = -critSideToggle
         entry.offsetX = critSideToggle * (7 + math.random() * 5)
@@ -738,168 +754,6 @@ function CombatText:SpawnNumber(opts)
     table.insert(activeTexts, entry)
     EnsureSCTTicker()
     return entry
-end
-
-function CombatText:OnCombatLogEvent()
-    if not CombatLogGetCurrentEventInfo then
-        return
-    end
-    local _, subEvent, _, sourceGUID, _, sourceFlags, _, destGUID, _, _, _, arg12, arg13, arg14, arg15, arg16, arg17, arg18, arg19, arg20, arg21 = CombatLogGetCurrentEventInfo()
-    if not subEvent or ns.IsSecret(subEvent) or ns.IsSecret(sourceGUID) or ns.IsSecret(destGUID) then
-        return
-    end
-    local playerGUID = UnitGUID("player")
-    if not playerGUID or ns.IsSecret(playerGUID) then
-        return
-    end
-
-    local petGUID = UnitGUID("pet")
-    if ns.IsSecret(petGUID) then
-        petGUID = nil
-    end
-
-    local isMine = (sourceGUID == playerGUID)
-        or (petGUID and sourceGUID == petGUID)
-        or (sourceFlags and not ns.IsSecret(sourceFlags) and bit and bit.band and COMBATLOG_OBJECT_AFFILIATION_MINE and bit.band(sourceFlags, COMBATLOG_OBJECT_AFFILIATION_MINE) ~= 0)
-
-    local isOutgoing = isMine and (destGUID ~= playerGUID)
-    local isIncoming = (destGUID == playerGUID)
-    if not isOutgoing and not isIncoming then
-        return
-    end
-
-    local amount, overkill, school, critical, spellName
-    local isHeal = false
-    local isAutoAttack = false
-    local isPeriodic = false
-
-    if subEvent == "SWING_DAMAGE" then
-        amount, overkill, school, _, _, _, critical = arg12, arg13, arg14, arg15, arg16, arg17, arg18
-        isAutoAttack = true
-    elseif subEvent == "RANGE_DAMAGE" or subEvent == "SPELL_DAMAGE" or subEvent == "SPELL_PERIODIC_DAMAGE" then
-        spellName = arg13
-        school = arg14
-        amount = arg15
-        overkill = arg16
-        critical = arg21
-        isAutoAttack = (subEvent == "RANGE_DAMAGE")
-        isPeriodic = (subEvent == "SPELL_PERIODIC_DAMAGE")
-    elseif subEvent == "SPELL_HEAL" or subEvent == "SPELL_PERIODIC_HEAL" then
-        amount = arg15
-        critical = arg18
-        isHeal = true
-        isPeriodic = (subEvent == "SPELL_PERIODIC_HEAL")
-    elseif subEvent == "SPELL_INTERRUPT" then
-        if isOutgoing then
-            if ns.Elements then
-                ns.Elements.lastPlayerInterruptTime = GetTime()
-            end
-            if ns.Nameplates and destGUID then
-                local _, enhancer = ns.Nameplates:GetBarForGUID(destGUID)
-                if enhancer and ns.Nameplates.ScheduleInterruptForEnhancer then
-                    ns.Nameplates:ScheduleInterruptForEnhancer(enhancer)
-                end
-            end
-        end
-        return
-    elseif subEvent == "UNIT_DIED" or subEvent == "PARTY_KILL" then
-        if ns.Nameplates and destGUID then
-            local _, enhancer = ns.Nameplates:GetBarForGUID(destGUID)
-            if enhancer then
-                ns.Nameplates:TriggerDeathForEnhancer(enhancer)
-            end
-        end
-        return
-    else
-        return
-    end
-
-    if not amount then
-        return
-    end
-    if not ns.IsSecret(amount) and amount <= 0 then
-        return
-    end
-
-    local isCrit = (not ns.IsSecret(critical)) and (not not critical) or false
-    local isKill = (overkill and not ns.IsSecret(overkill) and overkill >= 0) or false
-
-    if isOutgoing and not isHeal then
-        if ns.Elements and spellName then
-            ns.Elements:RecordPlayerSpell(nil, spellName)
-        end
-        local elementKey = (ns.Elements and ns.Elements:ResolveElement(school, spellName, isAutoAttack)) or "PHYSICAL"
-        local prof = ns.Elements and ns.Elements:GetProfile(elementKey)
-
-        if ns.Nameplates then
-            ns.Nameplates:OnCombatLogImpact(destGUID, amount, isCrit, isKill, elementKey, isPeriodic)
-        end
-
-        local anchorBar, enhancer = nil, nil
-        local cfg = ns.Config:Get("combatText")
-        if cfg and cfg.anchorToNameplate and ns.Nameplates then
-            anchorBar, enhancer = ns.Nameplates:GetBarForGUID(destGUID)
-        end
-
-        -- Avoid duplicate numbers if UNIT_COMBAT already spawned for this nameplate hit
-        if anchorBar or ((GetTime() - (self.lastUnitCombatTime or 0)) < 0.15) then
-            return
-        end
-
-        local r, g, b = 1.0, 1.0, 1.0
-        if prof and elementKey ~= "PHYSICAL" then
-            local col = isCrit and prof.critText or prof.text
-            r, g, b = col[1], col[2], col[3]
-        elseif not isAutoAttack then
-            local schoolKey = (school and not ns.IsSecret(school)) and school or 1
-            local sc = SCHOOL_COLORS[schoolKey] or SCHOOL_COLORS[1]
-            r, g, b = sc[1], sc[2], sc[3]
-        elseif isCrit then
-            r, g, b = 1.0, 0.82, 0.0
-        end
-
-        local baseWeight = isPeriodic and 0.12 or (isAutoAttack and 0.26 or 0.82)
-        local numAmt = (not ns.IsSecret(amount) and type(amount) == "number") and amount or nil
-
-        local entry = self:SpawnNumber({
-            text = ns.IsSecret(amount) and amount or tostring(amount),
-            numericAmount = numAmt,
-            hitWeight = baseWeight,
-            r = r, g = g, b = b,
-            elementKey = elementKey,
-            isCrit = isCrit,
-            isMega = isCrit and isKill,
-            isKill = isKill,
-            isDot = isPeriodic,
-            anchorFrame = (enhancer and enhancer.statusBar) or anchorBar,
-            woundAnchor = enhancer and (enhancer.steadyWoundAnchor or enhancer.statusBar) or nil,
-            side = "right",
-        })
-        if enhancer and entry then
-            enhancer.lastTextEntry = entry
-            enhancer.lastTextTime = GetTime()
-        end
-    elseif isIncoming and not ns.IsSecret(amount) then
-        if isHeal then
-            self:SpawnNumber({
-                text = "+" .. tostring(amount),
-                numericAmount = type(amount) == "number" and amount or nil,
-                r = 0.15, g = 1.0, b = 0.15,
-                isCrit = isCrit,
-                isDot = isPeriodic,
-                side = "left",
-            })
-        else
-            self:SpawnNumber({
-                text = "-" .. tostring(amount),
-                numericAmount = type(amount) == "number" and amount or nil,
-                r = 1.0, g = 0.15, b = 0.15,
-                isCrit = isCrit,
-                isDot = isPeriodic,
-                side = "left",
-            })
-        end
-    end
 end
 
 function CombatText:OnEnable()

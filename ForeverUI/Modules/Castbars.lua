@@ -402,8 +402,6 @@ function Castbars:OnUpdate(dt, now)
     local anyActive = false
 
     for unit, cb in pairs(castbars) do
-        local needsRender = false
-
         if cb.casting then
             anyActive = true
             local curTime = now
@@ -423,7 +421,6 @@ function Castbars:OnUpdate(dt, now)
 
                 local secStr = string.format("%.1fs", rem)
                 cb.timeText:SetText(secStr)
-                needsRender = true
             end
         end
 
