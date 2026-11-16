@@ -51,7 +51,7 @@ It enhances unit health bars, overhead enemy nameplates, and floating combat num
 ## Installation
 
 ### Option 1: Install from Release `.zip`
-1. Download `ForeverUI-v1.3.0.zip` from Releases (or build it locally with `.\Package-ForeverUI.ps1`).
+1. Download `ForeverUI-v1.3.5.zip` from Releases (or build it locally with `.\Package-ForeverUI.ps1`).
 2. Extract the archive into your World of Warcraft `Interface\AddOns` directory so the structure is:
    ```text
    <WoW Directory>\_forever_\Interface\AddOns\ForeverUI\ForeverUI.toc

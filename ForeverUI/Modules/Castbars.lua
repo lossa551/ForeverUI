@@ -8,6 +8,92 @@ local ICON_SIZE = 20
 
 local castbars = {}
 local activeCastbarCount = 0
+Castbars.suppressVanilla = false
+
+local VANILLA_CAST_KEYWORDS = {
+    -- Gathering
+    "mining",
+    "herb",
+    "skinning",
+    "fishing",
+    "lumber",
+    "logging",
+    "forag",
+    "gather",
+    -- Crafting / Profession utility
+    "smelting",
+    "prospecting",
+    "milling",
+    "disenchant",
+    "campfire",
+    "cooking",
+    "first aid",
+    "bandage",
+    -- Interactions / World Objects / Lockpicking
+    "opening",
+    "pick lock",
+    "lockpick",
+    "disarm trap",
+    "searching",
+    "inspecting",
+    "activating",
+    "unlocking",
+    "extinguish",
+    "capturing",
+    "collecting",
+    "salvaging",
+}
+
+local function IsVanillaPreferredCast(spellName, spellText, isTradeSkill)
+    local cfg = ns.Config and ns.Config:Get("castbars")
+    if cfg and cfg.vanillaNonCombat == false then
+        return false
+    end
+
+    if isTradeSkill ~= nil and not ns.IsSecret(isTradeSkill) and isTradeSkill == true then
+        return true
+    end
+
+    local candidates = { spellName, spellText }
+    for c = 1, 2 do
+        local s = candidates[c]
+        if s and not ns.IsSecret(s) and type(s) == "string" and s ~= "" then
+            local lower = string.lower(s)
+            for i = 1, #VANILLA_CAST_KEYWORDS do
+                if string.find(lower, VANILLA_CAST_KEYWORDS[i], 1, true) then
+                    return true
+                end
+            end
+        end
+    end
+
+    return false
+end
+
+local function HideVanillaCastBars()
+    local bars = { _G.CastingBarFrame, _G.PlayerCastingBarFrame }
+    for i = 1, #bars do
+        local bar = bars[i]
+        if bar then
+            pcall(bar.Hide, bar)
+        end
+    end
+end
+
+local function HookVanillaCastBars()
+    local bars = { _G.CastingBarFrame, _G.PlayerCastingBarFrame }
+    for i = 1, #bars do
+        local bar = bars[i]
+        if bar and bar.HookScript and not bar.fuiHookedShow then
+            bar.fuiHookedShow = true
+            pcall(bar.HookScript, bar, "OnShow", function(self)
+                if Castbars.suppressVanilla then
+                    pcall(self.Hide, self)
+                end
+            end)
+        end
+    end
+end
 
 -- Resolve elemental school profile from spell name
 local function ResolveSpellSchool(spellName)
@@ -264,6 +350,11 @@ function Castbars:StartCast(unit, spellName, texture, startTimeMS, endTimeMS, is
         return
     end
 
+    if unit == "player" then
+        self.suppressVanilla = true
+        HideVanillaCastBars()
+    end
+
     local startSec = (startTimeMS or 0) / 1000
     local endSec = (endTimeMS or 0) / 1000
     if endSec <= startSec then
@@ -444,6 +535,9 @@ function Castbars:OnUpdate(dt, now)
                 cb.flashOverlay:SetAlpha(0)
                 if not cb.casting then
                     cb.container:Hide()
+                    if unit == "player" then
+                        self.suppressVanilla = false
+                    end
                 end
             else
                 local alpha = math.min(0.65, cb.flashTimer / 0.16 * 0.65)
@@ -478,11 +572,21 @@ end
 
 -- Event Multiplexing
 function Castbars:OnSpellcastStart(unit)
-    if not castbars[unit] then
+    local cb = castbars[unit]
+    if not cb then
         return
     end
-    local name, text, texture, startTimeMS, endTimeMS = UnitCastingInfo(unit)
+    local name, text, texture, startTimeMS, endTimeMS, isTradeSkill = UnitCastingInfo(unit)
     if not name then
+        return
+    end
+    if unit == "player" and IsVanillaPreferredCast(name, text, isTradeSkill) then
+        self.suppressVanilla = false
+        cb.casting = false
+        cb.flashTimer = 0
+        cb.recoilTimer = 0
+        cb.trauma = 0
+        cb.container:Hide()
         return
     end
     self:StartCast(unit, name, texture, startTimeMS, endTimeMS, false)
@@ -554,13 +658,9 @@ function Castbars:OnEnable()
     pBar.offsetX = 0
     pBar.offsetY = -180
 
-    -- Suppress vanilla CastingBarFrame if present
-    if _G.CastingBarFrame then
-        pcall(function()
-            _G.CastingBarFrame:UnregisterAllEvents()
-            _G.CastingBarFrame:Hide()
-        end)
-    end
+    -- Hook vanilla castbars so they stay intact for mining, gathering, crafting & interactions,
+    -- and are only hidden while ForeverUI's combat castbar is actively displayed.
+    HookVanillaCastBars()
 
     -- Register Blizzard Spellcast Events
     ns.Events:Register("UNIT_SPELLCAST_START", function(_, _, unit)

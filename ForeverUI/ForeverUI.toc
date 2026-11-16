@@ -2,7 +2,7 @@
 ## Title: |cffffb833Forever|r|cffffffffUI|r
 ## Notes: Vanilla+ health bar trauma, cracked & tilted death bars, dynamic text-only combat text, and state-aware immersive UI for World of Warcraft: Forever.
 ## Author: ForeverUI
-## Version: 1.3.0
+## Version: 1.3.5
 ## SavedVariables: ForeverUIDB
 ## AllowLoadGameType: standard, camelot
 

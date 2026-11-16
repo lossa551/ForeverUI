@@ -400,6 +400,11 @@ local function BuildUnitBarsTab(panel)
         function(v) ns.Config:Set("unitBars", "trailHoldCrit", v) end,
         function(v) return string.format("%.2fs", v) end
     )
+
+    CreateCheckbox(panel, 16, -334, "Vanilla Castbar for Gathering & Crafting", "Use the default Blizzard castbar for mining, herbalism, skinning, crafting, and interactions while keeping ForeverUI's castbar for combat spells.",
+        function() return ns.Config:Get("castbars", "vanillaNonCombat") ~= false end,
+        function(v) ns.Config:Set("castbars", "vanillaNonCombat", v) end
+    )
 end
 
 -- ============================================================================
@@ -874,7 +879,7 @@ local function CreateOptionsFrame()
 
     local verLabel = optionsFrame:CreateFontString(nil, "ARTWORK", "GameFontDisableSmall")
     verLabel:SetPoint("RIGHT", bottomCloseBtn, "LEFT", -16, 0)
-    verLabel:SetText("v1.3.0")
+    verLabel:SetText("v1.3.5")
 
     SelectTab(1)
     return optionsFrame

@@ -613,7 +613,7 @@ function ns.Elements:ResolveElement(schoolMask, spellName, isAutoAttack)
 end
 
 local DEFAULTS = {
-    version = "1.3.0",
+    version = "1.3.5",
     unitBars = {
         enabled = true,
         vanillaBarMode = false,
@@ -700,6 +700,7 @@ local DEFAULTS = {
         enabled = true,
         player = true,
         target = true,
+        vanillaNonCombat = true,
         showLatency = true,
         pushbackRecoil = true,
         recoilShake = true,
@@ -1115,11 +1116,11 @@ function ns.Config:Initialize()
         end
         MergeDefaults(ForeverUIDB, DEFAULTS)
         -- Migrate older profiles where wowSpellColors defaulted to false
-        if ForeverUIDB.version ~= "1.3.0" then
-            if type(ForeverUIDB.combatFX) == "table" then
+        if ForeverUIDB.version ~= "1.3.5" then
+            if type(ForeverUIDB.combatFX) == "table" and ForeverUIDB.combatFX.wowSpellColors == nil then
                 ForeverUIDB.combatFX.wowSpellColors = true
             end
-            ForeverUIDB.version = "1.3.0"
+            ForeverUIDB.version = "1.3.5"
         end
         if type(ForeverUIDB.questTracker) == "table" and (ForeverUIDB.questTracker.closeDistanceYards or 0) < 180 then
             ForeverUIDB.questTracker.closeDistanceYards = 180

@@ -536,5 +536,5 @@ ns.Events:Register("PLAYER_LOGIN", function()
     if ns.Options and ns.Options.OnEnable then
         ns.Options:OnEnable()
     end
-    PrintMsg("Loaded (v1.3.0). Type |cffffd100/fui|r to open settings & art presets, or click the minimap icon.")
+    PrintMsg("Loaded (v1.3.5). Type |cffffd100/fui|r to open settings & art presets, or click the minimap icon.")
 end, ns)
